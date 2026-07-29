@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
+import { Route as AuthenticatedReadinessRouteImport } from './routes/_authenticated/readiness'
 import { Route as AuthenticatedQuestionsRouteImport } from './routes/_authenticated/questions'
 import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
@@ -46,6 +47,11 @@ const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReadinessRoute = AuthenticatedReadinessRouteImport.update({
+  id: '/readiness',
+  path: '/readiness',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQuestionsRoute = AuthenticatedQuestionsRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/readiness': typeof AuthenticatedReadinessRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
 }
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/readiness': typeof AuthenticatedReadinessRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
 }
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
   '/_authenticated/questions': typeof AuthenticatedQuestionsRoute
+  '/_authenticated/readiness': typeof AuthenticatedReadinessRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
 }
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/my-scores'
     | '/questions'
+    | '/readiness'
     | '/schedule'
     | '/students'
   fileRoutesByTo: FileRoutesByTo
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/my-scores'
     | '/questions'
+    | '/readiness'
     | '/schedule'
     | '/students'
   id:
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modules'
     | '/_authenticated/my-scores'
     | '/_authenticated/questions'
+    | '/_authenticated/readiness'
     | '/_authenticated/schedule'
     | '/_authenticated/students'
   fileRoutesById: FileRoutesById
@@ -232,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/schedule'
       fullPath: '/schedule'
       preLoaderRoute: typeof AuthenticatedScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/readiness': {
+      id: '/_authenticated/readiness'
+      path: '/readiness'
+      fullPath: '/readiness'
+      preLoaderRoute: typeof AuthenticatedReadinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/questions': {
@@ -310,6 +329,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
   AuthenticatedQuestionsRoute: typeof AuthenticatedQuestionsRoute
+  AuthenticatedReadinessRoute: typeof AuthenticatedReadinessRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
 }
@@ -324,6 +344,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,
   AuthenticatedQuestionsRoute: AuthenticatedQuestionsRoute,
+  AuthenticatedReadinessRoute: AuthenticatedReadinessRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
 }

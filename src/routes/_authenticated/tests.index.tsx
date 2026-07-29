@@ -1,0 +1,277 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
+
+import { generateTest, setTestPublished, deleteTest } from "@/lib/tests.functions";
+import { batchesQuery, meQuery, modulesQuery, questionsQuery, testsQuery } from "@/lib/crt-queries";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export const Route = createFileRoute("/_authenticated/tests")({
+  head: () => ({
+    meta: [
+      { title: "Online tests — CRT Training Console" },
+      {
+        name: "description",
+        content:
+          "Auto-generate timed MCQ tests from the question bank with difficulty mix, shuffling and instant scoring.",
+      },
+      { property: "og:title", content: "Online tests — CRT Training Console" },
+      { property: "og:description", content: "Timed CRT test engine with auto evaluation." },
+    ],
+  }),
+  component: TestsPage,
+});
+
+function TestsPage() {
+  const me = useQuery(meQuery);
+  const tests = useQuery(testsQuery);
+  const modules = useQuery(modulesQuery);
+  const batches = useQuery(batchesQuery);
+  const questions = useQuery(questionsQuery);
+  const queryClient = useQueryClient();
+  const gen = useServerFn(generateTest);
+  const publish = useServerFn(setTestPublished);
+  const remove = useServerFn(deleteTest);
+
+  const isStaff = !!me.data?.isStaff;
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("Weekly test");
+  const [moduleId, setModuleId] = useState("none");
+  const [batchId, setBatchId] = useState("none");
+  const [count, setCount] = useState("20");
+  const [duration, setDuration] = useState("30");
+  const [when, setWhen] = useState(new Date().toISOString().slice(0, 16));
+  const [mix, setMix] = useState({ easy: "50", medium: "35", hard: "15" });
+
+  const create = useMutation({
+    mutationFn: () =>
+      gen({
+        data: {
+          title: title.trim(),
+          batch_id: batchId === "none" ? null : batchId,
+          module_id: moduleId === "none" ? null : moduleId,
+          starts_at: new Date(when).toISOString(),
+          duration_min: Number(duration) || 30,
+          count: Number(count) || 10,
+          easy_pct: Number(mix.easy) || 0,
+          medium_pct: Number(mix.medium) || 0,
+          hard_pct: Number(mix.hard) || 0,
+          shuffle: true,
+          publish: true,
+        },
+      }),
+    onSuccess: (r) => {
+      toast.success(`Test generated with ${r.items} questions`);
+      setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["tests"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const togglePublish = useMutation({
+    mutationFn: (vars: { id: string; published: boolean }) => publish({ data: vars }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tests"] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => remove({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Test deleted");
+      queryClient.invalidateQueries({ queryKey: ["tests"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const list = tests.data?.tests ?? [];
+  const items = tests.data?.items ?? [];
+  const attempts = tests.data?.attempts ?? [];
+  const mcqCount = (questions.data ?? []).filter((q) => q.qtype === "mcq").length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Online tests</h1>
+          <p className="text-sm text-muted-foreground">
+            {isStaff
+              ? `${mcqCount} MCQs available for auto-generation.`
+              : "Take your scheduled tests and see instant results."}
+          </p>
+        </div>
+        {isStaff && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" /> Generate test
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Auto-generate a test</DialogTitle>
+                <DialogDescription>
+                  Questions are picked from the bank using your difficulty mix.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Title</Label>
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Module</Label>
+                  <Select value={moduleId} onValueChange={setModuleId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">All modules</SelectItem>
+                      {(modules.data?.modules ?? []).map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.code} — {m.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Batch</Label>
+                  <Select value={batchId} onValueChange={setBatchId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">All batches</SelectItem>
+                      {(batches.data ?? []).map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Questions</Label>
+                  <Input type="number" value={count} onChange={(e) => setCount(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Duration (min)</Label>
+                  <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Starts at</Label>
+                  <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Easy %</Label>
+                  <Input
+                    type="number"
+                    value={mix.easy}
+                    onChange={(e) => setMix((m) => ({ ...m, easy: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Medium %</Label>
+                  <Input
+                    type="number"
+                    value={mix.medium}
+                    onChange={(e) => setMix((m) => ({ ...m, medium: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Hard %</Label>
+                  <Input
+                    type="number"
+                    value={mix.hard}
+                    onChange={(e) => setMix((m) => ({ ...m, hard: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                  Generate
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {list.map((t) => {
+          const qCount = items.filter((i) => i.test_id === t.id).length;
+          const done = attempts.filter((a) => a.test_id === t.id && a.submitted_at);
+          const myAttempt = done[0];
+          return (
+            <Card key={t.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between gap-2 text-base">
+                  <span className="truncate">{t.title}</span>
+                  <Badge variant={t.published ? "default" : "secondary"}>
+                    {t.published ? "Published" : "Draft"}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  {new Date(t.starts_at).toLocaleString()} · {t.duration_min} min · {qCount} questions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/tests/$testId" params={{ testId: t.id }}>
+                    {isStaff ? "Preview / results" : myAttempt ? "Review" : "Start test"}
+                  </Link>
+                </Button>
+                {isStaff && (
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Switch
+                        checked={t.published}
+                        onCheckedChange={(v) => togglePublish.mutate({ id: t.id, published: v })}
+                      />
+                      Publish
+                    </div>
+                    <span className="text-xs text-muted-foreground">{done.length} submitted</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="ml-auto"
+                      aria-label="Delete test"
+                      onClick={() => del.mutate(t.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+        {list.length === 0 && <p className="text-sm text-muted-foreground">No tests yet.</p>}
+      </div>
+    </div>
+  );
+}

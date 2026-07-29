@@ -68,6 +68,7 @@ function TestsPage() {
   const [duration, setDuration] = useState("30");
   const [when, setWhen] = useState(new Date().toISOString().slice(0, 16));
   const [mix, setMix] = useState({ easy: "50", medium: "35", hard: "15" });
+  const [qtype, setQtype] = useState<"mcq" | "coding" | "mixed">("mcq");
 
   const fieldErrors = (() => {
     const errs: Record<string, string> = {};
@@ -100,6 +101,8 @@ function TestsPage() {
           hard_pct: Number(mix.hard) || 0,
           shuffle: true,
           publish: true,
+          qtypes:
+            qtype === "mixed" ? ["mcq", "coding", "descriptive"] : qtype === "coding" ? ["coding"] : ["mcq"],
         },
       }),
     onSuccess: (r) => {
@@ -199,6 +202,19 @@ function TestsPage() {
                           {b.name}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Question type</Label>
+                  <Select value={qtype} onValueChange={(v) => setQtype(v as typeof qtype)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mcq">MCQ only</SelectItem>
+                      <SelectItem value="coding">Coding only</SelectItem>
+                      <SelectItem value="mixed">Mixed (MCQ + coding)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

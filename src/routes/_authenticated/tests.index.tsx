@@ -231,9 +231,13 @@ function TestsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                <Button
+                  onClick={() => create.mutate()}
+                  disabled={create.isPending || !formValid}
+                >
                   Generate
                 </Button>
+
               </DialogFooter>
             </DialogContent>
           </Dialog>

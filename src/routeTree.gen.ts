@@ -16,6 +16,7 @@ import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedReadinessRouteImport } from './routes/_authenticated/readiness'
 import { Route as AuthenticatedQuestionsRouteImport } from './routes/_authenticated/questions'
+import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
@@ -59,6 +60,11 @@ const AuthenticatedReadinessRoute = AuthenticatedReadinessRouteImport.update({
 const AuthenticatedQuestionsRoute = AuthenticatedQuestionsRouteImport.update({
   id: '/questions',
   path: '/questions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMyScoresRoute = AuthenticatedMyScoresRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/questions': typeof AuthenticatedQuestionsRoute
   '/readiness': typeof AuthenticatedReadinessRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/questions': typeof AuthenticatedQuestionsRoute
   '/readiness': typeof AuthenticatedReadinessRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
+  '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/questions': typeof AuthenticatedQuestionsRoute
   '/_authenticated/readiness': typeof AuthenticatedReadinessRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/modules'
     | '/my-scores'
+    | '/practice'
     | '/questions'
     | '/readiness'
     | '/schedule'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/modules'
     | '/my-scores'
+    | '/practice'
     | '/questions'
     | '/readiness'
     | '/schedule'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/modules'
     | '/_authenticated/my-scores'
+    | '/_authenticated/practice'
     | '/_authenticated/questions'
     | '/_authenticated/readiness'
     | '/_authenticated/schedule'
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/questions'
       fullPath: '/questions'
       preLoaderRoute: typeof AuthenticatedQuestionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/practice': {
+      id: '/_authenticated/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/my-scores': {
@@ -367,6 +386,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
+  AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedQuestionsRoute: typeof AuthenticatedQuestionsRoute
   AuthenticatedReadinessRoute: typeof AuthenticatedReadinessRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
@@ -384,6 +404,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,
+  AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedQuestionsRoute: AuthenticatedQuestionsRoute,
   AuthenticatedReadinessRoute: AuthenticatedReadinessRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,

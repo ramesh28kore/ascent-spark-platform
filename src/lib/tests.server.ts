@@ -25,12 +25,16 @@ export const generateTestSchema = z.object({
   hard_pct: z.number().int().min(0).max(100),
   shuffle: z.boolean(),
   publish: z.boolean(),
+  qtypes: z
+    .array(z.enum(["mcq", "coding", "descriptive"]))
+    .min(1, { message: "pick at least one question type" })
+    .default(["mcq"]),
 });
 
 
 export const submitSchema = z.object({
   test_id: z.string().uuid(),
-  responses: z.record(z.string().uuid(), z.string().max(500)),
+  responses: z.record(z.string().uuid(), z.string().max(20000)),
   blur_count: z.number().int().min(0).max(9999),
 });
 

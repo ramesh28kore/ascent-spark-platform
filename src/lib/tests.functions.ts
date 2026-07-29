@@ -25,11 +25,15 @@ export const generateTest = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => generateTestSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    let query = supabase.from("questions").select("id, level, bloom, marks, module_id").eq("qtype", "mcq");
+    let query = supabase
+      .from("questions")
+      .select("id, level, bloom, marks, module_id")
+      .in("qtype", data.qtypes);
     if (data.module_id) query = query.eq("module_id", data.module_id);
     const { data: pool, error: poolErr } = await query;
     if (poolErr) throw new Error(poolErr.message);
-    if (!pool || pool.length === 0) throw new Error("No MCQ questions available for that module.");
+    if (!pool || pool.length === 0)
+      throw new Error("No questions of that type available for the selected module.");
 
     const picked = pickByDistribution(pool, data.count, {
       easy: data.easy_pct,
@@ -114,7 +118,7 @@ export const getTestPaper = createServerFn({ method: "POST" })
 
     const ids = (items ?? []).map((i) => i.question_id);
     const { data: questions } = ids.length
-      ? await supabase.from("questions").select("id, prompt, options, level, bloom, marks").in("id", ids)
+      ? await supabase.from("questions").select("id, prompt, options, level, bloom, marks, qtype").in("id", ids)
       : { data: [] };
 
     const byId = new Map((questions ?? []).map((q) => [q.id, q]));
@@ -125,6 +129,7 @@ export const getTestPaper = createServerFn({ method: "POST" })
       prompt: byId.get(i.question_id)?.prompt ?? "",
       options: (byId.get(i.question_id)?.options ?? []) as unknown as string[],
       level: byId.get(i.question_id)?.level ?? "easy",
+      qtype: (byId.get(i.question_id)?.qtype ?? "mcq") as string,
     }));
     if (test.shuffle) paper = seededShuffle(paper, `${test.id}:${profile?.id ?? userId}`);
 

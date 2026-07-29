@@ -127,16 +127,26 @@ export const saveScore = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const STUDENT_QUESTION_COLS =
+  "id, module_id, prompt, qtype, options, level, bloom, marks, created_at";
+
 export const getQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Staff get the full row (answer + explanation) through a secured helper.
+    const staff = await context.supabase.rpc("staff_questions");
+    if (!staff.error && (staff.data?.length ?? 0) > 0) {
+      return [...staff.data].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
+    // Students may only read the answer-free columns.
     const { data, error } = await context.supabase
       .from("questions")
-      .select("*")
+      .select(STUDENT_QUESTION_COLS)
       .order("created_at");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((q) => ({ ...q, answer: null, explanation: null }));
   });
+
 
 export const createQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

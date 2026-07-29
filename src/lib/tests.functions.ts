@@ -181,37 +181,19 @@ export const submitAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => submitSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!profile) throw new Error("No student profile linked to this account.");
-
-    const { data: items } = await supabase
-      .from("test_items")
-      .select("question_id, marks")
-      .eq("test_id", data.test_id);
-    const ids = (items ?? []).map((i) => i.question_id);
-    const { data: questions } = ids.length
-      ? await supabase.from("questions").select("id, answer").in("id", ids)
-      : { data: [] };
-    const answers = new Map((questions ?? []).map((q) => [q.id, q.answer]));
-    const { score, maxScore } = scoreResponses(items ?? [], answers, data.responses);
-
-    const { error } = await supabase.from("test_attempts").upsert(
-      {
-        test_id: data.test_id,
-        student_id: profile.id,
-        submitted_at: new Date().toISOString(),
-        score,
-        max_score: maxScore,
-        responses: data.responses,
-        blur_count: data.blur_count,
-      },
-      { onConflict: "test_id,student_id" },
-    );
+    // Grading is done entirely in the database: answer keys never leave the
+    // server, the deadline is enforced there and resubmission is rejected.
+    const { data: result, error } = await context.supabase.rpc("grade_attempt", {
+      _test_id: data.test_id,
+      _responses: data.responses,
+      _blur_count: data.blur_count,
+    });
     if (error) throw new Error(error.message);
-    return { ok: true, score, maxScore };
+    const row = Array.isArray(result) ? result[0] : result;
+    return {
+      ok: true,
+      score: Number(row?.score ?? 0),
+      maxScore: Number(row?.max_score ?? 0),
+    };
   });
+

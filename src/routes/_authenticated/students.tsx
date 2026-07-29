@@ -206,6 +206,9 @@ function StudentsPage() {
                   <TableHead className="text-right">Tests</TableHead>
                   <TableHead className="text-right">Attempts</TableHead>
                   <TableHead className="text-right">Average</TableHead>
+                  <TableHead className="text-right">Attendance</TableHead>
+                  <TableHead className="text-right">Readiness</TableHead>
+
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-right">Report</TableHead>
                 </TableRow>

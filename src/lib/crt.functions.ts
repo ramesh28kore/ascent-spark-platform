@@ -127,16 +127,26 @@ export const saveScore = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const STUDENT_QUESTION_COLS =
+  "id, module_id, prompt, qtype, options, level, bloom, marks, created_at";
+
 export const getQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Staff get the full row (answer + explanation) through a secured helper.
+    const staff = await context.supabase.rpc("staff_questions");
+    if (!staff.error && (staff.data?.length ?? 0) > 0) {
+      return [...staff.data].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
+    // Students may only read the answer-free columns.
     const { data, error } = await context.supabase
       .from("questions")
-      .select("*")
+      .select(STUDENT_QUESTION_COLS)
       .order("created_at");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((q) => ({ ...q, answer: null, explanation: null }));
   });
+
 
 export const createQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -161,16 +171,30 @@ export const createQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const STUDENT_CODING_COLS =
+  "id, module_id, title, pattern, level, problem, complexity, follow_ups, created_at";
+
 export const getCodingProblems = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Staff see the model solution; students do not.
+    const staff = await context.supabase.rpc("staff_coding_problems");
+    if (!staff.error && (staff.data?.length ?? 0) > 0) {
+      return [...staff.data].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
     const { data, error } = await context.supabase
       .from("coding_problems")
-      .select("*")
+      .select(STUDENT_CODING_COLS)
       .order("created_at");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((p) => ({
+      ...p,
+      approach: "",
+      code: "",
+      expected_output: null,
+    }));
   });
+
 
 export const createCodingProblem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

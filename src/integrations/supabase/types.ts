@@ -656,6 +656,7 @@ export type Database = {
       test_attempts: {
         Row: {
           blur_count: number
+          graded_at: string | null
           id: string
           max_score: number
           responses: Json
@@ -667,6 +668,7 @@ export type Database = {
         }
         Insert: {
           blur_count?: number
+          graded_at?: string | null
           id?: string
           max_score?: number
           responses?: Json
@@ -678,6 +680,7 @@ export type Database = {
         }
         Update: {
           blur_count?: number
+          graded_at?: string | null
           id?: string
           max_score?: number
           responses?: Json
@@ -836,7 +839,58 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      grade_attempt: {
+        Args: { _blur_count?: number; _responses: Json; _test_id: string }
+        Returns: {
+          max_score: number
+          score: number
+        }[]
+      }
+      staff_coding_problems: {
+        Args: never
+        Returns: {
+          approach: string
+          code: string
+          complexity: string | null
+          created_at: string
+          expected_output: string | null
+          follow_ups: string | null
+          id: string
+          level: Database["public"]["Enums"]["difficulty"]
+          module_id: string | null
+          pattern: string | null
+          problem: string
+          title: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "coding_problems"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      staff_questions: {
+        Args: never
+        Returns: {
+          answer: string | null
+          bloom: string
+          created_at: string
+          explanation: string | null
+          id: string
+          level: Database["public"]["Enums"]["difficulty"]
+          marks: number
+          module_id: string | null
+          options: Json
+          prompt: string
+          qtype: Database["public"]["Enums"]["question_type"]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       app_role: "trainer" | "student" | "admin" | "placement"

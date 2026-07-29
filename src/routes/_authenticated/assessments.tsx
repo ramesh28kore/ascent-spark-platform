@@ -114,8 +114,15 @@ function AssessmentsPage() {
 
   if (assessments.isLoading) return <Skeleton className="h-96 w-full" />;
   if (!me.data?.isTrainer) {
-    return <p className="text-sm text-muted-foreground">Trainer access only.</p>;
+    return (
+      <StudentAssessments
+        assessments={assessments.data ?? []}
+        scores={scores.data ?? []}
+        myProfileId={me.data?.profile?.id ?? null}
+      />
+    );
   }
+
 
   const list = assessments.data ?? [];
   const active = list.find((a) => a.id === selected) ?? list[0];

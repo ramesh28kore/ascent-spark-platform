@@ -121,11 +121,29 @@ export const getTestPaper = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
 
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const isStaff = (roles ?? []).some((r) =>
+      ["trainer", "admin", "placement"].includes(r.role as string),
+    );
+
+    // Students can only see the question list while an attempt is live, so
+    // open the attempt before loading the paper.
+    if (!isStaff && profile && test.published) {
+      await supabase.from("test_attempts").upsert(
+        { test_id: data.test_id, student_id: profile.id, started_at: new Date().toISOString() },
+        { onConflict: "test_id,student_id", ignoreDuplicates: true },
+      );
+    }
+
     const { data: items } = await supabase
       .from("test_items")
       .select("id, question_id, marks, sort_order")
       .eq("test_id", data.test_id)
       .order("sort_order");
+
 
     const ids = (items ?? []).map((i) => i.question_id);
     const { data: questions } = ids.length

@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedQuestionsRouteImport } from './routes/_authenticated/questions'
 import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   id: '/students',
   path: '/students',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQuestionsRoute = AuthenticatedQuestionsRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRoutesByTo {
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRoutesById {
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
   '/_authenticated/questions': typeof AuthenticatedQuestionsRoute
+  '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRouteTypes {
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/my-scores'
     | '/questions'
+    | '/schedule'
     | '/students'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/modules'
     | '/my-scores'
     | '/questions'
+    | '/schedule'
     | '/students'
   id:
     | '__root__'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modules'
     | '/_authenticated/my-scores'
     | '/_authenticated/questions'
+    | '/_authenticated/schedule'
     | '/_authenticated/students'
   fileRoutesById: FileRoutesById
 }
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students'
       preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/schedule': {
+      id: '/_authenticated/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof AuthenticatedScheduleRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/questions': {
@@ -271,6 +290,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
   AuthenticatedQuestionsRoute: typeof AuthenticatedQuestionsRoute
+  AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
 }
 
@@ -283,6 +303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,
   AuthenticatedQuestionsRoute: AuthenticatedQuestionsRoute,
+  AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
 }
 

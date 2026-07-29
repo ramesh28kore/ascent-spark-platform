@@ -27,12 +27,6 @@ export const bulkImport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: isTrainer } = await supabase.rpc("is_trainer" as never).then(
-      () => ({ data: null }),
-      () => ({ data: null }),
-    );
-    void isTrainer;
-
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     if (!(roles ?? []).some((r) => r.role === "trainer")) {
       throw new Error("Only trainers can bulk import data.");

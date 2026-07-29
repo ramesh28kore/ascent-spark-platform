@@ -223,6 +223,13 @@ function StudentsPage() {
                     <TableCell className="text-right">{r.taken}</TableCell>
                     <TableCell className="text-right">{r.attempts}</TableCell>
                     <TableCell className="text-right font-semibold">{r.avg}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.attendancePct}%</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={bandVariant(r.band)}>
+                        {r.readiness} · {r.band}
+                      </Badge>
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <Badge
                         variant={r.avg >= 70 ? "default" : r.avg >= 50 ? "secondary" : "destructive"}

@@ -6,8 +6,8 @@ import {
   submitSchema,
   pickByDistribution,
   seededShuffle,
-  scoreResponses,
 } from "@/lib/tests.server";
+
 
 export const getTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

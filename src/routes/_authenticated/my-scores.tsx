@@ -185,6 +185,61 @@ function MyScores() {
           )}
         </CardContent>
       </Card>
+
+      {report && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-base">Course outcome attainment</CardTitle>
+              <CardDescription>
+                Level 3 = 70%+, 2 = 60–69%, 1 = 50–59%, 0 = below target
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {report.coRows.map((c) => (
+                <div key={c.co}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="font-medium">
+                      {c.co} · {c.moduleTitle}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {c.tests ? `${c.percent}% · L${c.level}` : "Not assessed"}
+                    </span>
+                  </div>
+                  <Progress value={c.percent} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-base">
+                Programme outcome (PO / PSO) mapping
+              </CardTitle>
+              <CardDescription>Correlation-weighted from mapped course outcomes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {report.poRows.map((p) => (
+                  <Badge
+                    key={p.po}
+                    variant={p.level >= 2 ? "default" : p.level === 1 ? "secondary" : "destructive"}
+                    className="gap-1"
+                  >
+                    {p.po} · {p.percent}% · L{p.level}
+                  </Badge>
+                ))}
+                {report.poRows.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No attainment yet — take an assessment first.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

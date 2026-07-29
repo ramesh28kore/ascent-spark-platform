@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { FileSpreadsheet, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
   CartesianGrid,
   Line,
@@ -10,9 +12,25 @@ import {
   YAxis,
 } from "recharts";
 
-import { assessmentsQuery, meQuery, scoresQuery, KIND_LABEL, pct } from "@/lib/crt-queries";
+import {
+  assessmentsQuery,
+  meQuery,
+  modulesQuery,
+  scoresQuery,
+  KIND_LABEL,
+  pct,
+} from "@/lib/crt-queries";
+import {
+  buildStudentReport,
+  downloadText,
+  reportToCsv,
+  reportToPdf,
+  type StudentRow,
+} from "@/lib/crt-report";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -42,10 +60,12 @@ function MyScores() {
   const me = useQuery(meQuery);
   const assessments = useQuery(assessmentsQuery);
   const scores = useQuery(scoresQuery);
+  const modules = useQuery(modulesQuery);
 
   if (me.isLoading || scores.isLoading) return <Skeleton className="h-96 w-full" />;
 
-  const profileId = me.data?.profile?.id;
+  const profile = me.data?.profile as StudentRow | null | undefined;
+  const profileId = profile?.id;
   const list = assessments.data ?? [];
   const mine = (scores.data ?? []).filter((s) => s.student_id === profileId);
 
@@ -69,14 +89,41 @@ function MyScores() {
     ? Math.round(rows.reduce((s, r) => s + r.percent, 0) / rows.length)
     : 0;
 
+  const report = profile
+    ? buildStudentReport(profile, modules.data?.modules ?? [], list, scores.data ?? [])
+    : null;
+
+  function exportPdf() {
+    if (!report) return;
+    reportToPdf(report);
+    toast.success("PDF report downloaded");
+  }
+
+  function exportCsv() {
+    if (!report) return;
+    downloadText("crt-my-report.csv", reportToCsv(report), "text/csv");
+    toast.success("CSV report downloaded");
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">My scores</h1>
-        <p className="text-sm text-muted-foreground">
-          {rows.length} assessments recorded · {avg}% average
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">My scores</h1>
+          <p className="text-sm text-muted-foreground">
+            {rows.length} assessments recorded · {avg}% average
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={exportPdf} disabled={!report}>
+            <FileText className="h-4 w-4" /> Export PDF
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={!report}>
+            <FileSpreadsheet className="h-4 w-4" /> Export CSV
+          </Button>
+        </div>
       </div>
+
 
       <Card>
         <CardHeader>
@@ -138,6 +185,61 @@ function MyScores() {
           )}
         </CardContent>
       </Card>
+
+      {report && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-base">Course outcome attainment</CardTitle>
+              <CardDescription>
+                Level 3 = 70%+, 2 = 60–69%, 1 = 50–59%, 0 = below target
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {report.coRows.map((c) => (
+                <div key={c.co}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="font-medium">
+                      {c.co} · {c.moduleTitle}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {c.tests ? `${c.percent}% · L${c.level}` : "Not assessed"}
+                    </span>
+                  </div>
+                  <Progress value={c.percent} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-base">
+                Programme outcome (PO / PSO) mapping
+              </CardTitle>
+              <CardDescription>Correlation-weighted from mapped course outcomes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {report.poRows.map((p) => (
+                  <Badge
+                    key={p.po}
+                    variant={p.level >= 2 ? "default" : p.level === 1 ? "secondary" : "destructive"}
+                    className="gap-1"
+                  >
+                    {p.po} · {p.percent}% · L{p.level}
+                  </Badge>
+                ))}
+                {report.poRows.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No attainment yet — take an assessment first.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

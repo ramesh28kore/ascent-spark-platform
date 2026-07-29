@@ -8,6 +8,17 @@ import {
   getQuestions,
   getCodingProblems,
 } from "@/lib/crt.functions";
+import {
+  getBatches,
+  getSessions,
+  getAttendance,
+  getMockInterviews,
+  getPractice,
+  getResources,
+  getNotifications,
+  getRoleAssignments,
+} from "@/lib/crt-ops.functions";
+import { getTests } from "@/lib/tests.functions";
 
 export const meQuery = queryOptions({ queryKey: ["me"], queryFn: () => getMe() });
 export const modulesQuery = queryOptions({ queryKey: ["modules"], queryFn: () => getModules() });
@@ -25,6 +36,32 @@ export const codingQuery = queryOptions({
   queryKey: ["coding"],
   queryFn: () => getCodingProblems(),
 });
+
+export const batchesQuery = queryOptions({ queryKey: ["batches"], queryFn: () => getBatches() });
+export const sessionsQuery = queryOptions({ queryKey: ["sessions"], queryFn: () => getSessions() });
+export const attendanceQuery = queryOptions({
+  queryKey: ["attendance"],
+  queryFn: () => getAttendance(),
+});
+export const mocksQuery = queryOptions({
+  queryKey: ["mock-interviews"],
+  queryFn: () => getMockInterviews(),
+});
+export const practiceQuery = queryOptions({ queryKey: ["practice"], queryFn: () => getPractice() });
+export const resourcesQuery = queryOptions({
+  queryKey: ["resources"],
+  queryFn: () => getResources(),
+});
+export const notificationsQuery = queryOptions({
+  queryKey: ["notifications"],
+  queryFn: () => getNotifications(),
+});
+export const rolesQuery = queryOptions({
+  queryKey: ["role-assignments"],
+  queryFn: () => getRoleAssignments(),
+});
+export const testsQuery = queryOptions({ queryKey: ["tests"], queryFn: () => getTests() });
+
 
 export const KIND_LABEL: Record<string, string> = {
   weekly_test: "Weekly test",

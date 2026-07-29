@@ -159,8 +159,17 @@ function TestsPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                  <Input
+                    value={title}
+                    maxLength={160}
+                    aria-invalid={!!fieldErrors.title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  {fieldErrors.title && (
+                    <p className="text-xs text-destructive">{fieldErrors.title}</p>
+                  )}
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Module</Label>
                   <Select value={moduleId} onValueChange={setModuleId}>

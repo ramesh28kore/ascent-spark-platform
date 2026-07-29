@@ -5,7 +5,11 @@ export type DatasetKey =
   | "assessments"
   | "questions"
   | "coding"
-  | "scores";
+  | "scores"
+  | "batches"
+  | "sessions"
+  | "attendance";
+
 
 export type FieldSpec = {
   key: string;

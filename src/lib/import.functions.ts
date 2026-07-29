@@ -40,8 +40,8 @@ export const bulkImport = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    if (!(roles ?? []).some((r) => r.role === "trainer")) {
-      throw new Error("Only trainers can bulk import data.");
+    if (!(roles ?? []).some((r) => r.role === "trainer" || r.role === "admin")) {
+      throw new Error("Only trainers or admins can bulk import data.");
     }
 
     const rows = data.rows as Row[];
@@ -51,7 +51,10 @@ export const bulkImport = createServerFn({ method: "POST" })
     let skipped = 0;
 
     const modulesByCode = new Map<string, string>();
-    if (["topics", "assessments", "questions", "coding", "modules"].includes(data.dataset)) {
+    if (
+      ["topics", "assessments", "questions", "coding", "modules", "sessions"].includes(data.dataset)
+    ) {
+
       const { data: mods } = await supabase.from("modules").select("id, code");
       (mods ?? []).forEach((m) => modulesByCode.set(m.code.toLowerCase(), m.id));
     }

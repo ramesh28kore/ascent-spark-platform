@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import {
   modulesQuery,
   scoresQuery,
   studentsQuery,
+  testsQuery,
   KIND_LABEL,
   pct,
 } from "@/lib/crt-queries";
@@ -69,6 +70,7 @@ function AssessmentsPage() {
   const modules = useQuery(modulesQuery);
   const students = useQuery(studentsQuery);
   const scores = useQuery(scoresQuery);
+  const tests = useQuery(testsQuery);
   const queryClient = useQueryClient();
 
   const addAssessment = useServerFn(createAssessment);
@@ -119,6 +121,7 @@ function AssessmentsPage() {
         assessments={assessments.data ?? []}
         scores={scores.data ?? []}
         myProfileId={me.data?.profile?.id ?? null}
+        tests={tests.data?.tests ?? []}
       />
     );
   }
@@ -321,20 +324,41 @@ type AssessmentRow = {
   id: string;
   title: string;
   kind: string;
+  module_id?: string | null;
   max_marks: number;
   scheduled_on: string;
 };
 type ScoreRow = { student_id: string; assessment_id: string; marks: number };
+type TestRow = {
+  id: string;
+  title: string;
+  published: boolean;
+  module_id: string | null;
+  assessment_id: string | null;
+  starts_at: string;
+};
 
 function StudentAssessments({
   assessments,
   scores,
   myProfileId,
+  tests,
 }: {
   assessments: AssessmentRow[];
   scores: ScoreRow[];
   myProfileId: string | null;
+  tests: TestRow[];
 }) {
+  const linkedTest = (a: AssessmentRow) =>
+    tests.find((t) => t.published && t.assessment_id === a.id) ??
+    tests.find(
+      (t) =>
+        t.published &&
+        !!a.module_id &&
+        t.module_id === a.module_id &&
+        t.starts_at.slice(0, 10) === a.scheduled_on,
+    ) ??
+    null;
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = assessments
     .filter((a) => a.scheduled_on >= today)
@@ -372,6 +396,19 @@ function StudentAssessments({
               <p className="mt-1 text-xs text-muted-foreground">
                 {a.scheduled_on} · {a.max_marks} marks
               </p>
+              <div className="mt-2">
+                {linkedTest(a) ? (
+                  <Button asChild size="sm">
+                    <Link to="/tests/$testId" params={{ testId: linkedTest(a)!.id }}>
+                      Open test
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/tests">View online tests</Link>
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </CardContent>

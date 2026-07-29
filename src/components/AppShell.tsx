@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel>{me?.isTrainer ? "Trainer" : "Student"}</SidebarGroupLabel>
+              <SidebarGroupLabel>{me?.roleLabel ?? "Menu"}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {items.map((item) => (

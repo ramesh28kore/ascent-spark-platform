@@ -54,6 +54,7 @@ function StudentsPage() {
   const students = useQuery(studentsQuery);
   const assessments = useQuery(assessmentsQuery);
   const scores = useQuery(scoresQuery);
+  const modules = useQuery(modulesQuery);
   const [search, setSearch] = useState("");
 
   const rows = useMemo(() => {
@@ -83,6 +84,36 @@ function StudentsPage() {
       .sort((a, b) => b.avg - a.avg);
   }, [students.data, scores.data, assessments.data, search]);
 
+  function reportFor(student: StudentRow) {
+    return buildStudentReport(
+      student,
+      modules.data?.modules ?? [],
+      assessments.data ?? [],
+      scores.data ?? [],
+    );
+  }
+
+  function exportPdf(student: StudentRow) {
+    reportToPdf(reportFor(student));
+    toast.success(`PDF report generated for ${student.full_name}`);
+  }
+
+  function exportCsv(student: StudentRow) {
+    const report = reportFor(student);
+    const slug = (student.roll_number || student.full_name)
+      .replace(/[^a-z0-9]+/gi, "-")
+      .toLowerCase();
+    downloadText(`crt-report-${slug}.csv`, reportToCsv(report), "text/csv");
+    toast.success(`CSV report generated for ${student.full_name}`);
+  }
+
+  function exportBatch() {
+    if (!rows.length) return toast.error("No students to export");
+    const reports = rows.map((r) => reportFor(r));
+    downloadText("crt-batch-attainment.csv", batchToCsv(reports), "text/csv");
+    toast.success(`Batch CSV exported for ${reports.length} students`);
+  }
+
   if (students.isLoading) return <Skeleton className="h-96 w-full" />;
 
   if (!me.data?.isTrainer) {
@@ -91,18 +122,26 @@ function StudentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Student performance</h1>
-        <p className="text-sm text-muted-foreground">
-          Ranked by average percentage across all recorded assessments.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Student performance</h1>
+          <p className="text-sm text-muted-foreground">
+            Ranked by average percentage across all recorded assessments.
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2" onClick={exportBatch}>
+          <FileDown className="h-4 w-4" /> Export batch CO/PO CSV
+        </Button>
       </div>
 
       <Card>
         <CardHeader className="gap-3">
           <div>
             <CardTitle className="font-display text-base">Batch roster</CardTitle>
-            <CardDescription>{rows.length} students</CardDescription>
+            <CardDescription>
+              {rows.length} students · export any student's full report with scores, attempt history
+              and CO/PO attainment
+            </CardDescription>
           </div>
           <Input
             placeholder="Search name, roll number, branch or batch"
@@ -125,6 +164,7 @@ function StudentsPage() {
                   <TableHead className="text-right">Attempts</TableHead>
                   <TableHead className="text-right">Average</TableHead>
                   <TableHead className="text-right">Status</TableHead>
+                  <TableHead className="text-right">Report</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -143,6 +183,28 @@ function StudentsPage() {
                       >
                         {r.avg >= 70 ? "Placement ready" : r.avg >= 50 ? "On track" : "Remedial"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-1"
+                          onClick={() => exportPdf(r)}
+                          aria-label={`Download PDF report for ${r.full_name}`}
+                        >
+                          <FileText className="h-4 w-4" /> PDF
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-1"
+                          onClick={() => exportCsv(r)}
+                          aria-label={`Download CSV report for ${r.full_name}`}
+                        >
+                          <FileSpreadsheet className="h-4 w-4" /> CSV
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

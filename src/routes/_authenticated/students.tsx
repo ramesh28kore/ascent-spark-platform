@@ -1,14 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { FileDown, FileSpreadsheet, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   assessmentsQuery,
   scoresQuery,
   studentsQuery,
   meQuery,
+  modulesQuery,
   pct,
 } from "@/lib/crt-queries";
+import {
+  batchToCsv,
+  buildStudentReport,
+  downloadText,
+  reportToCsv,
+  reportToPdf,
+  type StudentRow,
+} from "@/lib/crt-report";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -19,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 

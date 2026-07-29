@@ -251,7 +251,109 @@ export const bulkImport = createServerFn({ method: "POST" })
             if (error) throw new Error(error.message);
             inserted += 1;
           }
+        } else if (data.dataset === "batches") {
+          const name = clean(r.name);
+          if (!name) {
+            fail(i, "name is required");
+            continue;
+          }
+          const payload = {
+            name: name.slice(0, 60),
+            academic_year: clean(r.academic_year).slice(0, 20) || "2025-26",
+            branch: clean(r.branch).slice(0, 60) || null,
+            active: clean(r.active).toLowerCase() !== "false",
+          };
+          const { data: ex } = await supabase
+            .from("batches")
+            .select("id")
+            .eq("name", payload.name)
+            .maybeSingle();
+          if (ex?.id) {
+            const { error } = await supabase.from("batches").update(payload).eq("id", ex.id);
+            if (error) throw new Error(error.message);
+            updated += 1;
+          } else {
+            const { error } = await supabase.from("batches").insert(payload);
+            if (error) throw new Error(error.message);
+            inserted += 1;
+          }
+        } else if (data.dataset === "sessions") {
+          const title = clean(r.title);
+          const when = clean(r.scheduled_at);
+          if (!title || !when) {
+            fail(i, "title and scheduled_at are required");
+            continue;
+          }
+          const iso = new Date(when).toISOString();
+          const batchName = clean(r.batch);
+          let batchId: string | null = null;
+          if (batchName) {
+            const { data: b } = await supabase
+              .from("batches")
+              .select("id")
+              .eq("name", batchName)
+              .maybeSingle();
+            if (!b?.id) {
+              fail(i, `no batch named "${batchName}"`);
+              continue;
+            }
+            batchId = b.id;
+          }
+          const payload = {
+            title: title.slice(0, 160),
+            batch_id: batchId,
+            module_id: modulesByCode.get(clean(r.module_code).toLowerCase()) ?? null,
+            trainer_name: clean(r.trainer_name).slice(0, 120) || null,
+            scheduled_at: iso,
+            duration_min: Math.max(15, Math.round(num(r.duration_min, 90))),
+            status: pick(r.status, ["planned", "conducted", "cancelled"] as const, "planned"),
+          };
+          const { data: ex } = await supabase
+            .from("sessions")
+            .select("id")
+            .eq("title", payload.title)
+            .eq("scheduled_at", iso)
+            .maybeSingle();
+          if (ex?.id) {
+            const { error } = await supabase.from("sessions").update(payload).eq("id", ex.id);
+            if (error) throw new Error(error.message);
+            updated += 1;
+          } else {
+            const { error } = await supabase.from("sessions").insert(payload);
+            if (error) throw new Error(error.message);
+            inserted += 1;
+          }
+        } else if (data.dataset === "attendance") {
+          const roll = clean(r.roll_number);
+          const title = clean(r.session_title);
+          const when = clean(r.scheduled_at);
+          const { data: student } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("roll_number", roll)
+            .maybeSingle();
+          if (!student?.id) {
+            fail(i, `no student with roll_number "${roll}"`);
+            continue;
+          }
+          let sessionQuery = supabase.from("sessions").select("id").eq("title", title);
+          if (when) sessionQuery = sessionQuery.eq("scheduled_at", new Date(when).toISOString());
+          const { data: session } = await sessionQuery.maybeSingle();
+          if (!session?.id) {
+            fail(i, `no session titled "${title}"`);
+            continue;
+          }
+          const present = !["false", "0", "absent", "no"].includes(clean(r.present).toLowerCase());
+          const { error } = await supabase
+            .from("attendance")
+            .upsert(
+              { session_id: session.id, student_id: student.id, present },
+              { onConflict: "session_id,student_id" },
+            );
+          if (error) throw new Error(error.message);
+          inserted += 1;
         } else {
+
           const roll = clean(r.roll_number);
           const title = clean(r.assessment_title);
           const { data: student } = await supabase

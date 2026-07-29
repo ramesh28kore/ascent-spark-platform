@@ -1,0 +1,144 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+
+import {
+  assessmentsQuery,
+  scoresQuery,
+  studentsQuery,
+  meQuery,
+  pct,
+} from "@/lib/crt-queries";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export const Route = createFileRoute("/_authenticated/students")({
+  head: () => ({
+    meta: [
+      { title: "Students — CRT Training Console" },
+      {
+        name: "description",
+        content: "Student performance tracker: averages, attempts and per-assessment scores.",
+      },
+      { property: "og:title", content: "Students — CRT Training Console" },
+      { property: "og:description", content: "Track every trainee's CRT performance." },
+    ],
+  }),
+  component: StudentsPage,
+});
+
+function StudentsPage() {
+  const me = useQuery(meQuery);
+  const students = useQuery(studentsQuery);
+  const assessments = useQuery(assessmentsQuery);
+  const scores = useQuery(scoresQuery);
+  const [search, setSearch] = useState("");
+
+  const rows = useMemo(() => {
+    const list = assessments.data ?? [];
+    return (students.data ?? [])
+      .map((p) => {
+        const mine = (scores.data ?? []).filter((s) => s.student_id === p.id);
+        const percents = mine.map((s) => {
+          const a = list.find((x) => x.id === s.assessment_id);
+          return a ? pct(Number(s.marks), a.max_marks) : 0;
+        });
+        const avg = percents.length
+          ? Math.round(percents.reduce((x, y) => x + y, 0) / percents.length)
+          : 0;
+        return {
+          ...p,
+          taken: mine.length,
+          attempts: mine.reduce((s, r) => s + r.attempts, 0),
+          avg,
+        };
+      })
+      .filter((p) =>
+        `${p.full_name} ${p.roll_number ?? ""} ${p.branch ?? ""} ${p.batch ?? ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      )
+      .sort((a, b) => b.avg - a.avg);
+  }, [students.data, scores.data, assessments.data, search]);
+
+  if (students.isLoading) return <Skeleton className="h-96 w-full" />;
+
+  if (!me.data?.isTrainer) {
+    return <p className="text-sm text-muted-foreground">Trainer access only.</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Student performance</h1>
+        <p className="text-sm text-muted-foreground">
+          Ranked by average percentage across all recorded assessments.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="gap-3">
+          <div>
+            <CardTitle className="font-display text-base">Batch roster</CardTitle>
+            <CardDescription>{rows.length} students</CardDescription>
+          </div>
+          <Input
+            placeholder="Search name, roll number, branch or batch"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            maxLength={60}
+            className="max-w-sm"
+          />
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Roll</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Batch</TableHead>
+                  <TableHead className="text-right">Tests</TableHead>
+                  <TableHead className="text-right">Attempts</TableHead>
+                  <TableHead className="text-right">Average</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.full_name}</TableCell>
+                    <TableCell>{r.roll_number ?? "—"}</TableCell>
+                    <TableCell>{r.branch ?? "—"}</TableCell>
+                    <TableCell>{r.batch ?? "—"}</TableCell>
+                    <TableCell className="text-right">{r.taken}</TableCell>
+                    <TableCell className="text-right">{r.attempts}</TableCell>
+                    <TableCell className="text-right font-semibold">{r.avg}%</TableCell>
+                    <TableCell className="text-right">
+                      <Badge
+                        variant={r.avg >= 70 ? "default" : r.avg >= 50 ? "secondary" : "destructive"}
+                      >
+                        {r.avg >= 70 ? "Placement ready" : r.avg >= 50 ? "On track" : "Remedial"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

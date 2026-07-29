@@ -9,38 +9,162 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedQuestionsRouteImport } from './routes/_authenticated/questions'
+import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
+import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCodingRouteImport } from './routes/_authenticated/coding'
+import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuestionsRoute = AuthenticatedQuestionsRouteImport.update({
+  id: '/questions',
+  path: '/questions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMyScoresRoute = AuthenticatedMyScoresRouteImport.update({
+  id: '/my-scores',
+  path: '/my-scores',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedModulesRoute = AuthenticatedModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCodingRoute = AuthenticatedCodingRouteImport.update({
+  id: '/coding',
+  path: '/coding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssessmentsRoute =
+  AuthenticatedAssessmentsRouteImport.update({
+    id: '/assessments',
+    path: '/assessments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/coding': typeof AuthenticatedCodingRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/modules': typeof AuthenticatedModulesRoute
+  '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/questions': typeof AuthenticatedQuestionsRoute
+  '/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/coding': typeof AuthenticatedCodingRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/modules': typeof AuthenticatedModulesRoute
+  '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/questions': typeof AuthenticatedQuestionsRoute
+  '/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/assessments': typeof AuthenticatedAssessmentsRoute
+  '/_authenticated/coding': typeof AuthenticatedCodingRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/modules': typeof AuthenticatedModulesRoute
+  '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
+  '/_authenticated/questions': typeof AuthenticatedQuestionsRoute
+  '/_authenticated/students': typeof AuthenticatedStudentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/assessments'
+    | '/coding'
+    | '/dashboard'
+    | '/modules'
+    | '/my-scores'
+    | '/questions'
+    | '/students'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/assessments'
+    | '/coding'
+    | '/dashboard'
+    | '/modules'
+    | '/my-scores'
+    | '/questions'
+    | '/students'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/assessments'
+    | '/_authenticated/coding'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/modules'
+    | '/_authenticated/my-scores'
+    | '/_authenticated/questions'
+    | '/_authenticated/students'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +172,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/students': {
+      id: '/_authenticated/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof AuthenticatedStudentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/questions': {
+      id: '/_authenticated/questions'
+      path: '/questions'
+      fullPath: '/questions'
+      preLoaderRoute: typeof AuthenticatedQuestionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-scores': {
+      id: '/_authenticated/my-scores'
+      path: '/my-scores'
+      fullPath: '/my-scores'
+      preLoaderRoute: typeof AuthenticatedMyScoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/modules': {
+      id: '/_authenticated/modules'
+      path: '/modules'
+      fullPath: '/modules'
+      preLoaderRoute: typeof AuthenticatedModulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coding': {
+      id: '/_authenticated/coding'
+      path: '/coding'
+      fullPath: '/coding'
+      preLoaderRoute: typeof AuthenticatedCodingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assessments': {
+      id: '/_authenticated/assessments'
+      path: '/assessments'
+      fullPath: '/assessments'
+      preLoaderRoute: typeof AuthenticatedAssessmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRoute
+  AuthenticatedCodingRoute: typeof AuthenticatedCodingRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
+  AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
+  AuthenticatedQuestionsRoute: typeof AuthenticatedQuestionsRoute
+  AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRoute,
+  AuthenticatedCodingRoute: AuthenticatedCodingRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedModulesRoute: AuthenticatedModulesRoute,
+  AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,
+  AuthenticatedQuestionsRoute: AuthenticatedQuestionsRoute,
+  AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

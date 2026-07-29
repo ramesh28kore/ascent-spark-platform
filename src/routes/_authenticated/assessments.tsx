@@ -259,6 +259,23 @@ function AssessmentsPage() {
             <CardDescription>
               {active ? `Out of ${active.max_marks}. Entries save on blur.` : "Select an assessment"}
             </CardDescription>
+            {active && (
+              <div className="pt-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    to="/tests"
+                    search={{
+                      assessment: active.id,
+                      type: active.kind === "coding_test" ? "coding" : "mcq",
+                    }}
+                  >
+                    {active.kind === "coding_test"
+                      ? "Create linked coding test"
+                      : "Create linked online test"}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {active && (
@@ -400,8 +417,12 @@ function StudentAssessments({
                 {linkedTest(a) ? (
                   <Button asChild size="sm">
                     <Link to="/tests/$testId" params={{ testId: linkedTest(a)!.id }}>
-                      Open test
+                      {a.kind === "coding_test" ? "Open coding test" : "Open test"}
                     </Link>
+                  </Button>
+                ) : a.kind === "coding_test" ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/coding">Practice coding problems</Link>
                   </Button>
                 ) : (
                   <Button asChild size="sm" variant="outline">

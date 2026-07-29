@@ -171,16 +171,30 @@ export const createQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const STUDENT_CODING_COLS =
+  "id, module_id, title, pattern, level, problem, complexity, follow_ups, created_at";
+
 export const getCodingProblems = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Staff see the model solution; students do not.
+    const staff = await context.supabase.rpc("staff_coding_problems");
+    if (!staff.error && (staff.data?.length ?? 0) > 0) {
+      return [...staff.data].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
     const { data, error } = await context.supabase
       .from("coding_problems")
-      .select("*")
+      .select(STUDENT_CODING_COLS)
       .order("created_at");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map((p) => ({
+      ...p,
+      approach: "",
+      code: "",
+      expected_output: null,
+    }));
   });
+
 
 export const createCodingProblem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

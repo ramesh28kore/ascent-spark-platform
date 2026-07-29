@@ -17,7 +17,13 @@ export const getTests = createServerFn({ method: "GET" })
       context.supabase.from("test_items").select("id, test_id, question_id, marks, sort_order"),
       context.supabase.from("test_attempts").select("*"),
     ]);
-    return { tests: tests ?? [], items: items ?? [], attempts: attempts ?? [] };
+    const { data: qtypes } = await context.supabase.from("questions").select("id, qtype");
+    return {
+      tests: tests ?? [],
+      items: items ?? [],
+      attempts: attempts ?? [],
+      questionTypes: qtypes ?? [],
+    };
   });
 
 export const generateTest = createServerFn({ method: "POST" })
@@ -33,7 +39,11 @@ export const generateTest = createServerFn({ method: "POST" })
     const { data: pool, error: poolErr } = await query;
     if (poolErr) throw new Error(poolErr.message);
     if (!pool || pool.length === 0)
-      throw new Error("No questions of that type available for the selected module.");
+      throw new Error(
+        data.qtypes.includes("coding") && data.qtypes.length === 1
+          ? "No coding questions in the bank for this module yet. Add coding questions first, or pick All modules."
+          : "No questions of that type available for the selected module.",
+      );
 
     const picked = pickByDistribution(pool, data.count, {
       easy: data.easy_pct,
@@ -47,6 +57,7 @@ export const generateTest = createServerFn({ method: "POST" })
         title: data.title,
         batch_id: data.batch_id,
         module_id: data.module_id,
+        assessment_id: data.assessment_id,
         starts_at: data.starts_at,
         duration_min: data.duration_min,
         shuffle: data.shuffle,

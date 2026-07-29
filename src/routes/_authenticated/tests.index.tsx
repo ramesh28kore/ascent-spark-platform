@@ -1,14 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 
 import { generateTest, setTestPublished, deleteTest } from "@/lib/tests.functions";
 import { formatFormError } from "@/lib/form-errors";
 
-import { batchesQuery, meQuery, modulesQuery, questionsQuery, testsQuery } from "@/lib/crt-queries";
+import {
+  assessmentsQuery,
+  batchesQuery,
+  meQuery,
+  modulesQuery,
+  questionsQuery,
+  testsQuery,
+} from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +39,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type TestsSearch = { assessment?: string; type?: "mcq" | "coding" | "mixed" };
+
 export const Route = createFileRoute("/_authenticated/tests/")({
+  validateSearch: (search: Record<string, unknown>): TestsSearch => ({
+    assessment: typeof search.assessment === "string" ? search.assessment : undefined,
+    type:
+      search.type === "coding" || search.type === "mixed" || search.type === "mcq"
+        ? search.type
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Online tests — CRT Training Console" },
@@ -49,7 +65,9 @@ export const Route = createFileRoute("/_authenticated/tests/")({
 });
 
 function TestsPage() {
+  const search = Route.useSearch();
   const me = useQuery(meQuery);
+  const assessments = useQuery(assessmentsQuery);
   const tests = useQuery(testsQuery);
   const modules = useQuery(modulesQuery);
   const batches = useQuery(batchesQuery);
@@ -68,7 +86,27 @@ function TestsPage() {
   const [duration, setDuration] = useState("30");
   const [when, setWhen] = useState(new Date().toISOString().slice(0, 16));
   const [mix, setMix] = useState({ easy: "50", medium: "35", hard: "15" });
-  const [qtype, setQtype] = useState<"mcq" | "coding" | "mixed">("mcq");
+  const [qtype, setQtype] = useState<"mcq" | "coding" | "mixed">(search.type ?? "mcq");
+  const [assessmentId, setAssessmentId] = useState(search.assessment ?? "none");
+
+  // Prefill and open the dialog when arriving from an assessment.
+  useEffect(() => {
+    if (!search.assessment) return;
+    setAssessmentId(search.assessment);
+    if (search.type) setQtype(search.type);
+    setOpen(true);
+  }, [search.assessment, search.type]);
+
+  const linkedAssessment = (assessments.data ?? []).find(
+    (a) => a.id === assessmentId,
+  );
+  useEffect(() => {
+    if (!linkedAssessment) return;
+    setTitle(linkedAssessment.title);
+    setWhen(new Date(`${linkedAssessment.scheduled_on}T09:00`).toISOString().slice(0, 16));
+    if (linkedAssessment.module_id) setModuleId(linkedAssessment.module_id);
+    if (linkedAssessment.kind === "coding_test") setQtype("coding");
+  }, [linkedAssessment?.id]);
 
   const fieldErrors = (() => {
     const errs: Record<string, string> = {};
@@ -93,6 +131,7 @@ function TestsPage() {
           title: title.trim(),
           batch_id: batchId === "none" ? null : batchId,
           module_id: moduleId === "none" ? null : moduleId,
+          assessment_id: assessmentId === "none" ? null : assessmentId,
           starts_at: new Date(when).toISOString(),
           duration_min: Number(duration),
           count: Number(count),
@@ -133,6 +172,16 @@ function TestsPage() {
   const items = tests.data?.items ?? [];
   const attempts = tests.data?.attempts ?? [];
   const mcqCount = (questions.data ?? []).filter((q) => q.qtype === "mcq").length;
+  const codingCount = (questions.data ?? []).filter((q) => q.qtype === "coding").length;
+  const typeById = new Map((tests.data?.questionTypes ?? []).map((q) => [q.id, q.qtype]));
+  const testKind = (testId: string) => {
+    const kinds = new Set(
+      items.filter((i) => i.test_id === testId).map((i) => typeById.get(i.question_id)),
+    );
+    if (kinds.has("coding") && kinds.size > 1) return "Mixed";
+    if (kinds.has("coding")) return "Coding";
+    return "MCQ";
+  };
 
   return (
     <div className="space-y-6">
@@ -141,7 +190,7 @@ function TestsPage() {
           <h1 className="font-display text-2xl font-semibold tracking-tight">Online tests</h1>
           <p className="text-sm text-muted-foreground">
             {isStaff
-              ? `${mcqCount} MCQs available for auto-generation.`
+              ? `${mcqCount} MCQs and ${codingCount} coding questions available for auto-generation.`
               : "Take your scheduled tests and see instant results."}
           </p>
         </div>
@@ -171,6 +220,26 @@ function TestsPage() {
                   {fieldErrors.title && (
                     <p className="text-xs text-destructive">{fieldErrors.title}</p>
                   )}
+                </div>
+
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Link to assessment</Label>
+                  <Select value={assessmentId} onValueChange={setAssessmentId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not linked</SelectItem>
+                      {(assessments.data ?? []).map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.title} · {a.scheduled_on}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Linked tests show an Open test button on the student assessments page.
+                  </p>
                 </div>
 
                 <div className="space-y-1.5">
@@ -306,9 +375,12 @@ function TestsPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center justify-between gap-2 text-base">
                   <span className="truncate">{t.title}</span>
-                  <Badge variant={t.published ? "default" : "secondary"}>
-                    {t.published ? "Published" : "Draft"}
-                  </Badge>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <Badge variant="outline">{testKind(t.id)}</Badge>
+                    <Badge variant={t.published ? "default" : "secondary"}>
+                      {t.published ? "Published" : "Draft"}
+                    </Badge>
+                  </span>
                 </CardTitle>
                 <CardDescription>
                   {new Date(t.starts_at).toLocaleString()} · {t.duration_min} min · {qCount} questions

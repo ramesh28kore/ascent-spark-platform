@@ -9,6 +9,7 @@ export const generateTestSchema = z.object({
     .max(160, { message: "keep the title under 160 characters" }),
   batch_id: z.string().uuid().nullable(),
   module_id: z.string().uuid().nullable(),
+  assessment_id: z.string().uuid().nullable().default(null),
   starts_at: z.string().min(10, { message: "pick a valid start date and time" }).max(40),
   duration_min: z
     .number()

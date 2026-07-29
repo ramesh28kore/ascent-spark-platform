@@ -299,7 +299,7 @@ export function downloadText(filename: string, content: string, mime: string) {
 const NAVY: [number, number, number] = [15, 42, 74];
 const STEEL: [number, number, number] = [27, 75, 122];
 
-export function reportToPdf(report: StudentReport) {
+export function buildPdfDoc(report: StudentReport) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -416,8 +416,12 @@ export function reportToPdf(report: StudentReport) {
     { maxWidth: pageWidth - 80 },
   );
 
+  return doc;
+}
+
+export function reportToPdf(report: StudentReport) {
   const slug = (report.student.roll_number || report.student.full_name)
     .replace(/[^a-z0-9]+/gi, "-")
     .toLowerCase();
-  doc.save(`crt-report-${slug}.pdf`);
+  buildPdfDoc(report).save(`crt-report-${slug}.pdf`);
 }

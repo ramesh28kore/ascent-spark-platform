@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/tests")({
+export const Route = createFileRoute("/_authenticated/tests/")({
   head: () => ({
     meta: [
       { title: "Online tests — CRT Training Console" },

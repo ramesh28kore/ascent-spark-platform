@@ -67,6 +67,22 @@ function TestsPage() {
   const [when, setWhen] = useState(new Date().toISOString().slice(0, 16));
   const [mix, setMix] = useState({ easy: "50", medium: "35", hard: "15" });
 
+  const fieldErrors = (() => {
+    const errs: Record<string, string> = {};
+    const dur = Number(duration);
+    const qty = Number(count);
+    if (title.trim().length < 3) errs.title = "Give the test a title of at least 3 characters.";
+    if (title.trim().length > 160) errs.title = "Keep the title under 160 characters.";
+    if (!Number.isFinite(dur) || !Number.isInteger(dur) || dur < 5 || dur > 300)
+      errs.duration = "Duration must be a whole number between 5 and 300 minutes.";
+    if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty < 1 || qty > 100)
+      errs.count = "Pick between 1 and 100 questions.";
+    if (!when || Number.isNaN(new Date(when).getTime()))
+      errs.when = "Pick a valid start date and time.";
+    return errs;
+  })();
+  const formValid = Object.keys(fieldErrors).length === 0;
+
   const create = useMutation({
     mutationFn: () =>
       gen({
@@ -75,8 +91,8 @@ function TestsPage() {
           batch_id: batchId === "none" ? null : batchId,
           module_id: moduleId === "none" ? null : moduleId,
           starts_at: new Date(when).toISOString(),
-          duration_min: Number(duration) || 30,
-          count: Number(count) || 10,
+          duration_min: Number(duration),
+          count: Number(count),
           easy_pct: Number(mix.easy) || 0,
           medium_pct: Number(mix.medium) || 0,
           hard_pct: Number(mix.hard) || 0,
@@ -89,8 +105,9 @@ function TestsPage() {
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["tests"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(formatFormError(e, "Could not generate the test.")),
   });
+
 
   const togglePublish = useMutation({
     mutationFn: (vars: { id: string; published: boolean }) => publish({ data: vars }),

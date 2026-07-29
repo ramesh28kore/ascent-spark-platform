@@ -19,6 +19,7 @@ import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCodingRouteImport } from './routes/_authenticated/coding'
+import { Route as AuthenticatedBatchesRouteImport } from './routes/_authenticated/batches'
 import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
 
 const AuthRoute = AuthRouteImport.update({
@@ -70,6 +71,11 @@ const AuthenticatedCodingRoute = AuthenticatedCodingRouteImport.update({
   path: '/coding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBatchesRoute = AuthenticatedBatchesRouteImport.update({
+  id: '/batches',
+  path: '/batches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAssessmentsRoute =
   AuthenticatedAssessmentsRouteImport.update({
     id: '/assessments',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/batches': typeof AuthenticatedBatchesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/batches': typeof AuthenticatedBatchesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/assessments': typeof AuthenticatedAssessmentsRoute
+  '/_authenticated/batches': typeof AuthenticatedBatchesRoute
   '/_authenticated/coding': typeof AuthenticatedCodingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assessments'
+    | '/batches'
     | '/coding'
     | '/dashboard'
     | '/import'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/assessments'
+    | '/batches'
     | '/coding'
     | '/dashboard'
     | '/import'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/assessments'
+    | '/_authenticated/batches'
     | '/_authenticated/coding'
     | '/_authenticated/dashboard'
     | '/_authenticated/import'
@@ -233,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCodingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/batches': {
+      id: '/_authenticated/batches'
+      path: '/batches'
+      fullPath: '/batches'
+      preLoaderRoute: typeof AuthenticatedBatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/assessments': {
       id: '/_authenticated/assessments'
       path: '/assessments'
@@ -245,6 +264,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRoute
+  AuthenticatedBatchesRoute: typeof AuthenticatedBatchesRoute
   AuthenticatedCodingRoute: typeof AuthenticatedCodingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
@@ -256,6 +276,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRoute,
+  AuthenticatedBatchesRoute: AuthenticatedBatchesRoute,
   AuthenticatedCodingRoute: AuthenticatedCodingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,

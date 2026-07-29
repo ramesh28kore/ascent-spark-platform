@@ -2,18 +2,31 @@
 import { z } from "zod";
 
 export const generateTestSchema = z.object({
-  title: z.string().trim().min(3).max(160),
+  title: z
+    .string()
+    .trim()
+    .min(3, { message: "give the test a title of at least 3 characters" })
+    .max(160, { message: "keep the title under 160 characters" }),
   batch_id: z.string().uuid().nullable(),
   module_id: z.string().uuid().nullable(),
-  starts_at: z.string().min(10).max(40),
-  duration_min: z.number().int().min(5).max(300),
-  count: z.number().int().min(1).max(100),
+  starts_at: z.string().min(10, { message: "pick a valid start date and time" }).max(40),
+  duration_min: z
+    .number()
+    .int()
+    .min(5, { message: "must be at least 5 minutes" })
+    .max(300, { message: "must be 300 minutes or less" }),
+  count: z
+    .number()
+    .int()
+    .min(1, { message: "add at least 1 question" })
+    .max(100, { message: "100 questions maximum" }),
   easy_pct: z.number().int().min(0).max(100),
   medium_pct: z.number().int().min(0).max(100),
   hard_pct: z.number().int().min(0).max(100),
   shuffle: z.boolean(),
   publish: z.boolean(),
 });
+
 
 export const submitSchema = z.object({
   test_id: z.string().uuid(),

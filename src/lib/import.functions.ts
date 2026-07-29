@@ -5,7 +5,19 @@ import { z } from "zod";
 const rowSchema = z.record(z.string(), z.string().max(8000));
 
 const inputSchema = z.object({
-  dataset: z.enum(["students", "modules", "topics", "assessments", "questions", "coding", "scores"]),
+  dataset: z.enum([
+    "students",
+    "modules",
+    "topics",
+    "assessments",
+    "questions",
+    "coding",
+    "scores",
+    "batches",
+    "sessions",
+    "attendance",
+  ]),
+
   rows: z.array(rowSchema).min(1).max(500),
 });
 

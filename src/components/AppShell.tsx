@@ -145,13 +145,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant={me?.isTrainer ? "default" : "secondary"}>
-                {me?.isTrainer ? "Trainer" : "Student"}
+              <Link to="/alerts" className="relative inline-flex items-center">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                {unread > 0 && (
+                  <span className="absolute -right-2 -top-2 rounded-full bg-primary px-1.5 text-[10px] font-semibold leading-4 text-primary-foreground">
+                    {unread}
+                  </span>
+                )}
+              </Link>
+              <Badge variant={me?.isStaff ? "default" : "secondary"}>
+                {me?.roleLabel ?? "Member"}
               </Badge>
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {me?.profile?.full_name}
               </span>
             </div>
+
           </header>
           <main className="flex-1 p-4 md:p-6">{children}</main>
         </div>

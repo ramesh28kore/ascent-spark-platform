@@ -66,6 +66,15 @@ function SchedulePage() {
   const [duration, setDuration] = useState("90");
   const [notes, setNotes] = useState("");
 
+  const titleValid = title.trim().length >= 3 && title.trim().length <= 160;
+  const durationValid = (() => {
+    const d = Number(duration);
+    return Number.isInteger(d) && d >= 15 && d <= 600;
+  })();
+  const whenValid = !!when && !Number.isNaN(new Date(when).getTime());
+  const formValid = titleValid && durationValid && whenValid;
+
+
   const create = useMutation({
     mutationFn: () =>
       save({

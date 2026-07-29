@@ -9,6 +9,8 @@ import { upsertSession, deleteSession } from "@/lib/crt-ops.functions";
 import { batchesQuery, meQuery, modulesQuery, sessionsQuery } from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatFormError } from "@/lib/form-errors";
+
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,7 +87,7 @@ function SchedulePage() {
           trainer_name: trainer.trim() || null,
           title: title.trim(),
           scheduled_at: new Date(when).toISOString(),
-          duration_min: Number(duration) || 90,
+          duration_min: Number(duration),
           status: "planned" as const,
           notes: notes.trim() || null,
         },
@@ -96,7 +98,8 @@ function SchedulePage() {
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(formatFormError(e, "Could not save the session.")),
+
   });
 
   const setStatus = useMutation({
@@ -249,7 +252,7 @@ function SchedulePage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={create.isPending || title.trim().length < 3}>
+                <Button onClick={() => create.mutate()} disabled={create.isPending || !formValid}>
                   Save session
                 </Button>
               </DialogFooter>

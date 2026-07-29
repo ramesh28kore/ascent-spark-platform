@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  UploadCloud,
   LayoutDashboard,
   BookOpen,
   Users,
@@ -39,6 +40,7 @@ const trainerNav = [
   { title: "Assessments", url: "/assessments", icon: ClipboardList },
   { title: "Question bank", url: "/questions", icon: FileQuestion },
   { title: "Coding library", url: "/coding", icon: Code2 },
+  { title: "Bulk import", url: "/import", icon: UploadCloud },
 ];
 
 const studentNav = [

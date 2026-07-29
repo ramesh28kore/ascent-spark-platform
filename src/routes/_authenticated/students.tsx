@@ -10,8 +10,15 @@ import {
   studentsQuery,
   meQuery,
   modulesQuery,
+  attendanceQuery,
+  testsQuery,
+  practiceQuery,
+  mocksQuery,
   pct,
 } from "@/lib/crt-queries";
+import { computeReadiness } from "@/lib/readiness-agg";
+import { bandVariant } from "@/lib/readiness";
+
 import {
   batchToCsv,
   buildStudentReport,

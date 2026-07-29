@@ -97,7 +97,7 @@ function TestsPage() {
     setOpen(true);
   }, [search.assessment, search.type]);
 
-  const linkedAssessment = (assessments.data?.assessments ?? []).find(
+  const linkedAssessment = (assessments.data ?? []).find(
     (a) => a.id === assessmentId,
   );
   useEffect(() => {
@@ -230,7 +230,7 @@ function TestsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Not linked</SelectItem>
-                      {(assessments.data?.assessments ?? []).map((a) => (
+                      {(assessments.data ?? []).map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.title} · {a.scheduled_on}
                         </SelectItem>

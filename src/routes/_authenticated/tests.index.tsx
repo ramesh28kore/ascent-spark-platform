@@ -195,16 +195,43 @@ function TestsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Questions</Label>
-                  <Input type="number" value={count} onChange={(e) => setCount(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={count}
+                    aria-invalid={!!fieldErrors.count}
+                    onChange={(e) => setCount(e.target.value)}
+                  />
+                  {fieldErrors.count && (
+                    <p className="text-xs text-destructive">{fieldErrors.count}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Duration (min)</Label>
-                  <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={5}
+                    max={300}
+                    value={duration}
+                    aria-invalid={!!fieldErrors.duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                  {fieldErrors.duration && (
+                    <p className="text-xs text-destructive">{fieldErrors.duration}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Starts at</Label>
-                  <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={when}
+                    aria-invalid={!!fieldErrors.when}
+                    onChange={(e) => setWhen(e.target.value)}
+                  />
+                  {fieldErrors.when && <p className="text-xs text-destructive">{fieldErrors.when}</p>}
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Easy %</Label>
                   <Input

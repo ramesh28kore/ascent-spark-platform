@@ -60,10 +60,12 @@ function MyScores() {
   const me = useQuery(meQuery);
   const assessments = useQuery(assessmentsQuery);
   const scores = useQuery(scoresQuery);
+  const modules = useQuery(modulesQuery);
 
   if (me.isLoading || scores.isLoading) return <Skeleton className="h-96 w-full" />;
 
-  const profileId = me.data?.profile?.id;
+  const profile = me.data?.profile as StudentRow | null | undefined;
+  const profileId = profile?.id;
   const list = assessments.data ?? [];
   const mine = (scores.data ?? []).filter((s) => s.student_id === profileId);
 
@@ -87,14 +89,41 @@ function MyScores() {
     ? Math.round(rows.reduce((s, r) => s + r.percent, 0) / rows.length)
     : 0;
 
+  const report = profile
+    ? buildStudentReport(profile, modules.data?.modules ?? [], list, scores.data ?? [])
+    : null;
+
+  function exportPdf() {
+    if (!report) return;
+    reportToPdf(report);
+    toast.success("PDF report downloaded");
+  }
+
+  function exportCsv() {
+    if (!report) return;
+    downloadText("crt-my-report.csv", reportToCsv(report), "text/csv");
+    toast.success("CSV report downloaded");
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">My scores</h1>
-        <p className="text-sm text-muted-foreground">
-          {rows.length} assessments recorded · {avg}% average
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">My scores</h1>
+          <p className="text-sm text-muted-foreground">
+            {rows.length} assessments recorded · {avg}% average
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={exportPdf} disabled={!report}>
+            <FileText className="h-4 w-4" /> Export PDF
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={!report}>
+            <FileSpreadsheet className="h-4 w-4" /> Export CSV
+          </Button>
+        </div>
       </div>
+
 
       <Card>
         <CardHeader>

@@ -13,11 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    next: typeof search.next === "string" && search.next.startsWith("/") && !search.next.startsWith("//")
-      ? search.next
-      : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { next?: string } =>
+    typeof search.next === "string" &&
+    search.next.startsWith("/") &&
+    !search.next.startsWith("//")
+      ? { next: search.next }
+      : {},
+
   head: () => ({
     meta: [
       { title: "Sign in — CRT Training Console" },

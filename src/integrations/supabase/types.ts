@@ -52,6 +52,75 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          id: string
+          marked_at: string
+          present: boolean
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          marked_at?: string
+          present?: boolean
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          marked_at?: string
+          present?: boolean
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batches: {
+        Row: {
+          academic_year: string
+          active: boolean
+          branch: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: string
+          active?: boolean
+          branch?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string
+          active?: boolean
+          branch?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coding_problems: {
         Row: {
           approach: string
@@ -101,6 +170,44 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mock_interviews: {
+        Row: {
+          created_at: string
+          held_on: string
+          id: string
+          interviewer: string | null
+          notes: string | null
+          rating: number
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          held_on?: string
+          id?: string
+          interviewer?: string | null
+          notes?: string | null
+          rating?: number
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          held_on?: string
+          id?: string
+          interviewer?: string | null
+          notes?: string | null
+          rating?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_interviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -176,9 +283,123 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      practice_problems: {
+        Row: {
+          created_at: string
+          id: string
+          level: Database["public"]["Enums"]["difficulty"]
+          module_id: string | null
+          platform: string
+          points: number
+          sort_order: number
+          title: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: Database["public"]["Enums"]["difficulty"]
+          module_id?: string | null
+          platform?: string
+          points?: number
+          sort_order?: number
+          title: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: Database["public"]["Enums"]["difficulty"]
+          module_id?: string | null
+          platform?: string
+          points?: number
+          sort_order?: number
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_problems_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_progress: {
+        Row: {
+          id: string
+          problem_id: string
+          status: Database["public"]["Enums"]["practice_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          problem_id: string
+          status?: Database["public"]["Enums"]["practice_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          problem_id?: string
+          status?: Database["public"]["Enums"]["practice_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_progress_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           batch: string | null
+          batch_id: string | null
           branch: string | null
           created_at: string
           email: string | null
@@ -191,6 +412,7 @@ export type Database = {
         }
         Insert: {
           batch?: string | null
+          batch_id?: string | null
           branch?: string | null
           created_at?: string
           email?: string | null
@@ -203,6 +425,7 @@ export type Database = {
         }
         Update: {
           batch?: string | null
+          batch_id?: string | null
           branch?: string | null
           created_at?: string
           email?: string | null
@@ -213,7 +436,15 @@ export type Database = {
           user_id?: string | null
           year?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       questions: {
         Row: {
@@ -265,6 +496,51 @@ export type Database = {
           },
         ]
       }
+      resources: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          module_id: string | null
+          session_id: string | null
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          module_id?: string | null
+          session_id?: string | null
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          module_id?: string | null
+          session_id?: string | null
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scores: {
         Row: {
           assessment_id: string
@@ -307,6 +583,233 @@ export type Database = {
           },
         ]
       }
+      sessions: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          duration_min: number
+          id: string
+          module_id: string | null
+          notes: string | null
+          scheduled_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          title: string
+          topic_id: string | null
+          trainer_id: string | null
+          trainer_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          duration_min?: number
+          id?: string
+          module_id?: string | null
+          notes?: string | null
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          title: string
+          topic_id?: string | null
+          trainer_id?: string | null
+          trainer_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          duration_min?: number
+          id?: string
+          module_id?: string | null
+          notes?: string | null
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          title?: string
+          topic_id?: string | null
+          trainer_id?: string | null
+          trainer_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "module_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_attempts: {
+        Row: {
+          blur_count: number
+          id: string
+          max_score: number
+          responses: Json
+          score: number
+          started_at: string
+          student_id: string
+          submitted_at: string | null
+          test_id: string
+        }
+        Insert: {
+          blur_count?: number
+          id?: string
+          max_score?: number
+          responses?: Json
+          score?: number
+          started_at?: string
+          student_id: string
+          submitted_at?: string | null
+          test_id: string
+        }
+        Update: {
+          blur_count?: number
+          id?: string
+          max_score?: number
+          responses?: Json
+          score?: number
+          started_at?: string
+          student_id?: string
+          submitted_at?: string | null
+          test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_items: {
+        Row: {
+          id: string
+          marks: number
+          question_id: string
+          sort_order: number
+          test_id: string
+        }
+        Insert: {
+          id?: string
+          marks?: number
+          question_id: string
+          sort_order?: number
+          test_id: string
+        }
+        Update: {
+          id?: string
+          marks?: number
+          question_id?: string
+          sort_order?: number
+          test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_items_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_items_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          assessment_id: string | null
+          batch_id: string | null
+          created_at: string
+          duration_min: number
+          ends_at: string | null
+          id: string
+          module_id: string | null
+          published: boolean
+          shuffle: boolean
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          duration_min?: number
+          ends_at?: string | null
+          id?: string
+          module_id?: string | null
+          published?: boolean
+          shuffle?: boolean
+          starts_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          duration_min?: number
+          ends_at?: string | null
+          id?: string
+          module_id?: string | null
+          published?: boolean
+          shuffle?: boolean
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tests_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tests_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tests_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -336,10 +839,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "trainer" | "student"
+      app_role: "trainer" | "student" | "admin" | "placement"
       assessment_kind: "weekly_test" | "mock_nqt" | "coding_test" | "interview"
       difficulty: "easy" | "medium" | "hard"
+      practice_status: "todo" | "attempted" | "solved"
       question_type: "mcq" | "coding" | "descriptive"
+      session_status: "planned" | "conducted" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -467,10 +972,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["trainer", "student"],
+      app_role: ["trainer", "student", "admin", "placement"],
       assessment_kind: ["weekly_test", "mock_nqt", "coding_test", "interview"],
       difficulty: ["easy", "medium", "hard"],
+      practice_status: ["todo", "attempted", "solved"],
       question_type: ["mcq", "coding", "descriptive"],
+      session_status: ["planned", "conducted", "cancelled"],
     },
   },
 } as const

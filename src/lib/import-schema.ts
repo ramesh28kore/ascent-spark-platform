@@ -5,7 +5,11 @@ export type DatasetKey =
   | "assessments"
   | "questions"
   | "coding"
-  | "scores";
+  | "scores"
+  | "batches"
+  | "sessions"
+  | "attendance";
+
 
 export type FieldSpec = {
   key: string;
@@ -171,7 +175,65 @@ export const DATASETS: DatasetSpec[] = [
       attempts: "1",
     },
   },
+  {
+    key: "batches",
+    label: "Batches",
+    description: "Cohorts per academic year. Matched on batch name.",
+    fields: [
+      { key: "name", label: "name", required: true, hint: "unique key" },
+      { key: "academic_year", label: "academic_year" },
+      { key: "branch", label: "branch" },
+      { key: "active", label: "active", hint: "true | false" },
+    ],
+    sample: {
+      name: "CRT-2026-A",
+      academic_year: "2025-26",
+      branch: "CSE",
+      active: "true",
+    },
+  },
+  {
+    key: "sessions",
+    label: "Sessions",
+    description: "Training timetable. Matched on title + scheduled_at.",
+    fields: [
+      { key: "title", label: "title", required: true },
+      { key: "scheduled_at", label: "scheduled_at", required: true, hint: "2026-01-12 10:00" },
+      { key: "batch", label: "batch", hint: "existing batch name" },
+      { key: "module_code", label: "module_code" },
+      { key: "trainer_name", label: "trainer_name" },
+      { key: "duration_min", label: "duration_min" },
+      { key: "status", label: "status", hint: "planned | conducted | cancelled" },
+    ],
+    sample: {
+      title: "Arrays and strings drill",
+      scheduled_at: "2026-01-12 10:00",
+      batch: "CRT-2026-A",
+      module_code: "M2",
+      trainer_name: "R. Sharma",
+      duration_min: "90",
+      status: "planned",
+    },
+  },
+  {
+    key: "attendance",
+    label: "Attendance",
+    description: "Presence per student per session; both must already exist.",
+    fields: [
+      { key: "roll_number", label: "roll_number", required: true },
+      { key: "session_title", label: "session_title", required: true },
+      { key: "scheduled_at", label: "scheduled_at", hint: "optional disambiguator" },
+      { key: "present", label: "present", hint: "true | false" },
+    ],
+    sample: {
+      roll_number: "21CS001",
+      session_title: "Arrays and strings drill",
+      scheduled_at: "2026-01-12 10:00",
+      present: "true",
+    },
+  },
 ];
+
 
 export function datasetSpec(key: DatasetKey) {
   return DATASETS.find((d) => d.key === key)!;

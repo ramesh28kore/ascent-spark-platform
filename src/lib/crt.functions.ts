@@ -11,12 +11,28 @@ export const getMe = createServerFn({ method: "GET" })
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
     const roleList = (roles ?? []).map((r) => r.role as string);
+    const isAdmin = roleList.includes("admin");
+    const isPlacement = roleList.includes("placement");
+    const isTrainerRole = roleList.includes("trainer");
     return {
       profile: profile ?? null,
-      isTrainer: roleList.includes("trainer"),
+      isTrainer: isTrainerRole || isAdmin,
+      isAdmin,
+      isPlacement,
+      isStaff: isTrainerRole || isAdmin,
+      canViewAll: isTrainerRole || isAdmin || isPlacement,
+      isStudent: roleList.includes("student"),
+      roleLabel: isAdmin
+        ? "Admin"
+        : isTrainerRole
+          ? "Trainer"
+          : isPlacement
+            ? "Placement cell"
+            : "Student",
       roles: roleList,
     };
   });
+
 
 export const getModules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

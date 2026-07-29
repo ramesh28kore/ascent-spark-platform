@@ -10,8 +10,15 @@ import {
   studentsQuery,
   meQuery,
   modulesQuery,
+  attendanceQuery,
+  testsQuery,
+  practiceQuery,
+  mocksQuery,
   pct,
 } from "@/lib/crt-queries";
+import { computeReadiness } from "@/lib/readiness-agg";
+import { bandVariant } from "@/lib/readiness";
+
 import {
   batchToCsv,
   buildStudentReport,
@@ -55,7 +62,38 @@ function StudentsPage() {
   const assessments = useQuery(assessmentsQuery);
   const scores = useQuery(scoresQuery);
   const modules = useQuery(modulesQuery);
+  const attendance = useQuery(attendanceQuery);
+  const tests = useQuery(testsQuery);
+  const practice = useQuery(practiceQuery);
+  const mocks = useQuery(mocksQuery);
   const [search, setSearch] = useState("");
+
+  const readinessMap = useMemo(() => {
+    const coreModuleIds = (modules.data?.modules ?? [])
+      .filter((m) => ["M4", "M04"].includes(m.code.toUpperCase()))
+      .map((m) => m.id);
+    const list = computeReadiness({
+      students: students.data ?? [],
+      attendance: attendance.data ?? [],
+      attempts: tests.data?.attempts ?? [],
+      practiceProblems: practice.data?.problems ?? [],
+      practiceProgress: practice.data?.progress ?? [],
+      mocks: mocks.data ?? [],
+      scores: scores.data ?? [],
+      assessments: assessments.data ?? [],
+      coreModuleIds,
+    });
+    return new Map(list.map((r) => [r.student_id, r]));
+  }, [
+    students.data,
+    attendance.data,
+    tests.data,
+    practice.data,
+    mocks.data,
+    scores.data,
+    assessments.data,
+    modules.data,
+  ]);
 
   const rows = useMemo(() => {
     const list = assessments.data ?? [];
@@ -69,11 +107,15 @@ function StudentsPage() {
         const avg = percents.length
           ? Math.round(percents.reduce((x, y) => x + y, 0) / percents.length)
           : 0;
+        const readiness = readinessMap.get(p.id);
         return {
           ...p,
           taken: mine.length,
           attempts: mine.reduce((s, r) => s + r.attempts, 0),
           avg,
+          attendancePct: readiness?.attendancePct ?? 0,
+          readiness: readiness?.score ?? 0,
+          band: readiness?.band ?? "Needs Work",
         };
       })
       .filter((p) =>
@@ -82,7 +124,8 @@ function StudentsPage() {
           .includes(search.toLowerCase()),
       )
       .sort((a, b) => b.avg - a.avg);
-  }, [students.data, scores.data, assessments.data, search]);
+  }, [students.data, scores.data, assessments.data, readinessMap, search]);
+
 
   function reportFor(student: StudentRow) {
     return buildStudentReport(
@@ -163,6 +206,9 @@ function StudentsPage() {
                   <TableHead className="text-right">Tests</TableHead>
                   <TableHead className="text-right">Attempts</TableHead>
                   <TableHead className="text-right">Average</TableHead>
+                  <TableHead className="text-right">Attendance</TableHead>
+                  <TableHead className="text-right">Readiness</TableHead>
+
                   <TableHead className="text-right">Status</TableHead>
                   <TableHead className="text-right">Report</TableHead>
                 </TableRow>
@@ -177,6 +223,13 @@ function StudentsPage() {
                     <TableCell className="text-right">{r.taken}</TableCell>
                     <TableCell className="text-right">{r.attempts}</TableCell>
                     <TableCell className="text-right font-semibold">{r.avg}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.attendancePct}%</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={bandVariant(r.band)}>
+                        {r.readiness} · {r.band}
+                      </Badge>
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <Badge
                         variant={r.avg >= 70 ? "default" : r.avg >= 50 ? "secondary" : "destructive"}

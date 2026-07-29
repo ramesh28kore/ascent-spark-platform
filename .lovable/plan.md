@@ -1,50 +1,63 @@
-## CRT Training Dashboard
+# CRT System — closing the roadmap gaps
 
-A role-based web app for running Campus Recruitment Training: trainers plan modules, track student performance, generate tests and maintain a coding library; students see their progress, practice problems and take tests.
+## Stack note (read first)
+Your roadmap assumes Next.js + Prisma + Neon + Auth.js. This project is already built and running on TanStack Start + Lovable Cloud (Postgres + auth + RLS), which covers the same responsibilities (server functions instead of route handlers, RLS instead of middleware-only guards, SQL migrations instead of Prisma). I'll implement the *substance* of the roadmap on the existing stack rather than rewriting — a stack swap would throw away the working dashboard, question bank, imports and CO/PO export.
 
-### Design
-Academic navy palette (#0F2A4A deep navy, #1B4B7A mid blue, #F4F6F9 surface, #E8A317 amber accent), clean data-dense dashboard with sidebar navigation, cards, tables and charts.
+## What already exists
+- Auth (email/password + Google), auto role assignment
+- Roles: trainer, student
+- Modules + topics (M1–M7 syllabus), question bank with Bloom/difficulty, coding library
+- Assessments + scores, dashboards, my-scores
+- Bulk CSV/XLSX import, PDF/CSV export with CO/PO attainment
 
-### Backend (Lovable Cloud)
-Email/password + Google login, with roles stored in a separate `user_roles` table (`trainer`, `student`) and a security-definer `has_role()` function used in all policies.
+## What's missing (the gap list)
+1. **Roles** — no `admin`, no `placement` officer
+2. **Batches as real entities** — batch is just a text field on profile
+3. **Session scheduler** — no sessions, no trainer allocation, no calendar
+4. **Attendance** — entirely absent (a P0 item in your plan)
+5. **Test engine** — students can't take a timed test; marks are trainer-entered only
+6. **Practice tracker** — no problem ladder / per-student completion
+7. **Readiness score** — no composite index or Ready/Near-Ready/Needs Work bands
+8. **Analytics depth** — no topic-mastery heatmap or weak-area detection
+9. **Resource repository** — no slides/handouts storage
+10. **Notifications** — no test reminders or low-attendance alerts
 
-Tables:
-- `profiles` — name, roll number, branch, year, batch
-- `modules` — M1–M7: code, title, topics, hours, weight, order
-- `topics` — module topics with status/progress
-- `students` (via profiles) and `enrollments` — student ↔ batch
-- `assessments` — weekly test / mock NQT / coding test, module link, max marks, date
-- `scores` — student × assessment × marks × attempt count
-- `questions` — text, options, answer, type (MCQ/coding), difficulty, Bloom level L1–L6, module/topic tags
-- `test_papers` + `test_paper_questions` — generated papers
-- `coding_problems` — problem, approach, Python code, expected output, complexity, interview follow-ups, difficulty, pattern
-- `attendance` — optional per-session marking
+## Build order
 
-RLS: students read their own scores/profile and all published modules, questions marked practice, and coding problems; trainers (via `has_role`) read/write everything. Grants issued for `authenticated` and `service_role` on every table. Seed migration with M1–M7 modules, a sample batch of students, sample assessments/scores, ~20 questions and ~10 coding problems so the dashboard is populated on first load.
+### Phase A — Foundation & operational core (P0/P1 in your plan)
+- Extend `app_role` with `admin` and `placement`; trainer-manageable role assignment screen (admin/trainer only)
+- `batches` table (name, academic year, branch, active) + migrate existing text batch values; roster page per batch
+- `sessions` table (batch, topic, trainer, scheduled_at, duration, status PLANNED/CONDUCTED/CANCELLED) with a scheduler page: list + week calendar, create/edit, trainer allocation
+- `attendance` table (unique session+student) with a fast marking screen: bulk "all present", keyboard/roll-number entry, live % per student
+- Attendance % surfaced on student rows and dashboards
+- Import page extended with `batches`, `sessions`, `attendance` templates
 
-### Screens
-Public
-- `/` — landing page describing the CRT program with sign-in CTA
-- `/auth` — login / signup (email+password and Google)
+### Phase B — Assessment engine
+- `tests`, `test_items`, `test_attempts` tables
+- Auto paper generation from the question bank to a target Bloom/difficulty distribution (e.g. 30% L2 / 50% L3 / 20% L4+) and topic mix
+- Student-facing timed test runner: server-issued start time, per-student question shuffle, autosave responses, submit
+- Auto-scoring for MCQ; scores flow into the existing `scores`/analytics path
+- Anti-cheat basics: item shuffle, tab-blur logging on the attempt, single-attempt enforcement
 
-Trainer (under the authenticated gate)
-- `/dashboard` — batch KPIs: average score by module, pass %, bottom-quartile list, upcoming assessments, module completion progress
-- `/modules` — M1–M7 planner: hours, topics, deliverables, weight, editable progress; module detail page with topic checklist
-- `/students` — roster table with filters (batch, branch, year), per-student drill-down: module × score × attempts chart, attendance, remedial flag
-- `/assessments` — create assessments, enter/import scores, view score distribution
-- `/questions` — question bank with filters (module, difficulty, Bloom L1–L6, type), add/edit questions, and a paper generator that picks N questions by module/difficulty/Bloom mix and produces a printable paper + answer key
-- `/coding` — coding library in the required format: Problem → Approach → Python code → Output → Complexity → Interview follow-ups, with syntax-highlighted code blocks and pattern/difficulty filters
+### Phase C — Insight & readiness
+- `readiness_index(attendance, test_avg, coding_score, mock_rating, core_avg)` with your exact weights (15/30/30/15/10) and bands at 75 / 55 — implemented as one shared pure function used by UI, exports and any server calc
+- `mock_interviews` table for the manual rating input
+- Topic-mastery heatmap (students × topics), weak-area detection list per batch
+- Placement-officer view: readiness board filtered by band, batch and branch
+- Reports extended: readiness + attendance columns in the existing PDF/CSV and batch CO/PO export
 
-Student
-- `/dashboard` — own progress: module completion, score trend chart, weak-area callouts, next assessment
-- `/modules`, `/coding` — read-only learning material and practice problems
-- `/my-scores` — score history per assessment with attempt counts
+### Phase D — Practice, resources, notifications
+- `practice_problems` ladder + `practice_progress` per student (solved/attempted, difficulty-weighted score feeding readiness)
+- `resources` table + file storage per session/topic (slides, handouts, solutions)
+- Notifications: low-attendance and upcoming-test alerts, in-app first; email later if you want it
 
-### Technical notes
-- TanStack Start routes; protected pages under `src/routes/_authenticated/`, public landing + `/auth` at top level.
-- Data access via `createServerFn` with `requireSupabaseAuth`; role checks server-side through `has_role`, never client storage.
-- Charts with Recharts; tables with shadcn table + filtering.
-- Zod validation on every form; per-route `head()` metadata for SEO.
+## Technical details
+- All schema goes through migrations with GRANTs + RLS: trainer/admin write; students read learning content and only their own attendance/attempts/scores; placement officer reads roster + readiness, no edit.
+- Session/attendance/test writes go through `createServerFn` with `requireSupabaseAuth`; test scoring happens server-side only (answer keys never sent to the client — the runner fetches a sanitised item payload).
+- Charts stay on Recharts; exports stay on the existing jsPDF/CSV utilities.
+- Existing tables aren't dropped; `profiles.batch` text is backfilled into a `batch_id` FK.
 
-### Out of scope for v1
-Auto-grading of coding submissions, in-browser code execution, file/CSV bulk import, and CO-attainment report exports — can follow once the core is running.
+## Scope discipline
+M11 resources and M12 notifications stay last, and anything outside M1–M10 goes to a backlog note rather than into this build.
+
+Phases A–D are a lot of surface area; I'd suggest approving and shipping Phase A first, then continuing — but I can run straight through if you prefer.

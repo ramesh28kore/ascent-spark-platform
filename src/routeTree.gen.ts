@@ -13,13 +13,23 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
+import { Route as AuthenticatedRolesRouteImport } from './routes/_authenticated/roles'
+import { Route as AuthenticatedResourcesRouteImport } from './routes/_authenticated/resources'
+import { Route as AuthenticatedReadinessRouteImport } from './routes/_authenticated/readiness'
 import { Route as AuthenticatedQuestionsRouteImport } from './routes/_authenticated/questions'
+import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCodingRouteImport } from './routes/_authenticated/coding'
+import { Route as AuthenticatedBatchesRouteImport } from './routes/_authenticated/batches'
+import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
+import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
+import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests.index'
+import { Route as AuthenticatedTestsTestIdRouteImport } from './routes/_authenticated/tests.$testId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -40,9 +50,34 @@ const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRolesRoute = AuthenticatedRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedResourcesRoute = AuthenticatedResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReadinessRoute = AuthenticatedReadinessRouteImport.update({
+  id: '/readiness',
+  path: '/readiness',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedQuestionsRoute = AuthenticatedQuestionsRouteImport.update({
   id: '/questions',
   path: '/questions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMyScoresRoute = AuthenticatedMyScoresRouteImport.update({
@@ -70,89 +105,175 @@ const AuthenticatedCodingRoute = AuthenticatedCodingRouteImport.update({
   path: '/coding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBatchesRoute = AuthenticatedBatchesRouteImport.update({
+  id: '/batches',
+  path: '/batches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAttendanceRoute = AuthenticatedAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAssessmentsRoute =
   AuthenticatedAssessmentsRouteImport.update({
     id: '/assessments',
     path: '/assessments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTestsIndexRoute = AuthenticatedTestsIndexRouteImport.update({
+  id: '/tests/',
+  path: '/tests/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTestsTestIdRoute =
+  AuthenticatedTestsTestIdRouteImport.update({
+    id: '/tests/$testId',
+    path: '/tests/$testId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alerts': typeof AuthenticatedAlertsRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/attendance': typeof AuthenticatedAttendanceRoute
+  '/batches': typeof AuthenticatedBatchesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/readiness': typeof AuthenticatedReadinessRoute
+  '/resources': typeof AuthenticatedResourcesRoute
+  '/roles': typeof AuthenticatedRolesRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
+  '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/tests/': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/alerts': typeof AuthenticatedAlertsRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
+  '/attendance': typeof AuthenticatedAttendanceRoute
+  '/batches': typeof AuthenticatedBatchesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
+  '/practice': typeof AuthenticatedPracticeRoute
   '/questions': typeof AuthenticatedQuestionsRoute
+  '/readiness': typeof AuthenticatedReadinessRoute
+  '/resources': typeof AuthenticatedResourcesRoute
+  '/roles': typeof AuthenticatedRolesRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
   '/students': typeof AuthenticatedStudentsRoute
+  '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/tests': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
   '/_authenticated/assessments': typeof AuthenticatedAssessmentsRoute
+  '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
+  '/_authenticated/batches': typeof AuthenticatedBatchesRoute
   '/_authenticated/coding': typeof AuthenticatedCodingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
+  '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/questions': typeof AuthenticatedQuestionsRoute
+  '/_authenticated/readiness': typeof AuthenticatedReadinessRoute
+  '/_authenticated/resources': typeof AuthenticatedResourcesRoute
+  '/_authenticated/roles': typeof AuthenticatedRolesRoute
+  '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
+  '/_authenticated/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/alerts'
     | '/assessments'
+    | '/attendance'
+    | '/batches'
     | '/coding'
     | '/dashboard'
     | '/import'
     | '/modules'
     | '/my-scores'
+    | '/practice'
     | '/questions'
+    | '/readiness'
+    | '/resources'
+    | '/roles'
+    | '/schedule'
     | '/students'
+    | '/tests/$testId'
+    | '/tests/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/alerts'
     | '/assessments'
+    | '/attendance'
+    | '/batches'
     | '/coding'
     | '/dashboard'
     | '/import'
     | '/modules'
     | '/my-scores'
+    | '/practice'
     | '/questions'
+    | '/readiness'
+    | '/resources'
+    | '/roles'
+    | '/schedule'
     | '/students'
+    | '/tests/$testId'
+    | '/tests'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/alerts'
     | '/_authenticated/assessments'
+    | '/_authenticated/attendance'
+    | '/_authenticated/batches'
     | '/_authenticated/coding'
     | '/_authenticated/dashboard'
     | '/_authenticated/import'
     | '/_authenticated/modules'
     | '/_authenticated/my-scores'
+    | '/_authenticated/practice'
     | '/_authenticated/questions'
+    | '/_authenticated/readiness'
+    | '/_authenticated/resources'
+    | '/_authenticated/roles'
+    | '/_authenticated/schedule'
     | '/_authenticated/students'
+    | '/_authenticated/tests/$testId'
+    | '/_authenticated/tests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -191,11 +312,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/schedule': {
+      id: '/_authenticated/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof AuthenticatedScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/roles': {
+      id: '/_authenticated/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof AuthenticatedRolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/resources': {
+      id: '/_authenticated/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof AuthenticatedResourcesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/readiness': {
+      id: '/_authenticated/readiness'
+      path: '/readiness'
+      fullPath: '/readiness'
+      preLoaderRoute: typeof AuthenticatedReadinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/questions': {
       id: '/_authenticated/questions'
       path: '/questions'
       fullPath: '/questions'
       preLoaderRoute: typeof AuthenticatedQuestionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/practice': {
+      id: '/_authenticated/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/my-scores': {
@@ -233,6 +389,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCodingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/batches': {
+      id: '/_authenticated/batches'
+      path: '/batches'
+      fullPath: '/batches'
+      preLoaderRoute: typeof AuthenticatedBatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/attendance': {
+      id: '/_authenticated/attendance'
+      path: '/attendance'
+      fullPath: '/attendance'
+      preLoaderRoute: typeof AuthenticatedAttendanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/assessments': {
       id: '/_authenticated/assessments'
       path: '/assessments'
@@ -240,29 +410,70 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAssessmentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/alerts': {
+      id: '/_authenticated/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AuthenticatedAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/': {
+      id: '/_authenticated/tests/'
+      path: '/tests'
+      fullPath: '/tests/'
+      preLoaderRoute: typeof AuthenticatedTestsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tests/$testId': {
+      id: '/_authenticated/tests/$testId'
+      path: '/tests/$testId'
+      fullPath: '/tests/$testId'
+      preLoaderRoute: typeof AuthenticatedTestsTestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
   AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRoute
+  AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
+  AuthenticatedBatchesRoute: typeof AuthenticatedBatchesRoute
   AuthenticatedCodingRoute: typeof AuthenticatedCodingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
+  AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedQuestionsRoute: typeof AuthenticatedQuestionsRoute
+  AuthenticatedReadinessRoute: typeof AuthenticatedReadinessRoute
+  AuthenticatedResourcesRoute: typeof AuthenticatedResourcesRoute
+  AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
+  AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+  AuthenticatedTestsTestIdRoute: typeof AuthenticatedTestsTestIdRoute
+  AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlertsRoute: AuthenticatedAlertsRoute,
   AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRoute,
+  AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
+  AuthenticatedBatchesRoute: AuthenticatedBatchesRoute,
   AuthenticatedCodingRoute: AuthenticatedCodingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,
+  AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedQuestionsRoute: AuthenticatedQuestionsRoute,
+  AuthenticatedReadinessRoute: AuthenticatedReadinessRoute,
+  AuthenticatedResourcesRoute: AuthenticatedResourcesRoute,
+  AuthenticatedRolesRoute: AuthenticatedRolesRoute,
+  AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+  AuthenticatedTestsTestIdRoute: AuthenticatedTestsTestIdRoute,
+  AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

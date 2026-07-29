@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { FileSpreadsheet, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
   CartesianGrid,
   Line,
@@ -10,9 +12,25 @@ import {
   YAxis,
 } from "recharts";
 
-import { assessmentsQuery, meQuery, scoresQuery, KIND_LABEL, pct } from "@/lib/crt-queries";
+import {
+  assessmentsQuery,
+  meQuery,
+  modulesQuery,
+  scoresQuery,
+  KIND_LABEL,
+  pct,
+} from "@/lib/crt-queries";
+import {
+  buildStudentReport,
+  downloadText,
+  reportToCsv,
+  reportToPdf,
+  type StudentRow,
+} from "@/lib/crt-report";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,

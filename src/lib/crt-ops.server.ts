@@ -22,9 +22,18 @@ export const sessionSchema = z.object({
   module_id: nullableUuid,
   topic_id: nullableUuid,
   trainer_name: z.string().trim().max(120).nullable(),
-  title: z.string().trim().min(3).max(160),
-  scheduled_at: z.string().min(10).max(40),
-  duration_min: z.number().int().min(15).max(600),
+  title: z
+    .string()
+    .trim()
+    .min(3, { message: "give the session a title of at least 3 characters" })
+    .max(160, { message: "keep the title under 160 characters" }),
+  scheduled_at: z.string().min(10, { message: "pick a valid date and time" }).max(40),
+  duration_min: z
+    .number()
+    .int()
+    .min(15, { message: "must be at least 15 minutes" })
+    .max(600, { message: "must be 600 minutes or less" }),
+
   status: z.enum(["planned", "conducted", "cancelled"]),
   notes: z.string().trim().max(1000).nullable(),
 });

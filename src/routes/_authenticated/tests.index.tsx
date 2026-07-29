@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 
 import { generateTest, setTestPublished, deleteTest } from "@/lib/tests.functions";
+import { formatFormError } from "@/lib/form-errors";
+
 import { batchesQuery, meQuery, modulesQuery, questionsQuery, testsQuery } from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +69,22 @@ function TestsPage() {
   const [when, setWhen] = useState(new Date().toISOString().slice(0, 16));
   const [mix, setMix] = useState({ easy: "50", medium: "35", hard: "15" });
 
+  const fieldErrors = (() => {
+    const errs: Record<string, string> = {};
+    const dur = Number(duration);
+    const qty = Number(count);
+    if (title.trim().length < 3) errs.title = "Give the test a title of at least 3 characters.";
+    if (title.trim().length > 160) errs.title = "Keep the title under 160 characters.";
+    if (!Number.isFinite(dur) || !Number.isInteger(dur) || dur < 5 || dur > 300)
+      errs.duration = "Duration must be a whole number between 5 and 300 minutes.";
+    if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty < 1 || qty > 100)
+      errs.count = "Pick between 1 and 100 questions.";
+    if (!when || Number.isNaN(new Date(when).getTime()))
+      errs.when = "Pick a valid start date and time.";
+    return errs;
+  })();
+  const formValid = Object.keys(fieldErrors).length === 0;
+
   const create = useMutation({
     mutationFn: () =>
       gen({
@@ -75,8 +93,8 @@ function TestsPage() {
           batch_id: batchId === "none" ? null : batchId,
           module_id: moduleId === "none" ? null : moduleId,
           starts_at: new Date(when).toISOString(),
-          duration_min: Number(duration) || 30,
-          count: Number(count) || 10,
+          duration_min: Number(duration),
+          count: Number(count),
           easy_pct: Number(mix.easy) || 0,
           medium_pct: Number(mix.medium) || 0,
           hard_pct: Number(mix.hard) || 0,
@@ -89,8 +107,9 @@ function TestsPage() {
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["tests"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(formatFormError(e, "Could not generate the test.")),
   });
+
 
   const togglePublish = useMutation({
     mutationFn: (vars: { id: string; published: boolean }) => publish({ data: vars }),
@@ -140,8 +159,17 @@ function TestsPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                  <Input
+                    value={title}
+                    maxLength={160}
+                    aria-invalid={!!fieldErrors.title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  {fieldErrors.title && (
+                    <p className="text-xs text-destructive">{fieldErrors.title}</p>
+                  )}
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Module</Label>
                   <Select value={moduleId} onValueChange={setModuleId}>
@@ -176,16 +204,43 @@ function TestsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Questions</Label>
-                  <Input type="number" value={count} onChange={(e) => setCount(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={count}
+                    aria-invalid={!!fieldErrors.count}
+                    onChange={(e) => setCount(e.target.value)}
+                  />
+                  {fieldErrors.count && (
+                    <p className="text-xs text-destructive">{fieldErrors.count}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Duration (min)</Label>
-                  <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={5}
+                    max={300}
+                    value={duration}
+                    aria-invalid={!!fieldErrors.duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                  {fieldErrors.duration && (
+                    <p className="text-xs text-destructive">{fieldErrors.duration}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Starts at</Label>
-                  <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={when}
+                    aria-invalid={!!fieldErrors.when}
+                    onChange={(e) => setWhen(e.target.value)}
+                  />
+                  {fieldErrors.when && <p className="text-xs text-destructive">{fieldErrors.when}</p>}
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Easy %</Label>
                   <Input
@@ -212,9 +267,13 @@ function TestsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                <Button
+                  onClick={() => create.mutate()}
+                  disabled={create.isPending || !formValid}
+                >
                   Generate
                 </Button>
+
               </DialogFooter>
             </DialogContent>
           </Dialog>

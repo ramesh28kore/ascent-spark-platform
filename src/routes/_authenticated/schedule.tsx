@@ -9,6 +9,8 @@ import { upsertSession, deleteSession } from "@/lib/crt-ops.functions";
 import { batchesQuery, meQuery, modulesQuery, sessionsQuery } from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatFormError } from "@/lib/form-errors";
+
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +68,15 @@ function SchedulePage() {
   const [duration, setDuration] = useState("90");
   const [notes, setNotes] = useState("");
 
+  const titleValid = title.trim().length >= 3 && title.trim().length <= 160;
+  const durationValid = (() => {
+    const d = Number(duration);
+    return Number.isInteger(d) && d >= 15 && d <= 600;
+  })();
+  const whenValid = !!when && !Number.isNaN(new Date(when).getTime());
+  const formValid = titleValid && durationValid && whenValid;
+
+
   const create = useMutation({
     mutationFn: () =>
       save({
@@ -76,7 +87,7 @@ function SchedulePage() {
           trainer_name: trainer.trim() || null,
           title: title.trim(),
           scheduled_at: new Date(when).toISOString(),
-          duration_min: Number(duration) || 90,
+          duration_min: Number(duration),
           status: "planned" as const,
           notes: notes.trim() || null,
         },
@@ -87,7 +98,8 @@ function SchedulePage() {
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(formatFormError(e, "Could not save the session.")),
+
   });
 
   const setStatus = useMutation({
@@ -156,7 +168,18 @@ function SchedulePage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                  <Input
+                    value={title}
+                    maxLength={160}
+                    aria-invalid={!titleValid}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  {!titleValid && (
+                    <p className="text-xs text-destructive">
+                      Give the session a title of at least 3 characters.
+                    </p>
+                  )}
+
                 </div>
                 <div className="space-y-1.5">
                   <Label>Batch</Label>
@@ -192,11 +215,32 @@ function SchedulePage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Starts at</Label>
-                  <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={when}
+                    aria-invalid={!whenValid}
+                    onChange={(e) => setWhen(e.target.value)}
+                  />
+                  {!whenValid && (
+                    <p className="text-xs text-destructive">Pick a valid date and time.</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Duration (min)</Label>
-                  <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={15}
+                    max={600}
+                    value={duration}
+                    aria-invalid={!durationValid}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                  {!durationValid && (
+                    <p className="text-xs text-destructive">
+                      Duration must be a whole number between 15 and 600 minutes.
+                    </p>
+                  )}
+
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Trainer</Label>
@@ -208,7 +252,7 @@ function SchedulePage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={create.isPending || title.trim().length < 3}>
+                <Button onClick={() => create.mutate()} disabled={create.isPending || !formValid}>
                   Save session
                 </Button>
               </DialogFooter>

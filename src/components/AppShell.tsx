@@ -11,6 +11,13 @@ import {
   LineChart,
   LogOut,
   GraduationCap,
+  CalendarDays,
+  CheckSquare,
+  Gauge,
+  Library,
+  Bell,
+  ShieldCheck,
+  Timer,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -31,31 +38,57 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { meQuery } from "@/lib/crt-queries";
+import { meQuery, notificationsQuery } from "@/lib/crt-queries";
 
-const trainerNav = [
+const staffNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Batches", url: "/batches", icon: Users },
+  { title: "Schedule", url: "/schedule", icon: CalendarDays },
+  { title: "Attendance", url: "/attendance", icon: CheckSquare },
   { title: "Modules", url: "/modules", icon: BookOpen },
   { title: "Students", url: "/students", icon: Users },
+  { title: "Readiness", url: "/readiness", icon: Gauge },
   { title: "Assessments", url: "/assessments", icon: ClipboardList },
+  { title: "Online tests", url: "/tests", icon: Timer },
   { title: "Question bank", url: "/questions", icon: FileQuestion },
   { title: "Coding library", url: "/coding", icon: Code2 },
+  { title: "Practice ladder", url: "/practice", icon: Code2 },
+  { title: "Resources", url: "/resources", icon: Library },
+  { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Bulk import", url: "/import", icon: UploadCloud },
+];
+
+const placementNav = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Readiness", url: "/readiness", icon: Gauge },
+  { title: "Students", url: "/students", icon: Users },
+  { title: "Alerts", url: "/alerts", icon: Bell },
 ];
 
 const studentNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Modules", url: "/modules", icon: BookOpen },
+  { title: "Schedule", url: "/schedule", icon: CalendarDays },
+  { title: "Online tests", url: "/tests", icon: Timer },
+  { title: "Practice ladder", url: "/practice", icon: Code2 },
   { title: "Coding library", url: "/coding", icon: Code2 },
+  { title: "Resources", url: "/resources", icon: Library },
+  { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "My scores", url: "/my-scores", icon: LineChart },
 ];
 
+const adminExtra = [{ title: "Roles & access", url: "/roles", icon: ShieldCheck }];
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { data: me } = useQuery(meQuery);
+  const { data: notifications } = useQuery(notificationsQuery);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const items = me?.isTrainer ? trainerNav : studentNav;
+  const base = me?.isStaff ? staffNav : me?.isPlacement ? placementNav : studentNav;
+  const items = me?.isAdmin ? [...base, ...adminExtra] : base;
+  const unread = (notifications ?? []).filter((n) => !n.read).length;
+
 
   async function signOut() {
     await queryClient.cancelQueries();

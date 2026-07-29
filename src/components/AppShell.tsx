@@ -70,6 +70,8 @@ const studentNav = [
   { title: "Modules", url: "/modules", icon: BookOpen },
   { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Online tests", url: "/tests", icon: Timer },
+  { title: "Assessments", url: "/assessments", icon: ClipboardList },
+
   { title: "Practice ladder", url: "/practice", icon: Code2 },
   { title: "Coding library", url: "/coding", icon: Code2 },
   { title: "Resources", url: "/resources", icon: Library },

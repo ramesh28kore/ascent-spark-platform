@@ -114,8 +114,15 @@ function AssessmentsPage() {
 
   if (assessments.isLoading) return <Skeleton className="h-96 w-full" />;
   if (!me.data?.isTrainer) {
-    return <p className="text-sm text-muted-foreground">Trainer access only.</p>;
+    return (
+      <StudentAssessments
+        assessments={assessments.data ?? []}
+        scores={scores.data ?? []}
+        myProfileId={me.data?.profile?.id ?? null}
+      />
+    );
   }
+
 
   const list = assessments.data ?? [];
   const active = list.find((a) => a.id === selected) ?? list[0];
@@ -306,6 +313,116 @@ function AssessmentsPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+type AssessmentRow = {
+  id: string;
+  title: string;
+  kind: string;
+  max_marks: number;
+  scheduled_on: string;
+};
+type ScoreRow = { student_id: string; assessment_id: string; marks: number };
+
+function StudentAssessments({
+  assessments,
+  scores,
+  myProfileId,
+}: {
+  assessments: AssessmentRow[];
+  scores: ScoreRow[];
+  myProfileId: string | null;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = assessments
+    .filter((a) => a.scheduled_on >= today)
+    .sort((a, b) => a.scheduled_on.localeCompare(b.scheduled_on));
+  const past = assessments
+    .filter((a) => a.scheduled_on < today)
+    .sort((a, b) => b.scheduled_on.localeCompare(a.scheduled_on));
+  const myScore = (id: string) =>
+    scores.find((s) => s.assessment_id === id && s.student_id === myProfileId);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Assessments</h1>
+        <p className="text-sm text-muted-foreground">
+          Your scheduled tests, mock papers and interviews, with marks once released.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Upcoming</CardTitle>
+          <CardDescription>{upcoming.length} scheduled</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {upcoming.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nothing scheduled right now.</p>
+          )}
+          {upcoming.map((a) => (
+            <div key={a.id} className="rounded-md border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">{a.title}</span>
+                <Badge variant="outline">{KIND_LABEL[a.kind] ?? a.kind}</Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {a.scheduled_on} · {a.max_marks} marks
+              </p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Completed</CardTitle>
+          <CardDescription>Marks appear once your trainer records them.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Assessment</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Marks</TableHead>
+                  <TableHead className="text-right">%</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {past.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-sm text-muted-foreground">
+                      No completed assessments yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {past.map((a) => {
+                  const s = myScore(a.id);
+                  return (
+                    <TableRow key={a.id}>
+                      <TableCell className="font-medium">{a.title}</TableCell>
+                      <TableCell>{a.scheduled_on}</TableCell>
+                      <TableCell>{KIND_LABEL[a.kind] ?? a.kind}</TableCell>
+                      <TableCell className="text-right">
+                        {s ? `${s.marks} / ${a.max_marks}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {s ? `${pct(Number(s.marks), a.max_marks)}%` : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

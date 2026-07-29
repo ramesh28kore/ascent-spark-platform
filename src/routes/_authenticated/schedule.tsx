@@ -156,7 +156,18 @@ function SchedulePage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Title</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                  <Input
+                    value={title}
+                    maxLength={160}
+                    aria-invalid={!titleValid}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  {!titleValid && (
+                    <p className="text-xs text-destructive">
+                      Give the session a title of at least 3 characters.
+                    </p>
+                  )}
+
                 </div>
                 <div className="space-y-1.5">
                   <Label>Batch</Label>
@@ -192,11 +203,32 @@ function SchedulePage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Starts at</Label>
-                  <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={when}
+                    aria-invalid={!whenValid}
+                    onChange={(e) => setWhen(e.target.value)}
+                  />
+                  {!whenValid && (
+                    <p className="text-xs text-destructive">Pick a valid date and time.</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Duration (min)</Label>
-                  <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} />
+                  <Input
+                    type="number"
+                    min={15}
+                    max={600}
+                    value={duration}
+                    aria-invalid={!durationValid}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                  {!durationValid && (
+                    <p className="text-xs text-destructive">
+                      Duration must be a whole number between 15 and 600 minutes.
+                    </p>
+                  )}
+
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Trainer</Label>

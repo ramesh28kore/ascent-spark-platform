@@ -68,6 +68,7 @@ import {
   getCredentialSettings,
   listStaffAccounts,
   listStudentCredentials,
+  previewCredential,
   previewStudentCredentials,
   resetAccountPassword,
   saveCredentialSettings,

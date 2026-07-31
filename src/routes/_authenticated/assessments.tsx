@@ -122,9 +122,11 @@ function AssessmentsPage() {
         scores={scores.data ?? []}
         myProfileId={me.data?.profile?.id ?? null}
         tests={tests.data?.tests ?? []}
+        attempts={tests.data?.attempts ?? []}
       />
     );
   }
+
 
 
   const list = assessments.data ?? [];

@@ -62,7 +62,7 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
 
     const { data: question } = await supabase
       .from("questions")
-      .select("id, prompt, marks, test_cases")
+      .select("id, prompt, marks, test_cases, time_limit_ms, memory_limit_kb")
       .eq("id", data.question_id)
       .maybeSingle();
     if (!question) throw new Error("Question not found.");
@@ -74,10 +74,48 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
     let verdict = "pending";
     let feedback = "";
     let status: "graded" | "pending_review" = "graded";
+    let judged_by = "ai";
+    let runtime_ms = 0;
+    let memory_kb = 0;
+    let casesPassed = data.cases_passed;
+    let casesTotal = data.cases_total;
+    let caseResults: unknown[] = [];
 
-    const provisional =
-      data.cases_total > 0 ? clampScore((data.cases_passed / data.cases_total) * marks, marks) : 0;
+    // 1) Authoritative judging: run every case (including hidden) in the sandbox.
+    if (cases.length > 0) {
+      const { judgeAgainstCases } = await import("@/lib/judge.server");
+      const judged = await judgeAgainstCases({
+        language: data.language === "python" ? "python" : "javascript",
+        code: data.code,
+        cases,
+        timeoutMs: question.time_limit_ms ?? 5000,
+        memoryKb: question.memory_limit_kb ?? 128000,
+      });
+      const sandboxUnavailable = judged.unreachable;
 
+      if (!sandboxUnavailable) {
+        judged_by = "sandbox";
+        casesPassed = judged.passed;
+        casesTotal = judged.total;
+        runtime_ms = judged.runtime_ms;
+        memory_kb = judged.memory_kb;
+        score = clampScore((judged.passed / Math.max(1, judged.total)) * marks, marks);
+        verdict =
+          judged.passed === judged.total
+            ? "accepted"
+            : judged.passed === 0
+              ? "wrong answer"
+              : "partial";
+        // Never leak hidden expectations back to the student.
+        caseResults = judged.results.map((r) =>
+          r.hidden
+            ? { index: r.index, hidden: true, passed: r.passed, runtime_ms: r.runtime_ms }
+            : r,
+        );
+      }
+    }
+
+    // 2) AI review: feedback always, and the score itself when there are no test cases.
     try {
       const apiKey = process.env.LOVABLE_API_KEY;
       if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
@@ -92,9 +130,17 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
         language: data.language,
         code: data.code,
         cases,
-        clientPassed: data.cases_passed,
-        clientTotal: data.cases_total,
+        clientPassed: casesPassed,
+        clientTotal: casesTotal,
       });
+
+      const applyAi = (out: { score: number; verdict: string; feedback: string }) => {
+        feedback = String(out.feedback || "").slice(0, 1000);
+        if (judged_by !== "sandbox") {
+          score = clampScore(out.score, marks);
+          verdict = String(out.verdict || "graded").slice(0, 40);
+        }
+      };
 
       try {
         const { output } = await generateText({
@@ -102,32 +148,32 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
           output: Output.object({ schema: gradeOutputSchema }),
           prompt,
         });
-        score = clampScore(output.score, marks);
-        verdict = String(output.verdict || "graded").slice(0, 40);
-        feedback = String(output.feedback || "").slice(0, 1000);
+        applyAi(output);
       } catch (error) {
         if (NoObjectGeneratedError.isInstance(error) && error.text) {
           const match = error.text.match(/\{[\s\S]*\}/);
           const fallback = match ? gradeOutputSchema.safeParse(JSON.parse(match[0])) : null;
-          if (fallback?.success) {
-            score = clampScore(fallback.data.score, marks);
-            verdict = fallback.data.verdict.slice(0, 40);
-            feedback = fallback.data.feedback.slice(0, 1000);
-          } else {
-            throw error;
-          }
+          if (fallback?.success) applyAi(fallback.data);
+          else throw error;
         } else {
           throw error;
         }
       }
     } catch (error) {
-      // Never zero a student out on an AI failure — record for trainer review.
-      status = "pending_review";
-      score = provisional;
-      verdict = "pending review";
-      feedback =
-        "Automatic review is temporarily unavailable, so a provisional score from your test-case run was recorded. Your trainer will confirm it.";
-      console.error("coding grading failed", error);
+      console.error("coding AI review failed", error);
+      if (judged_by === "sandbox") {
+        feedback = `Scored from ${casesPassed}/${casesTotal} sandbox test case(s). Written feedback is unavailable right now.`;
+      } else {
+        // Never zero a student out on an infrastructure failure.
+        status = "pending_review";
+        score =
+          data.cases_total > 0
+            ? clampScore((data.cases_passed / data.cases_total) * marks, marks)
+            : 0;
+        verdict = "pending review";
+        feedback =
+          "Automatic evaluation is temporarily unavailable, so a provisional score was recorded. Your trainer will confirm it.";
+      }
     }
 
     const { error: insertError } = await supabase.from("coding_submissions").insert({
@@ -136,18 +182,34 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
       student_id: profile.id,
       code: data.code,
       language: data.language,
-      cases_passed: data.cases_passed,
-      cases_total: data.cases_total,
+      cases_passed: casesPassed,
+      cases_total: casesTotal,
       ai_score: score,
       max_score: marks,
       verdict,
       feedback,
       status,
+      judged_by,
+      runtime_ms,
+      memory_kb,
+      case_results: caseResults as never,
     });
     if (insertError) throw new Error(insertError.message);
 
-    return { score, max_score: marks, verdict, feedback, status };
+    return {
+      score,
+      max_score: marks,
+      verdict,
+      feedback,
+      status,
+      judged_by,
+      runtime_ms,
+      memory_kb,
+      cases_passed: casesPassed,
+      cases_total: casesTotal,
+    };
   });
+
 
 export const getCodingSubmissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

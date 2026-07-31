@@ -699,7 +699,37 @@ function StaffAccounts() {
 
 /* ------------------------------------------------------------------ */
 
-function Directory() {
+function ConfirmDelete({
+  open,
+  onOpenChange,
+  title,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>
+            The login, profile and all linked records will be removed. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
   const queryClient = useQueryClient();
   const list = useServerFn(listStudentCredentials);
   const reset = useServerFn(resetAccountPassword);

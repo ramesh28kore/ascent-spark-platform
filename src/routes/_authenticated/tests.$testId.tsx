@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { AlertTriangle, Timer } from "lucide-react";
 
 import { getTestPaper, startAttempt, submitAttempt } from "@/lib/tests.functions";
+import { gradeCodingSubmission } from "@/lib/coding.functions";
+
 import { meQuery } from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +58,42 @@ function TestRunner() {
   const submitted = !!attempt?.submitted_at;
   const isStaff = !!me.data?.isStaff;
 
+  const gradeCode = useServerFn(gradeCodingSubmission);
+  const gradeCoding = useMutation({
+    mutationFn: (payload: {
+      test_id: string;
+      question_id: string;
+      code: string;
+      language: "javascript" | "python";
+      cases_passed: number;
+      cases_total: number;
+    }) => gradeCode({ data: payload }),
+    onSuccess: (r) => {
+      toast.success(`Graded — ${r.score}/${r.max_score} (${r.verdict})`);
+      queryClient.invalidateQueries({ queryKey: ["test-paper", testId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const submissionFor = (questionId: string) => {
+    const row = (paper.data?.codingSubmissions ?? []).find(
+      (s) => s.question_id === questionId,
+    );
+    return row
+      ? {
+          ai_score: Number(row.ai_score ?? 0),
+          max_score: Number(row.max_score ?? 0),
+          verdict: String(row.verdict ?? ""),
+          feedback: row.feedback ?? null,
+          status: String(row.status ?? "graded"),
+          cases_passed: Number(row.cases_passed ?? 0),
+          cases_total: Number(row.cases_total ?? 0),
+          code: String(row.code ?? ""),
+          language: String(row.language ?? ""),
+        }
+      : null;
+  };
+
   const send = useMutation({
     mutationFn: () =>
       submit({ data: { test_id: testId, responses, blur_count: blurCount } }),
@@ -66,6 +104,7 @@ function TestRunner() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   // Start the attempt once for students.
   useEffect(() => {
@@ -194,12 +233,27 @@ function TestRunner() {
                     }
                     onChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
                     disabled={submitted || isStaff}
+                    marks={q.marks}
+                    sampleCases={q.sample_cases ?? []}
+                    totalCases={q.total_cases ?? 0}
+                    submission={submissionFor(q.question_id)}
+                    onSubmit={
+                      isStaff
+                        ? undefined
+                        : (payload) =>
+                            gradeCoding.mutateAsync({
+                              test_id: testId,
+                              question_id: q.question_id,
+                              ...payload,
+                            })
+                    }
                   />
                   <p className="text-xs text-muted-foreground">
-                    Code answers are saved and reviewed by your trainer.
+                    Submitting locks this question and sends your code for AI grading.
                   </p>
                 </div>
               ) : q.qtype && q.qtype !== "mcq" ? (
+
                 <div className="space-y-2">
                   <Textarea
                     value={

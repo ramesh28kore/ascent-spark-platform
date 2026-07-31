@@ -162,6 +162,17 @@ export const createQuestion = createServerFn({ method: "POST" })
         level: z.enum(["easy", "medium", "hard"]),
         bloom: z.enum(["L1", "L2", "L3", "L4", "L5", "L6"]),
         marks: z.number().int().min(1).max(20),
+        test_cases: z
+          .array(
+            z.object({
+              input: z.string().max(4000),
+              expected_output: z.string().max(4000),
+              hidden: z.boolean(),
+            }),
+          )
+          .max(20)
+          .default([]),
+
       })
       .parse(input),
   )

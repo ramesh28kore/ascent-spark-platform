@@ -1,30 +1,34 @@
 ## Goal
 
-Students should always be able to open a coding test directly from the Assessments page, and be able to *run* their code (JavaScript and Python) in the browser before submitting.
+Coding questions get their own **Submit for grading** button, separate from the local **Run**. Submitting sends the code to the server, scores it, and shows the student the marks and feedback for that question. The final test score includes those coding marks.
 
-## Part 1 — Make the link always work
+## How a coding answer is scored
 
-Today the student card only shows "Open coding test" if a published test already exists and is linked (by `assessment_id`, or by module + same date). When a trainer schedules a coding assessment but never builds a test, students see a dead-end "Practice coding problems" button.
+Two stages:
 
-Changes:
-- Show the real state per assessment card instead of a fallback: **Open coding test** (published test found), **Opens on <date>** (test exists but not yet published / window not open), **Submitted — view result** (attempt already submitted), or **Not published yet** with no misleading link.
-- Trainer side: on each `coding_test` assessment row, surface whether a linked test exists; if not, a one-click **Create linked coding test** that builds a published test from the coding questions of that module and stamps `assessment_id`. (The generator already supports coding-only papers; this just makes the link explicit and visible.)
-- Widen the student matcher so a linked-but-unpublished test is detected and reported rather than silently ignored.
+1. **Instant (browser)** — the code runs against the question's stored test cases in the existing sandbox (JS in a Web Worker, Python in Pyodide). Each case compares trimmed stdout to the expected output. The student immediately sees `3/4 cases passed`. This is provisional and never trusted as the final mark.
+2. **AI-confirmed (server)** — the submit call sends the code, the question prompt, the test cases and the client's pass report to Lovable AI (`google/gemini-3.6-flash`). The model returns a score out of the question's marks, a verdict, and short feedback, and it is told to treat the client's pass report as an unverified claim. **The AI score is what gets recorded.** If the AI call fails (rate limit / credits), the submission is stored as `pending_review` with the provisional score shown and flagged for the trainer — never silently zero.
 
-## Part 2 — Run code in the browser
+## Per-question submit behaviour
 
-On the test-taking page (`/tests/$testId`), every `coding` question gets a small editor panel instead of a plain textarea:
+- Each coding question card gets: **Run** (unchanged scratchpad) and **Submit for grading**.
+- Submitting locks that question's editor, shows a result panel (marks awarded, cases passed, AI feedback), and leaves the rest of the test open.
+- One submission per question per attempt; a trainer can reopen it from the test detail view.
+- Whole-test submit still works: it grades MCQs as today and adds the already-recorded coding marks instead of string-matching them.
 
-- Language selector: **JavaScript** and **Python**.
-- **Run** button, an editable stdin box, and an output console showing stdout / errors and run time.
-- JavaScript runs in a sandboxed Web Worker with a hard timeout (~5s) so an infinite loop can't freeze the exam tab.
-- Python runs via Pyodide, loaded lazily from CDN only when the student first picks Python (kept out of the main bundle so the rest of the app stays fast).
-- Running is a scratchpad only — it never scores. The submitted answer stays the code text, and grading remains server-side through the existing `grade_attempt` RPC.
-- Proctoring stays intact: the run panel does not open new windows and does not affect the existing blur/focus counting.
+## Database changes
 
-## Technical notes
+- `questions.test_cases` — JSON array of `{ input, expected_output, hidden }`, editable by trainers in the Question Bank. Hidden cases are stripped from the student paper.
+- New `coding_submissions` table: attempt, test, question, student, code, language, client pass counts, ai_score, max_score, verdict, feedback, status (`graded` / `pending_review`), timestamps. RLS: students read/insert their own; staff read all and can override the score.
+- `grade_attempt` updated: for coding items it takes the recorded `coding_submissions.ai_score` (0 if none) rather than string matching, and adds it to the total.
 
-- New `src/lib/runner/js-worker.ts` (worker source) and `src/lib/runner/pyodide.ts` (lazy loader), plus a `CodeRunner` component used by `tests.$testId.tsx`.
-- Pyodide is loaded from its CDN at runtime via a dynamic script tag inside a client-only effect — no SSR import, so the exam route still renders server-side.
-- No database schema change is required for the runner. Part 1 uses the existing `tests.assessment_id` column.
-- Runner output is client-only and never persisted, so no new data exposure.
+## Server work
+
+- `gradeCodingSubmission` server function (auth-required): validates input, loads the question and its test cases server-side, rejects submissions for closed/submitted attempts, calls Lovable AI for the score, writes the row, and returns only the marks + feedback (never the hidden expected outputs beyond what's needed for feedback).
+- Answer keys and hidden test cases stay server-side; the student paper only carries visible sample cases.
+
+## UI work
+
+- `CodeRunner` gains an optional submit action, a result panel, and a locked state.
+- Question Bank (trainer) gains a small test-case editor for coding questions.
+- Test detail / results view shows per-question coding scores, verdicts and any `pending_review` flags so the trainer can adjust.

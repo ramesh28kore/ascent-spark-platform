@@ -67,6 +67,7 @@ function QuestionsPage() {
     prompt: "",
     qtype: "mcq" as (typeof TYPES)[number],
     options: "",
+    test_cases: "",
     answer: "",
     explanation: "",
     level: "medium" as (typeof LEVELS)[number],
@@ -86,6 +87,23 @@ function QuestionsPage() {
     [all, moduleFilter, levelFilter],
   );
 
+  const parseCases = (raw: string) =>
+    raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.includes("=>"))
+      .slice(0, 20)
+      .map((line) => {
+        const hidden = line.startsWith("#");
+        const body = hidden ? line.slice(1) : line;
+        const [input, ...rest] = body.split("=>");
+        return {
+          input: input.trim().replace(/\\n/g, "\n"),
+          expected_output: rest.join("=>").trim().replace(/\\n/g, "\n"),
+          hidden,
+        };
+      });
+
   const createMutation = useMutation({
     mutationFn: () =>
       add({
@@ -98,6 +116,7 @@ function QuestionsPage() {
             .map((o) => o.trim())
             .filter(Boolean)
             .slice(0, 6),
+          test_cases: form.qtype === "coding" ? parseCases(form.test_cases) : [],
           answer: form.answer.trim(),
           explanation: form.explanation.trim(),
           level: form.level,
@@ -108,11 +127,12 @@ function QuestionsPage() {
     onSuccess: () => {
       toast.success("Question added");
       setOpen(false);
-      setForm({ ...form, prompt: "", options: "", answer: "", explanation: "" });
+      setForm({ ...form, prompt: "", options: "", test_cases: "", answer: "", explanation: "" });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   function generate() {
     const n = Math.max(1, Math.min(50, Number(count) || 10));
@@ -241,6 +261,24 @@ function QuestionsPage() {
                     rows={4}
                   />
                 </div>
+                {form.qtype === "coding" && (
+                  <div className="space-y-1.5">
+                    <Label>Test cases (coding only)</Label>
+                    <Textarea
+                      value={form.test_cases}
+                      onChange={(e) => setForm({ ...form, test_cases: e.target.value })}
+                      rows={4}
+                      spellCheck={false}
+                      className="font-mono text-xs"
+                      placeholder={"5 3 => 8\n#10 -2 => 8   (prefix # to hide a case from students)"}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      One case per line as <code>input =&gt; expected output</code>. Use <code>\n</code>{" "}
+                      for multi-line input. Hidden cases are graded but never shown.
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Answer</Label>

@@ -87,7 +87,10 @@ const studentNav = [
   { title: "My scores", url: "/my-scores", icon: LineChart },
 ];
 
-const adminExtra = [{ title: "Roles & access", url: "/roles", icon: ShieldCheck }];
+const adminExtra = [
+  { title: "Admin console", url: "/admin", icon: ShieldCheck },
+  { title: "Roles & access", url: "/roles", icon: ShieldCheck },
+];
 
 
 export function AppShell({ children }: { children: ReactNode }) {

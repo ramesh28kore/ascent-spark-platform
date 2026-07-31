@@ -436,6 +436,27 @@ export type Database = {
           },
         ]
       }
+      credential_settings: {
+        Row: {
+          default_domain: string
+          domains: string[]
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          default_domain?: string
+          domains?: string[]
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          default_domain?: string
+          domains?: string[]
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       discussion_posts: {
         Row: {
           author_id: string
@@ -742,6 +763,7 @@ export type Database = {
           full_name: string
           id: string
           roll_number: string | null
+          section: string | null
           updated_at: string
           user_id: string | null
           year: string | null
@@ -755,6 +777,7 @@ export type Database = {
           full_name: string
           id?: string
           roll_number?: string | null
+          section?: string | null
           updated_at?: string
           user_id?: string | null
           year?: string | null
@@ -768,6 +791,7 @@ export type Database = {
           full_name?: string
           id?: string
           roll_number?: string | null
+          section?: string | null
           updated_at?: string
           user_id?: string | null
           year?: string | null

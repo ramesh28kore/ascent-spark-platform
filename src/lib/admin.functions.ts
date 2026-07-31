@@ -216,6 +216,51 @@ export const deleteAccount = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Remove several accounts in one go (bulk clean-up of a section or batch). */
+export const deleteAccounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        userIds: z
+          .array(z.string().uuid())
+          .min(1, "Select at least one account")
+          .max(300, "Delete at most 300 accounts at a time"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const db = await admin();
+
+    const ids = Array.from(new Set(data.userIds));
+    let deleted = 0;
+    const failed: { userId: string; reason: string }[] = [];
+
+    for (const userId of ids) {
+      if (userId === context.userId) {
+        failed.push({ userId, reason: "You cannot remove your own account." });
+        continue;
+      }
+      try {
+        const { error } = await db.auth.admin.deleteUser(userId);
+        if (error) failed.push({ userId, reason: error.message });
+        else deleted += 1;
+      } catch (err) {
+        failed.push({ userId, reason: err instanceof Error ? err.message : "Unexpected error" });
+      }
+    }
+
+    await audit(db, context.userId, "delete_accounts", "auth.users", {
+      requested: ids.length,
+      deleted,
+      failed: failed.length,
+    });
+
+    return { deleted, failed };
+  });
+
+
 /* ------------------------------------------------------------------ */
 /* Student credential generation                                       */
 /* ------------------------------------------------------------------ */

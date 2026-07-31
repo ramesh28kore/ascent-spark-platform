@@ -1,47 +1,22 @@
 ## Goal
 
-Make "super admin = credentials only" true at the API layer, not just in the sidebar. Right now the UI redirects the admin away from training pages, but a direct API call still succeeds in several places.
+The **Existing credentials** tab currently only lists students and resets passwords. Add account **deletion** there, working the same way as the Trainers tab. No editing of roll numbers, emails or other fields.
 
-## What I verified in the live database
+## What you'll get
 
-- Training data is excluded from the admin correctly for anything gated by `private.is_staff` / `private.can_view_all` (scores, attendance, attempts, certificates writes, etc.) — those already deny the admin.
-- **Gap 1 — open reads.** Many tables have a SELECT policy of plain `true` for every signed-in user: `modules`, `module_topics`, `assessments`, `batches`, `announcements`, `resources`, `practice_problems`, `rubrics`, `discussion_posts`, `sessions`, plus `tests` where `published`. The super admin is signed in, so a direct API call returns all of this content.
-- **Gap 2 — credential settings readable by trainers.** `credential_settings` SELECT is `is_staff OR is_admin`; only the admin should see the credential/domain configuration.
-- **Gap 3 — an unauthenticated endpoint that touches the admin account.** `bootstrapSuperAdmin` in `src/lib/admin.functions.ts` has no auth middleware, so it is a public POST endpoint that can create the super-admin user and (re-)grant the `admin` role using the service key.
-- **Gap 4 — a credentials endpoint missing the role check.** `getCredentialSettings` runs with only `requireSupabaseAuth`, no `requireAdmin`, so any signed-in student/trainer can read the configured domains.
+On **Admin console → Existing credentials**:
 
-## Plan
+- A **Delete** button on every student row, next to "Reset to roll".
+- A confirmation dialog naming the student ("Delete 23Q61A0501? Their login, profile and all linked records will be removed. This cannot be undone.") with Cancel / Delete.
+- A **checkbox column** plus a select-all box in the header, and a **Delete selected (N)** button above the table for clearing a whole section or batch at once. Bulk delete uses one confirmation and reports how many succeeded and how many failed.
+- The list refreshes automatically after deletion, and every delete is written to the audit log.
 
-### 1. Database migration — exclude the admin from content reads
-
-Add a `private.is_content_reader(uuid)` helper (`security definer`, granted to `authenticated`/`service_role`) that returns true for any signed-in user who is **not** admin-only. Replace the `USING (true)` SELECT policies on the content tables listed in Gap 1 with `USING (private.is_content_reader(auth.uid()))`, and change the `tests` read policy to `(published AND private.is_content_reader(auth.uid())) OR private.can_view_all(auth.uid())`.
-
-Effect: students and trainers are unchanged; the super admin gets zero rows from the Data API on training content.
-
-### 2. Database migration — tighten credential surfaces
-
-- `credential_settings`: SELECT becomes admin-only (`private.is_admin(auth.uid())`), scoped `TO authenticated`.
-- Confirm no INSERT/UPDATE/DELETE policy exists (writes stay service-role only, behind `saveCredentialSettings`).
-- Keep `user_roles` / `profiles` / `audit_logs` admin reads as they are — the console needs them.
-
-### 3. Server-function hardening
-
-- `bootstrapSuperAdmin`: stop being a public endpoint. Require a shared bootstrap secret compared with a timing-safe check, and make it a no-op once the admin exists.
-- `getCredentialSettings`: add the same `requireAdmin(context)` guard the other credential functions use.
-- Sweep `admin.functions.ts` and the other `*.functions.ts` files for any function that mutates accounts, roles, or credentials without a role check, and add one.
-
-### 4. Verification (the point of this task)
-
-Run a real signed-in check with the admin's own bearer token against the Data API — not just a code read:
-
-- As `avanthi`: reads of `modules`, `tests`, `assessments`, `scores`, `test_attempts` must all return empty/denied; reads of `profiles`, `user_roles`, `credential_settings`, `audit_logs` must still work.
-- As a trainer: all training reads still work; `credential_settings` now denied.
-- As a student: unchanged (own scores/attempts visible, answer keys still hidden).
-- Call `getCredentialSettings` and `saveCredentialSettings` with a non-admin token and confirm both are rejected.
-- Re-run the security linter and confirm the admin console still loads end to end in the preview.
+The Trainers tab keeps its existing Delete button; behaviour there is unchanged apart from getting the same confirmation dialog wording.
 
 ## Technical notes
 
-- All policy changes go through one migration; the new helper lives in the existing `private` schema so it is not callable from the Data API.
-- No changes to the UI route guard — it stays as defence in depth.
-- If any current admin-console query breaks under the tighter policies, it will be repointed at the service-role path inside a `requireAdmin`-guarded server function rather than loosening a policy.
+- Reuse the existing `deleteAccount` server function (already `requireAdmin`-gated and audit-logged) for single deletes.
+- Add `deleteAccounts` to `src/lib/admin.functions.ts`: takes an array of up to ~300 user IDs, requires the `admin` role, refuses the caller's own ID, deletes each auth user via the admin API, and returns `{ deleted, failed: [{ userId, reason }] }` with one audit entry recording the count.
+- In `src/routes/_authenticated/admin.tsx`, extend the `Directory` component with row selection state, an `AlertDialog` confirmation, and mutations that invalidate the `student-credentials` query on success.
+- Deleting the auth user cascades to the profile and role rows through the existing foreign keys; no schema migration is needed.
+- Verification: sign in as the super admin, generate two throwaway student accounts, delete one via the row button and one via bulk select, and confirm both disappear from the list, can no longer sign in, and appear in the audit log.

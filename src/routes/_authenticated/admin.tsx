@@ -28,10 +28,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { meQuery, batchesQuery } from "@/lib/crt-queries";
 import {
   createStaffAccount,
   deleteAccount,
+  deleteAccounts,
   generateStudentCredentials,
   getCredentialSettings,
   listStaffAccounts,
@@ -41,6 +53,7 @@ import {
   saveCredentialSettings,
   authoriseCredentialExport,
 } from "@/lib/admin.functions";
+
 import {
   csvEscape,
   expandRange,
@@ -528,6 +541,8 @@ function StaffAccounts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [pendingStaff, setPendingStaff] = useState<{ userId: string; label: string } | null>(null);
+
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => remove({ data: { userId } }),
     onSuccess: () => {
@@ -669,7 +684,11 @@ function StaffAccounts() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => s.user_id && deleteMutation.mutate(s.user_id)}
+                      disabled={!s.user_id}
+                      onClick={() =>
+                        s.user_id &&
+                        setPendingStaff({ userId: s.user_id, label: s.full_name ?? s.email ?? "this account" })
+                      }
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -680,21 +699,70 @@ function StaffAccounts() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDelete
+        open={!!pendingStaff}
+        onOpenChange={(open) => !open && setPendingStaff(null)}
+        title={`Delete ${pendingStaff?.label ?? ""}?`}
+        onConfirm={() => {
+          if (pendingStaff) deleteMutation.mutate(pendingStaff.userId);
+          setPendingStaff(null);
+        }}
+      />
     </div>
+
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function ConfirmDelete({
+  open,
+  onOpenChange,
+  title,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>
+            The login, profile and all linked records will be removed. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
 /* ------------------------------------------------------------------ */
 
 function Directory() {
+  const queryClient = useQueryClient();
+
   const list = useServerFn(listStudentCredentials);
   const reset = useServerFn(resetAccountPassword);
+  const removeOne = useServerFn(deleteAccount);
+  const removeMany = useServerFn(deleteAccounts);
   const { data: batches } = useQuery(batchesQuery);
 
   const [search, setSearch] = useState("");
   const [batchId, setBatchId] = useState(NONE);
   const [section, setSection] = useState("");
   const [year, setYear] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [pendingRow, setPendingRow] = useState<{ userId: string; label: string } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const filters = {
     search,
@@ -708,13 +776,46 @@ function Directory() {
     queryFn: () => list({ data: filters }),
   });
 
+  const students = studentsQuery.data?.students ?? [];
+  const deletable = students.filter((s) => s.user_id).map((s) => s.user_id as string);
+  const allSelected = deletable.length > 0 && selected.length === deletable.length;
+
+  const refresh = () => {
+    setSelected([]);
+    return queryClient.invalidateQueries({ queryKey: ["student-credentials"] });
+  };
+
   const resetMutation = useMutation({
     mutationFn: (vars: { userId: string; password: string }) => reset({ data: vars }),
     onSuccess: () => toast.success("Password reset to the roll number"),
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const students = studentsQuery.data?.students ?? [];
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => removeOne({ data: { userId } }),
+    onSuccess: () => {
+      void refresh();
+      toast.success("Account deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (userIds: string[]) => removeMany({ data: { userIds } }),
+    onSuccess: (result) => {
+      void refresh();
+      if (result.failed.length) {
+        toast.warning(`Deleted ${result.deleted} — ${result.failed.length} could not be removed`, {
+          description: result.failed[0]?.reason,
+        });
+      } else {
+        toast.success(`Deleted ${result.deleted} account${result.deleted === 1 ? "" : "s"}`);
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy = deleteMutation.isPending || bulkDeleteMutation.isPending;
 
   return (
     <Card>
@@ -725,25 +826,37 @@ function Directory() {
             Passwords are not stored in readable form — reset restores the roll number.
           </CardDescription>
         </div>
-        <Button
-          variant="outline"
-          onClick={() =>
-            void exportCredentials(
-              students.map((s) => ({
-                roll: s.roll_number ?? "",
-                email: s.email ?? "",
-                password: s.roll_number ?? "",
-                batch: s.batch ?? "",
-                section: s.section ?? "",
-                year: s.year ?? "",
-              })),
-              "student-usernames",
-            )
-          }
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export list
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {selected.length > 0 && (
+            <Button variant="destructive" disabled={busy} onClick={() => setBulkOpen(true)}>
+              {bulkDeleteMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete selected ({selected.length})
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={() =>
+              void exportCredentials(
+                students.map((s) => ({
+                  roll: s.roll_number ?? "",
+                  email: s.email ?? "",
+                  password: s.roll_number ?? "",
+                  batch: s.batch ?? "",
+                  section: s.section ?? "",
+                  year: s.year ?? "",
+                })),
+                "student-usernames",
+              )
+            }
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export list
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-4">
@@ -768,27 +881,50 @@ function Directory() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  aria-label="Select all students"
+                  checked={allSelected}
+                  disabled={!deletable.length}
+                  onCheckedChange={(checked) => setSelected(checked === true ? deletable : [])}
+                />
+              </TableHead>
               <TableHead>Roll</TableHead>
               <TableHead>Username</TableHead>
               <TableHead>Batch</TableHead>
               <TableHead>Section</TableHead>
               <TableHead>Year</TableHead>
-              <TableHead className="text-right">Password</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {students.map((s) => (
-              <TableRow key={s.id}>
+              <TableRow key={s.id} data-state={s.user_id && selected.includes(s.user_id) ? "selected" : undefined}>
+                <TableCell>
+                  <Checkbox
+                    aria-label={`Select ${s.roll_number ?? s.email ?? "student"}`}
+                    disabled={!s.user_id}
+                    checked={!!s.user_id && selected.includes(s.user_id)}
+                    onCheckedChange={(checked) =>
+                      s.user_id &&
+                      setSelected((prev) =>
+                        checked === true
+                          ? [...prev, s.user_id as string]
+                          : prev.filter((id) => id !== s.user_id),
+                      )
+                    }
+                  />
+                </TableCell>
                 <TableCell className="font-mono text-xs">{s.roll_number}</TableCell>
                 <TableCell className="font-mono text-xs">{s.email}</TableCell>
                 <TableCell>{s.batch ?? "—"}</TableCell>
                 <TableCell>{s.section ?? "—"}</TableCell>
                 <TableCell>{s.year ?? "—"}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="space-x-2 text-right">
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={!s.user_id || !s.roll_number}
+                    disabled={!s.user_id || !s.roll_number || busy}
                     onClick={() =>
                       s.user_id &&
                       s.roll_number &&
@@ -801,15 +937,57 @@ function Directory() {
                     <KeyRound className="mr-2 h-3.5 w-3.5" />
                     Reset to roll
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!s.user_id || busy}
+                    onClick={() =>
+                      s.user_id &&
+                      setPendingRow({
+                        userId: s.user_id,
+                        label: s.roll_number ?? s.email ?? "this student",
+                      })
+                    }
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {!students.length && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  {studentsQuery.isLoading ? "Loading…" : "No student accounts match these filters."}
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
+
+      <ConfirmDelete
+        open={!!pendingRow}
+        onOpenChange={(open) => !open && setPendingRow(null)}
+        title={`Delete ${pendingRow?.label ?? ""}?`}
+        onConfirm={() => {
+          if (pendingRow) deleteMutation.mutate(pendingRow.userId);
+          setPendingRow(null);
+        }}
+      />
+
+      <ConfirmDelete
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        title={`Delete ${selected.length} selected account${selected.length === 1 ? "" : "s"}?`}
+        onConfirm={() => {
+          bulkDeleteMutation.mutate(selected);
+          setBulkOpen(false);
+        }}
+      />
     </Card>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 

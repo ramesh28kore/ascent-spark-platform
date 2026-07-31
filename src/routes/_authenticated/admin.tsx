@@ -39,9 +39,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { meQuery, batchesQuery } from "@/lib/crt-queries";
 import {
   createStaffAccount,
+  createStudentAccount,
   deleteAccount,
   deleteAccounts,
   generateStudentCredentials,
@@ -53,6 +61,7 @@ import {
   saveCredentialSettings,
   authoriseCredentialExport,
 } from "@/lib/admin.functions";
+
 
 import {
   csvEscape,

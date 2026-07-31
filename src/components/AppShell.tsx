@@ -87,10 +87,13 @@ const studentNav = [
   { title: "My scores", url: "/my-scores", icon: LineChart },
 ];
 
-const adminExtra = [
+// The super admin is limited to credential and role management.
+const adminNav = [
   { title: "Admin console", url: "/admin", icon: ShieldCheck },
   { title: "Roles & access", url: "/roles", icon: ShieldCheck },
 ];
+
+const ADMIN_ALLOWED = ["/admin", "/roles"];
 
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -99,9 +102,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const base = me?.isStaff ? staffNav : me?.isPlacement ? placementNav : studentNav;
-  const items = me?.isAdmin ? [...base, ...adminExtra] : base;
+  const isAdmin = !!me?.isAdmin;
+  const items = isAdmin
+    ? adminNav
+    : me?.isStaff
+      ? staffNav
+      : me?.isPlacement
+        ? placementNav
+        : studentNav;
   const unread = (notifications ?? []).filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    if (ADMIN_ALLOWED.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
+    navigate({ to: "/admin", replace: true });
+  }, [isAdmin, pathname, navigate]);
+
 
 
   async function signOut() {

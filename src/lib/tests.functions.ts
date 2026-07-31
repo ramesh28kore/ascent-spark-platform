@@ -147,10 +147,22 @@ export const getTestPaper = createServerFn({ method: "POST" })
 
     const ids = (items ?? []).map((i) => i.question_id);
     const { data: questions } = ids.length
-      ? await supabase.from("questions").select("id, prompt, options, level, bloom, marks, qtype").in("id", ids)
+      ? await supabase
+          .from("questions")
+          .select("id, prompt, options, level, bloom, marks, qtype, test_cases")
+          .in("id", ids)
       : { data: [] };
 
     const byId = new Map((questions ?? []).map((q) => [q.id, q]));
+    const visibleCases = (raw: unknown) =>
+      (Array.isArray(raw) ? raw : [])
+        .filter((c) => c && typeof c === "object" && !(c as { hidden?: boolean }).hidden)
+        .map((c) => ({
+          input: String((c as { input?: unknown }).input ?? ""),
+          expected_output: String((c as { expected_output?: unknown }).expected_output ?? ""),
+        }));
+    const caseCount = (raw: unknown) => (Array.isArray(raw) ? raw.length : 0);
+
     let paper = (items ?? []).map((i) => ({
       item_id: i.id,
       question_id: i.question_id,
@@ -159,6 +171,8 @@ export const getTestPaper = createServerFn({ method: "POST" })
       options: (byId.get(i.question_id)?.options ?? []) as unknown as string[],
       level: byId.get(i.question_id)?.level ?? "easy",
       qtype: (byId.get(i.question_id)?.qtype ?? "mcq") as string,
+      sample_cases: visibleCases(byId.get(i.question_id)?.test_cases),
+      total_cases: caseCount(byId.get(i.question_id)?.test_cases),
     }));
     if (test.shuffle) paper = seededShuffle(paper, `${test.id}:${profile?.id ?? userId}`);
 
@@ -171,8 +185,20 @@ export const getTestPaper = createServerFn({ method: "POST" })
           .maybeSingle()
       : { data: null };
 
-    return { test, paper, attempt, profile_id: profile?.id ?? null };
+    const { data: codingSubmissions } = await supabase
+      .from("coding_submissions")
+      .select("*")
+      .eq("test_id", data.test_id);
+
+    return {
+      test,
+      paper,
+      attempt,
+      profile_id: profile?.id ?? null,
+      codingSubmissions: codingSubmissions ?? [],
+    };
   });
+
 
 export const startAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -174,6 +174,82 @@ export type Database = {
           },
         ]
       }
+      coding_submissions: {
+        Row: {
+          ai_score: number
+          cases_passed: number
+          cases_total: number
+          code: string
+          created_at: string
+          feedback: string | null
+          id: string
+          language: string
+          max_score: number
+          question_id: string
+          status: string
+          student_id: string
+          test_id: string
+          updated_at: string
+          verdict: string
+        }
+        Insert: {
+          ai_score?: number
+          cases_passed?: number
+          cases_total?: number
+          code: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          language?: string
+          max_score?: number
+          question_id: string
+          status?: string
+          student_id: string
+          test_id: string
+          updated_at?: string
+          verdict?: string
+        }
+        Update: {
+          ai_score?: number
+          cases_passed?: number
+          cases_total?: number
+          code?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          language?: string
+          max_score?: number
+          question_id?: string
+          status?: string
+          student_id?: string
+          test_id?: string
+          updated_at?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coding_submissions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coding_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coding_submissions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mock_interviews: {
         Row: {
           created_at: string
@@ -459,6 +535,7 @@ export type Database = {
           options: Json
           prompt: string
           qtype: Database["public"]["Enums"]["question_type"]
+          test_cases: Json
         }
         Insert: {
           answer?: string | null
@@ -472,6 +549,7 @@ export type Database = {
           options?: Json
           prompt: string
           qtype?: Database["public"]["Enums"]["question_type"]
+          test_cases?: Json
         }
         Update: {
           answer?: string | null
@@ -485,6 +563,7 @@ export type Database = {
           options?: Json
           prompt?: string
           qtype?: Database["public"]["Enums"]["question_type"]
+          test_cases?: Json
         }
         Relationships: [
           {
@@ -883,6 +962,7 @@ export type Database = {
           options: Json
           prompt: string
           qtype: Database["public"]["Enums"]["question_type"]
+          test_cases: Json
         }[]
         SetofOptions: {
           from: "*"

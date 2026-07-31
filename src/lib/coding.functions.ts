@@ -207,7 +207,9 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
       memory_kb,
       cases_passed: casesPassed,
       cases_total: casesTotal,
+      case_results: caseResults,
     };
+
   });
 
 

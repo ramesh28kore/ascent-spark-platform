@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { runJavaScript, runPython, type RunResult } from "@/lib/runner/run-code";
+import { CodeEditor } from "@/components/CodeEditor";
 
 type Lang = "javascript" | "python";
 
@@ -186,15 +187,14 @@ export function CodeRunner({
         </div>
       ) : (
         <>
-          <Textarea
+          <CodeEditor
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={locked}
-            rows={14}
-            spellCheck={false}
-            placeholder="Write your solution here…"
-            className="font-mono text-xs"
+            onChange={(next) => onChange(next)}
+            language={lang}
+            height={320}
+            readOnly={locked}
           />
+
 
           {sampleCases.length > 0 && (
             <div className="rounded-md border p-2">

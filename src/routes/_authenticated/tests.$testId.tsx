@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AlertTriangle, Timer } from "lucide-react";
 
 import { getTestPaper, startAttempt, submitAttempt } from "@/lib/tests.functions";
+import { saveTheoryAnswer } from "@/lib/exams.functions";
 import { gradeCodingSubmission } from "@/lib/coding.functions";
 
 import { meQuery } from "@/lib/crt-queries";
@@ -18,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeRunner } from "@/components/CodeRunner";
+import { Leaderboard } from "@/components/Leaderboard";
 
 
 export const Route = createFileRoute("/_authenticated/tests/$testId")({
@@ -94,9 +96,26 @@ function TestRunner() {
       : null;
   };
 
+  const saveTheory = useServerFn(saveTheoryAnswer);
+
   const send = useMutation({
-    mutationFn: () =>
-      submit({ data: { test_id: testId, responses, blur_count: blurCount } }),
+    mutationFn: async () => {
+      // Written answers need a human evaluator, so persist them before auto-grading.
+      const written = (paper.data?.paper ?? []).filter(
+        (q) => q.qtype === "descriptive" && (responses[q.question_id] ?? "").trim().length > 0,
+      );
+      for (const question of written) {
+        await saveTheory({
+          data: {
+            test_id: testId,
+            question_id: question.question_id,
+            answer: responses[question.question_id],
+            max_marks: question.marks ?? 1,
+          },
+        }).catch(() => undefined);
+      }
+      return submit({ data: { test_id: testId, responses, blur_count: blurCount } });
+    },
     onSuccess: (r) => {
       toast.success(`Submitted — ${r.score}/${r.maxScore}`);
       queryClient.invalidateQueries({ queryKey: ["test-paper", testId] });
@@ -104,6 +123,7 @@ function TestRunner() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
 
   // Start the attempt once for students.
@@ -302,6 +322,11 @@ function TestRunner() {
           Submit test
         </Button>
       )}
+
+      {paper.data?.test.leaderboard && (submitted || isStaff) ? (
+        <Leaderboard testId={testId} />
+      ) : null}
+
     </div>
   );
 }

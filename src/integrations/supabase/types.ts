@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author_id: string | null
+          batch_id: string | null
+          body: string
+          created_at: string
+          id: string
+          pinned: boolean
+          title: string
+        }
+        Insert: {
+          author_id?: string | null
+          batch_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title: string
+        }
+        Update: {
+          author_id?: string | null
+          batch_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessments: {
         Row: {
           created_at: string
@@ -91,6 +129,39 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          entity: string
+          entity_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity: string
+          entity_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity?: string
+          entity_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       batches: {
         Row: {
           academic_year: string
@@ -120,6 +191,109 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          problem_id: string | null
+          question_id: string | null
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          problem_id?: string | null
+          question_id?: string | null
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          problem_id?: string | null
+          question_id?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          code: string
+          created_at: string
+          holder_name: string
+          id: string
+          issued_on: string
+          kind: string
+          max_score: number
+          module_id: string | null
+          score: number
+          student_id: string
+          title: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          holder_name: string
+          id?: string
+          issued_on?: string
+          kind?: string
+          max_score?: number
+          module_id?: string | null
+          score?: number
+          student_id: string
+          title: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          holder_name?: string
+          id?: string
+          issued_on?: string
+          kind?: string
+          max_score?: number
+          module_id?: string | null
+          score?: number
+          student_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coding_problems: {
         Row: {
@@ -177,15 +351,19 @@ export type Database = {
       coding_submissions: {
         Row: {
           ai_score: number
+          case_results: Json
           cases_passed: number
           cases_total: number
           code: string
           created_at: string
           feedback: string | null
           id: string
+          judged_by: string
           language: string
           max_score: number
+          memory_kb: number
           question_id: string
+          runtime_ms: number
           status: string
           student_id: string
           test_id: string
@@ -194,15 +372,19 @@ export type Database = {
         }
         Insert: {
           ai_score?: number
+          case_results?: Json
           cases_passed?: number
           cases_total?: number
           code: string
           created_at?: string
           feedback?: string | null
           id?: string
+          judged_by?: string
           language?: string
           max_score?: number
+          memory_kb?: number
           question_id: string
+          runtime_ms?: number
           status?: string
           student_id: string
           test_id: string
@@ -211,15 +393,19 @@ export type Database = {
         }
         Update: {
           ai_score?: number
+          case_results?: Json
           cases_passed?: number
           cases_total?: number
           code?: string
           created_at?: string
           feedback?: string | null
           id?: string
+          judged_by?: string
           language?: string
           max_score?: number
+          memory_kb?: number
           question_id?: string
+          runtime_ms?: number
           status?: string
           student_id?: string
           test_id?: string
@@ -246,6 +432,65 @@ export type Database = {
             columns: ["test_id"]
             isOneToOne: false
             referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discussion_posts: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          parent_id: string | null
+          problem_id: string | null
+          question_id: string | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          problem_id?: string | null
+          question_id?: string | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          problem_id?: string | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_posts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_posts_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discussion_posts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
@@ -391,35 +636,50 @@ export type Database = {
       }
       practice_problems: {
         Row: {
+          category: string
+          company: string | null
           created_at: string
+          hints: Json
           id: string
           level: Database["public"]["Enums"]["difficulty"]
           module_id: string | null
           platform: string
           points: number
+          solution: string | null
           sort_order: number
+          statement: string | null
           title: string
           url: string | null
         }
         Insert: {
+          category?: string
+          company?: string | null
           created_at?: string
+          hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
           module_id?: string | null
           platform?: string
           points?: number
+          solution?: string | null
           sort_order?: number
+          statement?: string | null
           title: string
           url?: string | null
         }
         Update: {
+          category?: string
+          company?: string | null
           created_at?: string
+          hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
           module_id?: string | null
           platform?: string
           points?: number
+          solution?: string | null
           sort_order?: number
+          statement?: string | null
           title?: string
           url?: string | null
         }
@@ -526,44 +786,68 @@ export type Database = {
         Row: {
           answer: string | null
           bloom: string
+          buggy_code: string | null
+          category: string
+          company: string | null
           created_at: string
           explanation: string | null
+          hints: Json
           id: string
           level: Database["public"]["Enums"]["difficulty"]
           marks: number
+          memory_limit_kb: number
           module_id: string | null
           options: Json
           prompt: string
           qtype: Database["public"]["Enums"]["question_type"]
+          solution: string | null
+          starter_code: string | null
           test_cases: Json
+          time_limit_ms: number
         }
         Insert: {
           answer?: string | null
           bloom?: string
+          buggy_code?: string | null
+          category?: string
+          company?: string | null
           created_at?: string
           explanation?: string | null
+          hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
           marks?: number
+          memory_limit_kb?: number
           module_id?: string | null
           options?: Json
           prompt: string
           qtype?: Database["public"]["Enums"]["question_type"]
+          solution?: string | null
+          starter_code?: string | null
           test_cases?: Json
+          time_limit_ms?: number
         }
         Update: {
           answer?: string | null
           bloom?: string
+          buggy_code?: string | null
+          category?: string
+          company?: string | null
           created_at?: string
           explanation?: string | null
+          hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
           marks?: number
+          memory_limit_kb?: number
           module_id?: string | null
           options?: Json
           prompt?: string
           qtype?: Database["public"]["Enums"]["question_type"]
+          solution?: string | null
+          starter_code?: string | null
           test_cases?: Json
+          time_limit_ms?: number
         }
         Relationships: [
           {
@@ -619,6 +903,116 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rubric_scores: {
+        Row: {
+          assessment_id: string | null
+          comments: string | null
+          created_at: string
+          evaluator_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["exam_kind"]
+          max_total: number
+          released: boolean
+          rubric_id: string | null
+          scores: Json
+          student_id: string
+          test_id: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          comments?: string | null
+          created_at?: string
+          evaluator_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["exam_kind"]
+          max_total?: number
+          released?: boolean
+          rubric_id?: string | null
+          scores?: Json
+          student_id: string
+          test_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          comments?: string | null
+          created_at?: string
+          evaluator_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["exam_kind"]
+          max_total?: number
+          released?: boolean
+          rubric_id?: string | null
+          scores?: Json
+          student_id?: string
+          test_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubric_scores_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rubric_scores_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "rubrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rubric_scores_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rubric_scores_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rubrics: {
+        Row: {
+          created_at: string
+          criteria: Json
+          id: string
+          kind: Database["public"]["Enums"]["exam_kind"]
+          max_marks: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json
+          id?: string
+          kind?: Database["public"]["Enums"]["exam_kind"]
+          max_marks?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          id?: string
+          kind?: Database["public"]["Enums"]["exam_kind"]
+          max_marks?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       scores: {
         Row: {
@@ -732,6 +1126,44 @@ export type Database = {
           },
         ]
       }
+      snippets: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          language: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          id?: string
+          language?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          language?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snippets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       test_attempts: {
         Row: {
           blur_count: number
@@ -830,11 +1262,16 @@ export type Database = {
           assessment_id: string | null
           batch_id: string | null
           created_at: string
+          difficulty: Database["public"]["Enums"]["difficulty"]
           duration_min: number
           ends_at: string | null
+          exam_kind: Database["public"]["Enums"]["exam_kind"]
           id: string
+          leaderboard: boolean
           module_id: string | null
+          negative_marking: number
           published: boolean
+          results_released: boolean
           shuffle: boolean
           starts_at: string
           title: string
@@ -844,11 +1281,16 @@ export type Database = {
           assessment_id?: string | null
           batch_id?: string | null
           created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty"]
           duration_min?: number
           ends_at?: string | null
+          exam_kind?: Database["public"]["Enums"]["exam_kind"]
           id?: string
+          leaderboard?: boolean
           module_id?: string | null
+          negative_marking?: number
           published?: boolean
+          results_released?: boolean
           shuffle?: boolean
           starts_at?: string
           title: string
@@ -858,11 +1300,16 @@ export type Database = {
           assessment_id?: string | null
           batch_id?: string | null
           created_at?: string
+          difficulty?: Database["public"]["Enums"]["difficulty"]
           duration_min?: number
           ends_at?: string | null
+          exam_kind?: Database["public"]["Enums"]["exam_kind"]
           id?: string
+          leaderboard?: boolean
           module_id?: string | null
+          negative_marking?: number
           published?: boolean
+          results_released?: boolean
           shuffle?: boolean
           starts_at?: string
           title?: string
@@ -888,6 +1335,70 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      theory_answers: {
+        Row: {
+          answer: string
+          awarded: number | null
+          comment: string | null
+          created_at: string
+          evaluated_at: string | null
+          id: string
+          max_marks: number
+          question_id: string
+          student_id: string
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: string
+          awarded?: number | null
+          comment?: string | null
+          created_at?: string
+          evaluated_at?: string | null
+          id?: string
+          max_marks?: number
+          question_id: string
+          student_id: string
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          awarded?: number | null
+          comment?: string | null
+          created_at?: string
+          evaluated_at?: string | null
+          id?: string
+          max_marks?: number
+          question_id?: string
+          student_id?: string
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theory_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "theory_answers_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "theory_answers_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
             referencedColumns: ["id"]
           },
         ]
@@ -953,16 +1464,24 @@ export type Database = {
         Returns: {
           answer: string | null
           bloom: string
+          buggy_code: string | null
+          category: string
+          company: string | null
           created_at: string
           explanation: string | null
+          hints: Json
           id: string
           level: Database["public"]["Enums"]["difficulty"]
           marks: number
+          memory_limit_kb: number
           module_id: string | null
           options: Json
           prompt: string
           qtype: Database["public"]["Enums"]["question_type"]
+          solution: string | null
+          starter_code: string | null
           test_cases: Json
+          time_limit_ms: number
         }[]
         SetofOptions: {
           from: "*"
@@ -971,11 +1490,30 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      test_leaderboard: {
+        Args: { _test_id: string }
+        Returns: {
+          full_name: string
+          max_score: number
+          roll_number: string
+          score: number
+          seconds: number
+          student_id: string
+          submitted_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "trainer" | "student" | "admin" | "placement"
       assessment_kind: "weekly_test" | "mock_nqt" | "coding_test" | "interview"
       difficulty: "easy" | "medium" | "hard"
+      exam_kind:
+        | "mcq_quiz"
+        | "theory"
+        | "programming"
+        | "debugging"
+        | "challenge"
+        | "viva"
       practice_status: "todo" | "attempted" | "solved"
       question_type: "mcq" | "coding" | "descriptive"
       session_status: "planned" | "conducted" | "cancelled"
@@ -1109,6 +1647,14 @@ export const Constants = {
       app_role: ["trainer", "student", "admin", "placement"],
       assessment_kind: ["weekly_test", "mock_nqt", "coding_test", "interview"],
       difficulty: ["easy", "medium", "hard"],
+      exam_kind: [
+        "mcq_quiz",
+        "theory",
+        "programming",
+        "debugging",
+        "challenge",
+        "viva",
+      ],
       practice_status: ["todo", "attempted", "solved"],
       question_type: ["mcq", "coding", "descriptive"],
       session_status: ["planned", "conducted", "cancelled"],

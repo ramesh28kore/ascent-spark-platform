@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Award,
   UploadCloud,
   LayoutDashboard,
   BookOpen,
@@ -48,11 +49,15 @@ const staffNav = [
   { title: "Modules", url: "/modules", icon: BookOpen },
   { title: "Students", url: "/students", icon: Users },
   { title: "Readiness", url: "/readiness", icon: Gauge },
+  { title: "Analytics", url: "/analytics", icon: LineChart },
   { title: "Assessments", url: "/assessments", icon: ClipboardList },
   { title: "Online tests", url: "/tests", icon: Timer },
+  { title: "Evaluation desk", url: "/evaluate", icon: ClipboardList },
   { title: "Question bank", url: "/questions", icon: FileQuestion },
   { title: "Coding library", url: "/coding", icon: Code2 },
   { title: "Practice ladder", url: "/practice", icon: Code2 },
+  { title: "Playground", url: "/playground", icon: Code2 },
+  { title: "Certificates", url: "/certificates", icon: Award },
   { title: "Resources", url: "/resources", icon: Library },
   { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Bulk import", url: "/import", icon: UploadCloud },
@@ -61,7 +66,9 @@ const staffNav = [
 const placementNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Readiness", url: "/readiness", icon: Gauge },
+  { title: "Analytics", url: "/analytics", icon: LineChart },
   { title: "Students", url: "/students", icon: Users },
+  { title: "Certificates", url: "/certificates", icon: Award },
   { title: "Alerts", url: "/alerts", icon: Bell },
 ];
 
@@ -71,15 +78,17 @@ const studentNav = [
   { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Online tests", url: "/tests", icon: Timer },
   { title: "Assessments", url: "/assessments", icon: ClipboardList },
-
   { title: "Practice ladder", url: "/practice", icon: Code2 },
+  { title: "Playground", url: "/playground", icon: Code2 },
   { title: "Coding library", url: "/coding", icon: Code2 },
+  { title: "Certificates", url: "/certificates", icon: Award },
   { title: "Resources", url: "/resources", icon: Library },
   { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "My scores", url: "/my-scores", icon: LineChart },
 ];
 
 const adminExtra = [{ title: "Roles & access", url: "/roles", icon: ShieldCheck }];
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { data: me } = useQuery(meQuery);

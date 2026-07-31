@@ -364,6 +364,108 @@ export const generateStudentCredentials = createServerFn({ method: "POST" })
     return { created, skipped };
   });
 
+/**
+ * Read-only dry run for the single-credential flow. Resolves the username and
+ * password that WOULD be issued and reports blocking problems. Writes nothing
+ * and records no audit entry.
+ */
+export const previewCredential = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        kind: z.enum(["student", "trainer"]),
+        roll: z.string().trim().max(40).optional().default(""),
+        fullName: z.string().trim().max(160).optional().default(""),
+        domain: z.string().trim().max(80).optional().default(""),
+        email: z.string().trim().max(160).optional().default(""),
+        password: z.string().max(72).optional().default(""),
+        branch: z.string().trim().max(60).optional().default(""),
+        year: z.string().trim().max(20).optional().default(""),
+        section: z.string().trim().max(20).optional().default(""),
+        role: z.enum(["trainer", "placement", "admin"]).optional().default("trainer"),
+        batchName: z.string().trim().max(80).optional().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const db = await admin();
+
+    const problems: string[] = [];
+    const warnings: string[] = [];
+
+    let username = "";
+    let password = "";
+
+    if (data.kind === "student") {
+      const { data: settings } = await db
+        .from("credential_settings")
+        .select("domains, default_domain")
+        .maybeSingle();
+      const allowed = settings?.domains ?? [DEFAULT_DOMAIN];
+      const domain = data.domain.toLowerCase().replace(/^@/, "").trim();
+      const roll = normaliseRoll(data.roll);
+
+      if (roll.length < 3) problems.push("Enter a roll number of at least 3 characters.");
+      if (!domain) problems.push("Choose an email domain.");
+      else if (!allowed.includes(domain)) {
+        problems.push(`${domain} is not one of the configured email domains.`);
+      }
+
+      username = roll && domain ? rollToEmail(roll, domain) : "";
+      password = roll;
+      if (password && password.length < 6) {
+        warnings.push("The roll number is shorter than 6 characters — a weak password.");
+      }
+      if (!data.fullName) warnings.push("No full name given — the roll number will be used instead.");
+    } else {
+      const email = data.email.toLowerCase().trim();
+      username = email;
+      password = data.password;
+
+      if (data.fullName.trim().length < 2) problems.push("Enter the trainer's full name.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) problems.push("Enter a valid email address.");
+      if (password.length < 8) problems.push("Password must be at least 8 characters.");
+      if (data.role === "admin") {
+        warnings.push("This account will have full super-admin credential powers.");
+      }
+    }
+
+    const exists = username ? Boolean(await findUserIdByEmail(db, username)) : false;
+    if (exists) problems.push(`An account already exists for ${username}.`);
+
+    return {
+      kind: data.kind,
+      username,
+      password,
+      exists,
+      problems,
+      warnings,
+      details: {
+        name: data.fullName || (data.kind === "student" ? normaliseRoll(data.roll) : ""),
+        role: data.kind === "student" ? "student" : data.role,
+        branch: data.branch,
+        year: data.year,
+        section: data.section,
+        batch: data.batchName,
+      },
+      requirements:
+        data.kind === "student"
+          ? [
+              { label: "Password is the roll number in original case", ok: true },
+              { label: "At least 6 characters", ok: password.length >= 6 },
+              { label: "Username derived from an approved domain", ok: Boolean(username) },
+            ]
+          : [
+              { label: "At least 8 characters", ok: password.length >= 8 },
+              { label: "Contains a letter", ok: /[A-Za-z]/.test(password) },
+              { label: "Contains a number", ok: /[0-9]/.test(password) },
+              { label: "Contains a symbol", ok: /[^A-Za-z0-9]/.test(password) },
+            ],
+    };
+  });
+
 /** Issue a single student login from the credentials directory. */
 export const createStudentAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

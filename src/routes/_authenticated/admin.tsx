@@ -3,7 +3,19 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Download, KeyRound, Loader2, Trash2, UserPlus, Wand2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  Copy,
+  Download,
+  KeyRound,
+  Loader2,
+  Trash2,
+  UserPlus,
+  Wand2,
+  X,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { AppShell } from "@/components/AppShell";
@@ -56,6 +68,7 @@ import {
   getCredentialSettings,
   listStaffAccounts,
   listStudentCredentials,
+  previewCredential,
   previewStudentCredentials,
   resetAccountPassword,
   saveCredentialSettings,
@@ -749,6 +762,140 @@ function IssuedCredentials({ email, password }: { email: string; password: strin
   );
 }
 
+type CredentialPreview = {
+  kind: "student" | "trainer";
+  username: string;
+  password: string;
+  exists: boolean;
+  problems: string[];
+  warnings: string[];
+  details: { name: string; role: string; branch: string; year: string; section: string; batch: string };
+  requirements: { label: string; ok: boolean }[];
+};
+
+function ReviewPanel({
+  preview,
+  onBack,
+  onConfirm,
+  busy,
+}: {
+  preview: CredentialPreview;
+  onBack: () => void;
+  onConfirm: () => void;
+  busy: boolean;
+}) {
+  const detail = preview.details;
+  const rows: [string, string][] = [
+    ["Name", detail.name || "—"],
+    ["Role", detail.role],
+    ["Branch", detail.branch || "—"],
+    ...(preview.kind === "student"
+      ? ([
+          ["Year", detail.year || "—"],
+          ["Section", detail.section || "—"],
+          ["Batch", detail.batch || "No batch"],
+        ] as [string, string][])
+      : []),
+  ];
+
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="rounded-md border bg-muted/40 p-3">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Credential to be issued
+        </p>
+        <div className="space-y-1 font-mono text-xs">
+          <p>Username: {preview.username || "—"}</p>
+          <p>Password: {preview.password || "—"}</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-3"
+          disabled={!preview.username}
+          onClick={() => {
+            navigator.clipboard.writeText(`${preview.username} / ${preview.password}`);
+            toast.success("Credentials copied");
+          }}
+        >
+          <Copy className="mr-2 h-3.5 w-3.5" />
+          Copy
+        </Button>
+      </div>
+
+      <div className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-2 border-b py-1">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="text-right">{value}</span>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Password requirements
+        </p>
+        <ul className="space-y-1 text-sm">
+          {preview.requirements.map((r) => (
+            <li key={r.label} className="flex items-center gap-2">
+              {r.ok ? (
+                <Check className="h-3.5 w-3.5 text-accent" />
+              ) : (
+                <X className="h-3.5 w-3.5 text-destructive" />
+              )}
+              <span className={r.ok ? "" : "text-destructive"}>{r.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {preview.warnings.length > 0 && (
+        <div className="rounded-md border border-accent/40 bg-accent/10 p-3 text-sm">
+          {preview.warnings.map((w) => (
+            <p key={w} className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              {w}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {preview.problems.length > 0 && (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          {preview.problems.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Nothing has been saved yet. The account and its audit entry are written only when you
+        confirm.
+      </p>
+
+      <div className="flex gap-2">
+        <Button variant="outline" className="flex-1" onClick={onBack} disabled={busy}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to edit
+        </Button>
+        <Button
+          className="flex-1"
+          disabled={busy || preview.problems.length > 0}
+          onClick={onConfirm}
+        >
+          {busy ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <UserPlus className="mr-2 h-4 w-4" />
+          )}
+          Create login
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function CreateCredentialDialog({
   open,
   onOpenChange,
@@ -760,12 +907,14 @@ function CreateCredentialDialog({
 }) {
   const createStudent = useServerFn(createStudentAccount);
   const createStaff = useServerFn(createStaffAccount);
+  const preview = useServerFn(previewCredential);
   const { data: settings } = useDomains();
   const { data: batches } = useQuery(batchesQuery);
 
   const domains = settings?.domains ?? [];
   const [kind, setKind] = useState<"student" | "trainer">("student");
   const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
+  const [review, setReview] = useState<CredentialPreview | null>(null);
 
   // Student fields
   const [roll, setRoll] = useState("");
@@ -786,6 +935,10 @@ function CreateCredentialDialog({
   const activeDomain = domain || settings?.defaultDomain || domains[0] || "";
   const normalisedRoll = roll.trim() ? normaliseRoll(roll) : "";
   const previewEmail = normalisedRoll && activeDomain ? rollToEmail(normalisedRoll, activeDomain) : "";
+  const batchName =
+    batchId === NONE
+      ? ""
+      : ((batches ?? []).find((b: { id: string; name: string }) => b.id === batchId)?.name ?? "");
 
   const reset = () => {
     setRoll("");
@@ -798,7 +951,36 @@ function CreateCredentialDialog({
     setEmail("");
     setStaffBranch("");
     setPassword(randomPassword());
+    setReview(null);
   };
+
+  const previewMutation = useMutation({
+    mutationFn: () =>
+      preview({
+        data:
+          kind === "student"
+            ? {
+                kind: "student" as const,
+                roll,
+                fullName: studentName,
+                domain: activeDomain,
+                branch,
+                year,
+                section,
+                batchName,
+              }
+            : {
+                kind: "trainer" as const,
+                fullName,
+                email,
+                password,
+                branch: staffBranch,
+                role,
+              },
+      }),
+    onSuccess: (data) => setReview(data as CredentialPreview),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const studentMutation = useMutation({
     mutationFn: () =>
@@ -811,10 +993,7 @@ function CreateCredentialDialog({
           year,
           section,
           batchId: batchId === NONE ? null : batchId,
-          batchName:
-            batchId === NONE
-              ? ""
-              : ((batches ?? []).find((b: { id: string; name: string }) => b.id === batchId)?.name ?? ""),
+          batchName,
         },
       }),
     onSuccess: (data) => {
@@ -839,24 +1018,40 @@ function CreateCredentialDialog({
   });
 
   const busy = studentMutation.isPending || staffMutation.isPending;
+  const reviewing = review !== null;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) setIssued(null);
+        if (!next) {
+          setIssued(null);
+          setReview(null);
+        }
         onOpenChange(next);
       }}
     >
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display">Create new credential</DialogTitle>
+          <DialogTitle className="font-display">
+            {reviewing ? "Review credential" : "Create new credential"}
+          </DialogTitle>
           <DialogDescription>
-            Issue a single login. The account is active immediately — no email confirmation.
+            {reviewing
+              ? "Check the username, password and details before anything is saved."
+              : "Issue a single login. You will review it before it is created."}
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={kind} onValueChange={(v) => { setKind(v as "student" | "trainer"); setIssued(null); }}>
+        {reviewing ? (
+          <ReviewPanel
+            preview={review}
+            busy={busy}
+            onBack={() => setReview(null)}
+            onConfirm={() => (kind === "student" ? studentMutation.mutate() : staffMutation.mutate())}
+          />
+        ) : (
+        <Tabs value={kind} onValueChange={(v) => { setKind(v as "student" | "trainer"); setIssued(null); setReview(null); }}>
           <TabsList className="w-full">
             <TabsTrigger value="student" className="flex-1">
               Student
@@ -945,15 +1140,15 @@ function CreateCredentialDialog({
 
             <Button
               className="w-full"
-              disabled={busy || normalisedRoll.length < 3 || !activeDomain}
-              onClick={() => studentMutation.mutate()}
+              disabled={previewMutation.isPending || normalisedRoll.length < 3 || !activeDomain}
+              onClick={() => previewMutation.mutate()}
             >
-              {studentMutation.isPending ? (
+              {previewMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
+                <KeyRound className="mr-2 h-4 w-4" />
               )}
-              Create student login
+              Review credential
             </Button>
           </TabsContent>
 
@@ -1007,18 +1202,21 @@ function CreateCredentialDialog({
 
             <Button
               className="w-full"
-              disabled={busy || fullName.trim().length < 2 || !email.trim() || password.length < 8}
-              onClick={() => staffMutation.mutate()}
+              disabled={
+                previewMutation.isPending || fullName.trim().length < 2 || !email.trim() || !password
+              }
+              onClick={() => previewMutation.mutate()}
             >
-              {staffMutation.isPending ? (
+              {previewMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
+                <KeyRound className="mr-2 h-4 w-4" />
               )}
-              Create trainer login
+              Review credential
             </Button>
           </TabsContent>
         </Tabs>
+        )}
 
         {issued && <IssuedCredentials email={issued.email} password={issued.password} />}
       </DialogContent>

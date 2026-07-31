@@ -261,7 +261,15 @@ export const deleteAccounts = createServerFn({ method: "POST" })
         continue;
       }
       try {
+        if (await isSuperAdmin(db, userId)) {
+          failed.push({
+            userId,
+            reason: "The super admin account is permanent and cannot be deleted.",
+          });
+          continue;
+        }
         const { error } = await db.auth.admin.deleteUser(userId);
+
         if (error) failed.push({ userId, reason: error.message });
         else deleted += 1;
       } catch (err) {

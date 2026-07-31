@@ -730,7 +730,9 @@ function ConfirmDelete({
 
 /* ------------------------------------------------------------------ */
 
+function Directory() {
   const queryClient = useQueryClient();
+
   const list = useServerFn(listStudentCredentials);
   const reset = useServerFn(resetAccountPassword);
   const removeOne = useServerFn(deleteAccount);

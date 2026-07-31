@@ -140,6 +140,28 @@ function EvaluatePage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  /* coding review */
+  const submissionsFn = useServerFn(getCodingSubmissions);
+  const overrideFn = useServerFn(overrideCodingScore);
+  const tests = useQuery(testsQuery);
+  const [reviewTest, setReviewTest] = useState("");
+  const [overrides, setOverrides] = useState<Record<string, string>>({});
+
+  const codingSubs = useQuery({
+    queryKey: ["coding-submissions", reviewTest],
+    queryFn: () => submissionsFn({ data: { test_id: reviewTest } }),
+    enabled: !!reviewTest,
+  });
+
+  const override = useMutation({
+    mutationFn: (vars: { id: string; ai_score: number }) => overrideFn({ data: vars }),
+    onSuccess: () => {
+      toast.success("Score updated");
+      queryClient.invalidateQueries({ queryKey: ["coding-submissions", reviewTest] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const awaiting = (pending.data ?? []).filter((row) => row.evaluated_at === null);
   const done = (pending.data ?? []).filter((row) => row.evaluated_at !== null);
 
@@ -162,9 +184,111 @@ function EvaluatePage() {
               </Badge>
             ) : null}
           </TabsTrigger>
+          <TabsTrigger value="coding">Coding review</TabsTrigger>
           <TabsTrigger value="viva">Viva scoring</TabsTrigger>
           <TabsTrigger value="rubrics">Rubrics</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="coding" className="space-y-4 pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Coding submissions</CardTitle>
+              <CardDescription>
+                Per-case sandbox verdicts, including hidden cases, so you can confirm or override a
+                machine score.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Test</Label>
+                <Select value={reviewTest} onValueChange={setReviewTest}>
+                  <SelectTrigger className="max-w-md">
+                    <SelectValue placeholder="Pick a test" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(tests.data ?? []).map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {reviewTest && (codingSubs.data ?? []).length === 0 && !codingSubs.isLoading && (
+                <p className="text-sm text-muted-foreground">
+                  No coding submissions for this test yet.
+                </p>
+              )}
+
+              {(codingSubs.data ?? []).map((row) => (
+                <div key={row.id} className="space-y-3 rounded-md border p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {studentMap.get(row.student_id) ?? "Student"}
+                    </span>
+                    <Badge variant="outline">{row.verdict}</Badge>
+                    <Badge>
+                      {Number(row.ai_score)} / {Number(row.max_score)}
+                    </Badge>
+                    {row.status === "pending_review" && (
+                      <Badge variant="destructive">Needs review</Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {questionMap.get(row.question_id) ?? ""}
+                    </span>
+                  </div>
+
+                  <CaseResults
+                    results={row.case_results}
+                    passed={Number(row.cases_passed ?? 0)}
+                    total={Number(row.cases_total ?? 0)}
+                    judgedBy={row.judged_by}
+                    runtimeMs={Number(row.runtime_ms ?? 0)}
+                    memoryKb={Number(row.memory_kb ?? 0)}
+                    revealHidden
+                  />
+
+                  {row.feedback && <p className="text-xs">{row.feedback}</p>}
+
+                  <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-2 font-mono text-[11px] whitespace-pre-wrap">
+                    {row.code}
+                  </pre>
+
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Override marks</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={Number(row.max_score)}
+                        className="h-8 w-28"
+                        value={overrides[row.id] ?? String(row.ai_score ?? 0)}
+                        onChange={(e) =>
+                          setOverrides((prev) => ({ ...prev, [row.id]: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={override.isPending}
+                      onClick={() =>
+                        override.mutate({
+                          id: row.id,
+                          ai_score: Number(overrides[row.id] ?? row.ai_score ?? 0),
+                        })
+                      }
+                    >
+                      Save score
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
 
         <TabsContent value="theory" className="space-y-4 pt-4">
           {awaiting.length === 0 ? (

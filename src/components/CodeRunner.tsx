@@ -179,13 +179,17 @@ export function CodeRunner({
             {submission.status === "pending_review" && (
               <Badge variant="destructive">Awaiting trainer review</Badge>
             )}
-            {submission.cases_total > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {submission.cases_passed}/{submission.cases_total} cases passed locally
-              </span>
-            )}
           </div>
           {submission.feedback && <p className="text-xs">{submission.feedback}</p>}
+          <CaseResults
+            results={submission.case_results}
+            passed={submission.cases_passed}
+            total={submission.cases_total}
+            judgedBy={submission.judged_by}
+            runtimeMs={submission.runtime_ms}
+            memoryKb={submission.memory_kb}
+          />
+
           <pre className="max-h-56 overflow-auto rounded-md border bg-background p-2 font-mono text-xs whitespace-pre-wrap">
             {submission.code}
           </pre>

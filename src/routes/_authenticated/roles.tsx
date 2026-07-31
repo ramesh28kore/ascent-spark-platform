@@ -116,6 +116,7 @@ function RolesPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Roll</TableHead>
                 <TableHead className="w-[200px]">Role</TableHead>
+                {isAdmin && <TableHead className="w-[110px] text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,12 +148,61 @@ function RolesPage() {
                       <Badge variant="secondary">{roleFor(p.user_id!)}</Badge>
                     )}
                   </TableCell>
+                  {isAdmin && (
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        disabled={p.user_id === myUserId || remove.isPending}
+                        title={
+                          p.user_id === myUserId
+                            ? "You cannot remove your own account"
+                            : "Delete account"
+                        }
+                        onClick={() =>
+                          setPendingDelete({ userId: p.user_id!, name: p.full_name })
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete {p.full_name}</span>
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {pendingDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the login, profile and role assignment. This cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={remove.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDelete) remove.mutate(pendingDelete.userId);
+              }}
+            >
+              {remove.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

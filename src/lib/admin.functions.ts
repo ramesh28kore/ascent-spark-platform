@@ -378,3 +378,22 @@ export const listStudentCredentials = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { students: rows ?? [] };
   });
+
+/**
+ * Gate for any credential sheet download. Throws unless the caller is the super
+ * admin, and records the export in the audit log.
+ */
+export const authoriseCredentialExport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ label: z.string().min(1), count: z.number().int().min(0) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const db = await admin();
+    await audit(db, context.userId, "credential_export", "credentials", {
+      label: data.label,
+      count: data.count,
+    });
+    return { ok: true as const };
+  });

@@ -682,7 +682,11 @@ function StaffAccounts() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => s.user_id && deleteMutation.mutate(s.user_id)}
+                      disabled={!s.user_id}
+                      onClick={() =>
+                        s.user_id &&
+                        setPendingStaff({ userId: s.user_id, label: s.full_name ?? s.email ?? "this account" })
+                      }
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -693,7 +697,18 @@ function StaffAccounts() {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDelete
+        open={!!pendingStaff}
+        onOpenChange={(open) => !open && setPendingStaff(null)}
+        title={`Delete ${pendingStaff?.label ?? ""}?`}
+        onConfirm={() => {
+          if (pendingStaff) deleteMutation.mutate(pendingStaff.userId);
+          setPendingStaff(null);
+        }}
+      />
     </div>
+
   );
 }
 

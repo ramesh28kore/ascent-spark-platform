@@ -541,6 +541,8 @@ function StaffAccounts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [pendingStaff, setPendingStaff] = useState<{ userId: string; label: string } | null>(null);
+
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => remove({ data: { userId } }),
     onSuccess: () => {

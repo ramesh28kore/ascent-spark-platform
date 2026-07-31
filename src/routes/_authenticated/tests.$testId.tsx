@@ -194,12 +194,27 @@ function TestRunner() {
                     }
                     onChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
                     disabled={submitted || isStaff}
+                    marks={q.marks}
+                    sampleCases={q.sample_cases ?? []}
+                    totalCases={q.total_cases ?? 0}
+                    submission={submissionFor(q.question_id)}
+                    onSubmit={
+                      isStaff
+                        ? undefined
+                        : (payload) =>
+                            gradeCoding.mutateAsync({
+                              test_id: testId,
+                              question_id: q.question_id,
+                              ...payload,
+                            })
+                    }
                   />
                   <p className="text-xs text-muted-foreground">
-                    Code answers are saved and reviewed by your trainer.
+                    Submitting locks this question and sends your code for AI grading.
                   </p>
                 </div>
               ) : q.qtype && q.qtype !== "mcq" ? (
+
                 <div className="space-y-2">
                   <Textarea
                     value={

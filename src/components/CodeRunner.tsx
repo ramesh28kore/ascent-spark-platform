@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { runJavaScript, runPython, type RunResult } from "@/lib/runner/run-code";
 import { CodeEditor } from "@/components/CodeEditor";
+import { CaseResults } from "@/components/CaseResults";
 
 type Lang = "javascript" | "python";
 

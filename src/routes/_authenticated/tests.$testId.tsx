@@ -92,7 +92,12 @@ function TestRunner() {
           cases_total: Number(row.cases_total ?? 0),
           code: String(row.code ?? ""),
           language: String(row.language ?? ""),
+          case_results: row.case_results,
+          judged_by: row.judged_by ?? null,
+          runtime_ms: Number(row.runtime_ms ?? 0),
+          memory_kb: Number(row.memory_kb ?? 0),
         }
+
       : null;
   };
 

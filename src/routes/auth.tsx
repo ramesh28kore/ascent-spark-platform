@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { resolveLoginEmail } from "@/lib/admin-shared";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,8 +72,13 @@ function AuthPage() {
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = credentials.safeParse({ email, password });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    const parsed = credentials.safeParse({ email: resolveLoginEmail(email), password });
+    if (!parsed.success)
+      return toast.error(
+        parsed.error.issues[0].path[0] === "email"
+          ? "Enter your username or email"
+          : parsed.error.issues[0].message,
+      );
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
@@ -136,10 +142,12 @@ function AuthPage() {
               <TabsContent value="signin">
                 <form onSubmit={signIn} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Username or email</Label>
                     <Input
                       id="email"
-                      type="email"
+                      type="text"
+                      autoComplete="username"
+                      placeholder="23Q61A0501@gmail.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       maxLength={255}

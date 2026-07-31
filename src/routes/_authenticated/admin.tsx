@@ -3,7 +3,19 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Download, KeyRound, Loader2, Trash2, UserPlus, Wand2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  Copy,
+  Download,
+  KeyRound,
+  Loader2,
+  Trash2,
+  UserPlus,
+  Wand2,
+  X,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { AppShell } from "@/components/AppShell";

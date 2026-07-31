@@ -126,8 +126,10 @@ export function reportToPdfDoc(doc: ReportDoc) {
   const lastY = () =>
     (pdf as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 94;
 
+  let extra = 0;
   for (const section of doc.sections) {
-    const top = lastY() + 24;
+    const top = lastY() + 24 + extra;
+    extra = 0;
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.setTextColor(...NAVY);
@@ -156,6 +158,7 @@ export function reportToPdfDoc(doc: ReportDoc) {
       pdf.setFontSize(7.5);
       pdf.setTextColor(110, 110, 110);
       pdf.text(section.note, 40, lastY() + 12);
+      extra = 10;
     }
   }
 

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-import { DEFAULT_DOMAIN, SUPER_ADMIN_EMAIL, normaliseRoll, rollToEmail } from "./admin-shared";
+import { DEFAULT_DOMAIN, normaliseRoll, rollToEmail } from "./admin-shared";
 
 type AdminClient = Awaited<
   typeof import("@/integrations/supabase/client.server")
@@ -59,48 +59,20 @@ async function findUserIdByEmail(db: AdminClient, email: string): Promise<string
 }
 
 /* ------------------------------------------------------------------ */
-/* Bootstrap                                                           */
-/* ------------------------------------------------------------------ */
-
-/**
- * Idempotently ensures the fixed super-admin account exists with the password
- * held in backend secrets. Safe to call repeatedly; never creates anything else.
- */
-export const bootstrapSuperAdmin = createServerFn({ method: "POST" }).handler(async () => {
-  const email = (process.env.SUPER_ADMIN_EMAIL || SUPER_ADMIN_EMAIL).toLowerCase();
-  const password = process.env.SUPER_ADMIN_PASSWORD;
-  if (!password) return { ok: false as const, reason: "not_configured" };
-
-  const db = await admin();
-  const existing = await findUserIdByEmail(db, email);
-  if (existing) {
-    await setRole(db, existing, "admin");
-    return { ok: true as const, created: false };
-  }
-
-  const { data, error } = await db.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: "Super Admin" },
-  });
-  if (error || !data.user) return { ok: false as const, reason: error?.message ?? "failed" };
-
-  await setRole(db, data.user.id, "admin");
-  await db
-    .from("profiles")
-    .update({ full_name: "Super Admin", email })
-    .eq("user_id", data.user.id);
-  return { ok: true as const, created: true };
-});
-
-/* ------------------------------------------------------------------ */
 /* Credential settings                                                 */
 /* ------------------------------------------------------------------ */
+
+/*
+ * The super-admin account is provisioned once from backend secrets and then
+ * managed through this console. There is deliberately NO unauthenticated
+ * bootstrap endpoint: a public server function that can create or re-grant the
+ * `admin` role would be callable by anyone who knows the URL.
+ */
 
 export const getCredentialSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await requireAdmin(context);
     const { data } = await context.supabase
       .from("credential_settings")
       .select("domains, default_domain")
@@ -110,6 +82,7 @@ export const getCredentialSettings = createServerFn({ method: "GET" })
       defaultDomain: data?.default_domain ?? DEFAULT_DOMAIN,
     };
   });
+
 
 export const saveCredentialSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -1169,7 +1169,12 @@ function Directory() {
             <Download className="mr-2 h-4 w-4" />
             Export list
           </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Create new credential
+          </Button>
         </div>
+
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-4">

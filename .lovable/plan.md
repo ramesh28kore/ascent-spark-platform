@@ -1,60 +1,41 @@
-# CRT Python Training Platform — completing the spec
+## Goal
 
-The app already covers a large part of the spec: auth with roles, batches, sessions, attendance, modules/topics, question bank, MCQ test engine with timer/shuffle/proctoring/auto-scoring, coding questions with browser execution and AI grading, practice ladder, resources, readiness scoreboard, bulk import, alerts, and student/batch CSV+PDF exports with CO/PO mapping.
+After a student submits a coding answer, show a breakdown of every test case: pass/fail verdict, and for visible (non-hidden) cases the input, expected output, and actual output side by side with the differing lines highlighted.
 
-This plan builds only what is missing, in four phases.
+The per-case data is already produced by the sandbox judge and stored on each submission (`coding_submissions.case_results`), with hidden cases already stripped down to `{ index, hidden, passed, runtime_ms }` so answers never leak. Nothing new needs to be computed or stored — this is a display gap.
 
-## Stack note
+## What students will see
 
-The app stays on its current stack (TanStack Start + Lovable Cloud). Next.js, Prisma and a self-hosted Docker sandbox are not available here, and rebuilding would throw away all existing data and screens. The equivalents used instead:
+A "Test case results" panel inside the graded-submission card:
 
-| Spec | Here |
-|---|---|
-| Next.js API routes | TanStack server functions |
-| Prisma | Lovable Cloud database (Postgres + row-level security) |
-| Docker Python sandbox | Hosted execution API (Piston) called server-side, with the existing in-browser Pyodide runner as fallback |
-| Vercel | Lovable publish |
+- One row per case: `Case 1 · Passed` / `Case 2 · Failed`, plus runtime in ms.
+- Hidden cases render as `Hidden case · Passed/Failed` with no input/expected/actual (padlock icon).
+- Visible failing cases expand to a two-column diff: **Expected** vs **Your output**, with mismatching lines tinted red and matching lines neutral; extra/missing lines are shown as blank-padded rows so the columns stay aligned.
+- Errors (runtime error, timeout, compile error) show the captured message instead of the actual-output column.
+- A summary line above the list: `3/5 cases passed · judged in sandbox · 42 ms · 3.5 MB`, or a note when the score came from AI review because the sandbox was unavailable.
 
-## Phase 1 — Server-side Python + exams 2 to 6
+## Changes
 
-Python execution moves server-side so scoring is trustworthy: a server function submits code to a hosted sandbox, runs every visible and hidden test case, and records runtime and memory. The browser runner stays for the "Run" scratchpad so students get instant feedback with no quota.
+**New component `src/components/CaseResults.tsx`**
+- Props: `results` (the stored `case_results` array), `passed`, `total`, `judgedBy`, `runtimeMs`, `memoryKb`.
+- Parses the JSON defensively (older submissions have `[]`) and renders nothing but a plain `x/y cases passed` line when the array is empty.
+- Line-level diff helper: split both sides on newline, trim trailing whitespace, compare index by index, mark rows equal/different.
+- Failing visible cases start expanded; passing cases are collapsed behind a click.
 
-New exam modes on the existing test engine:
-- **Theory** — Part A short answers, Part B long answers, trainer evaluation screen with a rubric (per-criterion marks + comment), running total, release-to-student action.
-- **Programming** — Monaco editor, visible + hidden cases, compile & run, submit, per-case verdict, execution time and memory, automatic scoring.
-- **Debugging** — trainer stores a broken program plus the fixed reference and expected behaviour; the student edits the buggy code and submits; auto-evaluated against test cases with an error-category tag.
-- **Timed challenge** — difficulty tier, 60-minute window, automatic judge, live leaderboard ranked by score then time.
-- **Practical viva** — trainer rubric across confidence, logic, coding ability and communication, 30 marks total.
+**`src/components/CodeRunner.tsx`**
+- Render `<CaseResults />` in the graded-submission branch, replacing the current "N/M cases passed locally" text.
+- Accept the case data through the existing `submission` prop (extend `CodingSubmissionView` with `case_results`, `judged_by`, `runtime_ms`, `memory_kb`).
 
-Database: `exam_kind` on tests, rubric definition and rubric score tables, `hidden`/`visible` test cases, submissions gain runtime/memory/verdict, leaderboard view.
+**`src/lib/coding.functions.ts`**
+- Return `case_results`, and the already-computed `judged_by`/`runtime_ms`/`memory_kb`, from `gradeCodingSubmission` so the panel appears immediately on submit rather than only after a refetch.
 
-## Phase 2 — Playground and practice depth
+**`src/routes/_authenticated/tests.$testId.tsx`**
+- Pass the extra fields from the loaded submission rows into `CodeRunner` (the paper already selects `*` from `coding_submissions`).
 
-- `/playground` — Monaco Python editor with syntax highlighting, autocomplete, dark mode, console output, stdin, run, and save/load of personal snippets.
-- Practice section gains difficulty and topic filters, company tags, bookmarks, staged hints, solutions unlocked after an attempt, and a per-question discussion thread.
-- Question bank categories extended to the full spec list (basics, functions, loops, recursion, strings, lists, tuples, sets, dict, OOP, DSA, patterns, interview).
-
-## Phase 3 — Certificates and reports
-
-- Certificates issued automatically on module completion, final assessment pass and full programme completion; PDF download; each carries a QR code pointing at a public `/verify/{code}` page that confirms holder, programme and issue date.
-- Report centre: student-wise, batch-wise, module-wise and trainer-wise reports exported as PDF, Excel and CSV.
-
-## Phase 4 — Analytics and AI
-
-- Analytics dashboard: weekly progress, module completion, average score, coding accuracy, attempt history, submission heat map, top performers, weak topics and recommendations.
-- AI features on Lovable AI: coding feedback on submissions, question generator for trainers (topic + difficulty + count, preview before saving), and a plain-English performance analysis per student.
-
-## Cross-cutting (added alongside the phases)
-
-Dark/light toggle, announcements, audit log of trainer/admin actions, global search, pagination on long tables, and email notifications for exam scheduling and result release.
-
-## Not included
-
-Docker configuration, Prisma schema files, and a unit/integration test suite are out of scope for this stack; database migrations and row-level security policies serve the schema role, and verification is done against the running app.
+**`src/routes/_authenticated/evaluate.tsx`**
+- Reuse the same component on the trainer evaluation desk, with hidden cases fully expanded (input/expected/actual visible to staff) so overrides can be judged against the real failure.
 
 ## Technical notes
 
-- Python judging runs in a server function against a hosted sandbox with per-run time and output caps; student code never reaches privileged credentials.
-- Hidden test cases and rubric internals are protected at the column and policy level, matching the existing answer-key hardening.
-- Monaco is loaded lazily on the client only, so server rendering is unaffected.
-- Certificate verification is a public route reading a single non-personal row; everything else stays behind the authenticated gate.
+- Hidden-case redaction stays server-side where it already happens; the component's "staff" mode only reveals what the server chose to send, so a student's payload has nothing extra to unlock.
+- No migration and no schema change — `case_results` already exists and is populated by the sandbox path.

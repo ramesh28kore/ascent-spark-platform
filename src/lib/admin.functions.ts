@@ -40,7 +40,11 @@ async function audit(
 }
 
 /** Replace whatever role the signup trigger assigned with the intended one. */
-async function setRole(db: AdminClient, userId: string, role: "admin" | "trainer" | "student") {
+async function setRole(
+  db: AdminClient,
+  userId: string,
+  role: "admin" | "trainer" | "student" | "placement",
+) {
   await db.from("user_roles").delete().eq("user_id", userId).neq("role", role);
   await db.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
 }

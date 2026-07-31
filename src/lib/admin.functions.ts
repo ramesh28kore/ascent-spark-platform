@@ -39,15 +39,29 @@ async function audit(
   });
 }
 
+/** True when the account holds the permanent super-admin role. */
+async function isSuperAdmin(db: AdminClient, userId: string) {
+  const { data } = await db
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin");
+  return (data ?? []).length > 0;
+}
+
 /** Replace whatever role the signup trigger assigned with the intended one. */
 async function setRole(
   db: AdminClient,
   userId: string,
   role: "admin" | "trainer" | "student" | "placement",
 ) {
+  if (role !== "admin" && (await isSuperAdmin(db, userId))) {
+    throw new Error("The super admin role is permanent and cannot be changed.");
+  }
   await db.from("user_roles").delete().eq("user_id", userId).neq("role", role);
   await db.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
 }
+
 
 async function findUserIdByEmail(db: AdminClient, email: string): Promise<string | null> {
   const { data } = await db

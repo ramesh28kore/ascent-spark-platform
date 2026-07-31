@@ -122,9 +122,11 @@ function AssessmentsPage() {
         scores={scores.data ?? []}
         myProfileId={me.data?.profile?.id ?? null}
         tests={tests.data?.tests ?? []}
+        attempts={tests.data?.attempts ?? []}
       />
     );
   }
+
 
 
   const list = assessments.data ?? [];
@@ -260,7 +262,25 @@ function AssessmentsPage() {
               {active ? `Out of ${active.max_marks}. Entries save on blur.` : "Select an assessment"}
             </CardDescription>
             {active && (
-              <div className="pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                {(() => {
+                  const linked = (tests.data?.tests ?? []).find(
+                    (t) => t.assessment_id === active.id,
+                  );
+                  if (!linked) return <Badge variant="secondary">No linked test</Badge>;
+                  return (
+                    <>
+                      <Badge variant={linked.published ? "default" : "secondary"}>
+                        {linked.published ? "Linked test published" : "Linked test — draft"}
+                      </Badge>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/tests/$testId" params={{ testId: linked.id }}>
+                          Preview paper
+                        </Link>
+                      </Button>
+                    </>
+                  );
+                })()}
                 <Button asChild size="sm" variant="outline">
                   <Link
                     to="/tests"
@@ -276,6 +296,7 @@ function AssessmentsPage() {
                 </Button>
               </div>
             )}
+
           </CardHeader>
           <CardContent>
             {active && (
@@ -355,27 +376,40 @@ type TestRow = {
   starts_at: string;
 };
 
+type AttemptRow = {
+  test_id: string;
+  student_id: string;
+  submitted_at: string | null;
+  score: number;
+  max_score: number;
+};
+
 function StudentAssessments({
   assessments,
   scores,
   myProfileId,
   tests,
+  attempts,
 }: {
   assessments: AssessmentRow[];
   scores: ScoreRow[];
   myProfileId: string | null;
   tests: TestRow[];
+  attempts: AttemptRow[];
 }) {
+  /** Any test linked to the assessment, published or not. */
   const linkedTest = (a: AssessmentRow) =>
-    tests.find((t) => t.published && t.assessment_id === a.id) ??
+    tests.find((t) => t.assessment_id === a.id) ??
     tests.find(
       (t) =>
-        t.published &&
         !!a.module_id &&
         t.module_id === a.module_id &&
         t.starts_at.slice(0, 10) === a.scheduled_on,
     ) ??
     null;
+  const myAttempt = (testId: string) =>
+    attempts.find((at) => at.test_id === testId && at.student_id === myProfileId) ?? null;
+
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = assessments
     .filter((a) => a.scheduled_on >= today)
@@ -385,6 +419,52 @@ function StudentAssessments({
     .sort((a, b) => b.scheduled_on.localeCompare(a.scheduled_on));
   const myScore = (id: string) =>
     scores.find((s) => s.assessment_id === id && s.student_id === myProfileId);
+
+  const action = (a: AssessmentRow) => {
+    const t = linkedTest(a);
+    const coding = a.kind === "coding_test";
+    if (!t) {
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">Not published yet</Badge>
+          {coding && (
+            <Button asChild size="sm" variant="outline">
+              <Link to="/coding">Practice coding problems</Link>
+            </Button>
+          )}
+        </div>
+      );
+    }
+    const attempt = myAttempt(t.id);
+    if (attempt?.submitted_at) {
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link to="/tests/$testId" params={{ testId: t.id }}>
+              Submitted — view result
+            </Link>
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {Number(attempt.score)} / {Number(attempt.max_score)}
+          </span>
+        </div>
+      );
+    }
+    if (!t.published) {
+      return (
+        <Badge variant="secondary">
+          Opens on {t.starts_at.slice(0, 10)}
+        </Badge>
+      );
+    }
+    return (
+      <Button asChild size="sm">
+        <Link to="/tests/$testId" params={{ testId: t.id }}>
+          {coding ? "Open coding test" : "Open test"}
+        </Link>
+      </Button>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -413,27 +493,42 @@ function StudentAssessments({
               <p className="mt-1 text-xs text-muted-foreground">
                 {a.scheduled_on} · {a.max_marks} marks
               </p>
-              <div className="mt-2">
-                {linkedTest(a) ? (
-                  <Button asChild size="sm">
-                    <Link to="/tests/$testId" params={{ testId: linkedTest(a)!.id }}>
-                      {a.kind === "coding_test" ? "Open coding test" : "Open test"}
-                    </Link>
-                  </Button>
-                ) : a.kind === "coding_test" ? (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/coding">Practice coding problems</Link>
-                  </Button>
-                ) : (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/tests">View online tests</Link>
-                  </Button>
-                )}
-              </div>
+              <div className="mt-2">{action(a)}</div>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Open now</CardTitle>
+          <CardDescription>Published tests you can still attempt.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {past.filter((a) => {
+            const t = linkedTest(a);
+            return !!t?.published && !myAttempt(t.id)?.submitted_at;
+          }).length === 0 && (
+            <p className="text-sm text-muted-foreground">No past tests are still open.</p>
+          )}
+          {past
+            .filter((a) => {
+              const t = linkedTest(a);
+              return !!t?.published && !myAttempt(t.id)?.submitted_at;
+            })
+            .map((a) => (
+              <div key={a.id} className="rounded-md border p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{a.title}</span>
+                  <Badge variant="outline">{KIND_LABEL[a.kind] ?? a.kind}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{a.scheduled_on}</p>
+                <div className="mt-2">{action(a)}</div>
+              </div>
+            ))}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>

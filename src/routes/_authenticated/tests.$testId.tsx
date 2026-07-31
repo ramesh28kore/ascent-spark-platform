@@ -15,6 +15,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CodeRunner } from "@/components/CodeRunner";
+
 
 export const Route = createFileRoute("/_authenticated/tests/$testId")({
   head: () => ({
@@ -181,7 +183,23 @@ function TestRunner() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {q.qtype && q.qtype !== "mcq" ? (
+              {q.qtype === "coding" ? (
+                <div className="space-y-2">
+                  <CodeRunner
+                    value={
+                      responses[q.question_id] ??
+                      (submitted
+                        ? String((attempt?.responses as Record<string, string>)?.[q.question_id] ?? "")
+                        : "")
+                    }
+                    onChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
+                    disabled={submitted || isStaff}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Code answers are saved and reviewed by your trainer.
+                  </p>
+                </div>
+              ) : q.qtype && q.qtype !== "mcq" ? (
                 <div className="space-y-2">
                   <Textarea
                     value={
@@ -194,22 +212,16 @@ function TestRunner() {
                       setResponses((r) => ({ ...r, [q.question_id]: e.target.value }))
                     }
                     disabled={submitted || isStaff}
-                    rows={q.qtype === "coding" ? 12 : 6}
+                    rows={6}
                     spellCheck={false}
-                    placeholder={
-                      q.qtype === "coding"
-                        ? "Write your solution here…"
-                        : "Write your answer here…"
-                    }
-                    className={q.qtype === "coding" ? "font-mono text-xs" : ""}
+                    placeholder="Write your answer here…"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {q.qtype === "coding"
-                      ? "Code answers are saved and reviewed by your trainer."
-                      : "Written answers are reviewed by your trainer."}
+                    Written answers are reviewed by your trainer.
                   </p>
                 </div>
               ) : (
+
               <RadioGroup
                 value={responses[q.question_id] ?? (submitted ? String((attempt?.responses as Record<string, string>)?.[q.question_id] ?? "") : "")}
                 onValueChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}

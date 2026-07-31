@@ -39,6 +39,7 @@ import {
   previewStudentCredentials,
   resetAccountPassword,
   saveCredentialSettings,
+  authoriseCredentialExport,
 } from "@/lib/admin.functions";
 import {
   csvEscape,
@@ -90,8 +91,23 @@ type CredentialRow = {
   year?: string;
 };
 
-function exportCredentials(rows: CredentialRow[], label: string) {
-  if (!rows.length) return toast.error("Nothing to export yet");
+async function exportCredentials(rows: CredentialRow[], label: string) {
+  if (!rows.length) {
+    toast.error("Nothing to export yet");
+    return;
+  }
+
+  // Credential sheets are super-admin only: the server re-checks the role and
+  // logs the export before anything is written to disk.
+  try {
+    await authoriseCredentialExport({ data: { label, count: rows.length } });
+  } catch (err) {
+    toast.error(
+      err instanceof Error ? err.message : "Only the super admin can download credentials",
+    );
+    return;
+  }
+
   const header = ["Roll number", "Username", "Password", "Batch", "Section", "Year"];
   const body = rows.map((r) => [r.roll, r.email, r.password, r.batch ?? "", r.section ?? "", r.year ?? ""]);
 
@@ -418,7 +434,7 @@ function GenerateStudents() {
             <Button
               variant="outline"
               onClick={() =>
-                exportCredentials(
+                void exportCredentials(
                   result.created.map((c) => ({ ...c, batch: batchName, section, year })),
                   `student-credentials-${section || "all"}-${new Date().toISOString().slice(0, 10)}`,
                 )
@@ -593,7 +609,7 @@ function StaffAccounts() {
                 size="sm"
                 variant="outline"
                 onClick={() =>
-                  exportCredentials(
+                  void exportCredentials(
                     [{ roll: "", email: issued.email, password: issued.password }],
                     "staff-credential",
                   )
@@ -712,7 +728,7 @@ function Directory() {
         <Button
           variant="outline"
           onClick={() =>
-            exportCredentials(
+            void exportCredentials(
               students.map((s) => ({
                 roll: s.roll_number ?? "",
                 email: s.email ?? "",

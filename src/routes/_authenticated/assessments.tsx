@@ -262,7 +262,25 @@ function AssessmentsPage() {
               {active ? `Out of ${active.max_marks}. Entries save on blur.` : "Select an assessment"}
             </CardDescription>
             {active && (
-              <div className="pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                {(() => {
+                  const linked = (tests.data?.tests ?? []).find(
+                    (t) => t.assessment_id === active.id,
+                  );
+                  if (!linked) return <Badge variant="secondary">No linked test</Badge>;
+                  return (
+                    <>
+                      <Badge variant={linked.published ? "default" : "secondary"}>
+                        {linked.published ? "Linked test published" : "Linked test — draft"}
+                      </Badge>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/tests/$testId" params={{ testId: linked.id }}>
+                          Preview paper
+                        </Link>
+                      </Button>
+                    </>
+                  );
+                })()}
                 <Button asChild size="sm" variant="outline">
                   <Link
                     to="/tests"
@@ -278,6 +296,7 @@ function AssessmentsPage() {
                 </Button>
               </div>
             )}
+
           </CardHeader>
           <CardContent>
             {active && (

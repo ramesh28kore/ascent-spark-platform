@@ -1,25 +1,24 @@
 ## Goal
-Turn "Create new credential" into a two-step flow: fill the form → review a preview panel → confirm. Nothing is written to the database or audit log until the confirm step.
+Clear out every trainer and student account, keeping only the super admin (`avanthi@crtconsole.app`).
 
-## Step 1 — read-only preview check (server)
-Add `previewCredential` to `src/lib/admin.functions.ts`:
-- Super-admin gated (same `requireAdmin` check as the other functions), but performs **no writes and no audit entry**.
-- Input: `kind` ("student" | "trainer") plus the same fields the create functions take.
-- Student: normalise the roll number, build the email (`roll@domain`), confirm the domain is one of the configured domains, and check whether an account already exists for that email.
-- Trainer: normalise the email and check for an existing account.
-- Returns: resolved username/email, the password that will be issued, whether it already exists, the resolved branch/year/section/batch label, and a list of blocking problems vs. warnings.
+## Current state (verified)
+- 17 profiles exist; 7 are linked to real logins, 10 are demo/imported records with no login.
+- Only one role row exists in total, and it is the super admin's `admin` role.
+- Dependent data present: 71 score rows, 3 test attempts, 1 certificate; attendance and coding submissions are already empty.
 
-## Step 2 — review panel in the dialog
-In `src/routes/_authenticated/admin.tsx`, `CreateCredentialDialog` gains a `step` state (`"form"` | `"review"`), for both the Student and Trainer tabs:
-- The primary button becomes **Review credential**, which calls `previewCredential`.
-- The review panel replaces the form and shows:
-  - Username/email and password in monospace, with copy buttons.
-  - The account details being attached (name, role, branch, year, section, batch).
-  - Password requirements checklist (length ≥ 8 for trainer, ≥ 6 for the roll-derived student password, plus a note that a student's password is their roll number in original case).
-  - A red banner if the email is already taken — confirm is disabled in that case.
-- Footer: **Back to edit** and **Create login**. Only **Create login** calls the existing `createStudentAccount` / `createStaffAccount`, so the database write and audit entry happen only after review.
-- On success, the existing issued-credentials panel is shown as today; closing or switching tabs resets back to the form step.
+## What will be removed
+1. All profiles except the super admin's (16 rows), including the 10 demo students loaded earlier.
+2. Their dependent rows first, so nothing is left orphaned: scores, test attempts, certificates, practice progress, bookmarks, theory answers, coding submissions, rubric scores, mock interviews, attendance, discussion posts, snippets.
+3. Their logins: the 6 non-admin auth accounts are removed through the existing super-admin delete flow, which also writes an audit-log entry. Logins can't be deleted from SQL, so this step runs through the app's admin delete function.
 
-## Notes
-- No schema or RLS changes; `previewCredential` is read-only and reuses the existing super-admin gate.
-- The existing bulk generator already has its own preview (`previewStudentCredentials`) and is untouched.
+## What stays
+- The super admin login, profile and `admin` role.
+- All shared content: modules, topics, question bank, coding problems, practice problems, tests, assessments, batches, sessions, resources, announcements, credential settings and audit logs.
+
+## Steps
+1. Run a data-removal statement that deletes the dependent rows above for every non-super-admin profile, then the profiles themselves.
+2. Call the existing `deleteAccounts` admin function for the 6 remaining non-admin logins so the auth accounts disappear too and the action is audited.
+3. Verify: profiles count = 1, user_roles = 1 (admin), no leftover scores/attempts/certificates.
+
+## Note
+This is irreversible — the demo students and the two personal Gmail accounts go away as well. Say so if any of those should be kept.

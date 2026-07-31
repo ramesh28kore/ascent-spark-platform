@@ -1302,7 +1302,17 @@ function Directory() {
           setBulkOpen(false);
         }}
       />
+
+      <CreateCredentialDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: ["student-credentials"] });
+          void queryClient.invalidateQueries({ queryKey: ["staff-accounts"] });
+        }}
+      />
     </Card>
+
   );
 }
 

@@ -29,7 +29,12 @@ export type CodingSubmissionView = {
   cases_total: number;
   code: string;
   language: string;
+  case_results?: unknown;
+  judged_by?: string | null;
+  runtime_ms?: number | null;
+  memory_kb?: number | null;
 };
+
 
 const STARTER: Record<Lang, string> = {
   javascript: "// Read input with readline(), print with console.log()\n",

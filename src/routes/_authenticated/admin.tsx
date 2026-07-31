@@ -39,9 +39,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { meQuery, batchesQuery } from "@/lib/crt-queries";
 import {
   createStaffAccount,
+  createStudentAccount,
   deleteAccount,
   deleteAccounts,
   generateStudentCredentials,
@@ -53,6 +61,7 @@ import {
   saveCredentialSettings,
   authoriseCredentialExport,
 } from "@/lib/admin.functions";
+
 
 import {
   csvEscape,
@@ -716,6 +725,309 @@ function StaffAccounts() {
 
 /* ------------------------------------------------------------------ */
 
+function IssuedCredentials({ email, password }: { email: string; password: string }) {
+  return (
+    <div className="rounded-md border border-accent/40 bg-accent/10 p-3 text-sm">
+      <p className="mb-2 font-medium">Account created</p>
+      <div className="space-y-1 font-mono text-xs">
+        <p>Username: {email}</p>
+        <p>Password: {password}</p>
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-3"
+        onClick={() => {
+          navigator.clipboard.writeText(`${email} / ${password}`);
+          toast.success("Credentials copied");
+        }}
+      >
+        <Copy className="mr-2 h-3.5 w-3.5" />
+        Copy
+      </Button>
+    </div>
+  );
+}
+
+function CreateCredentialDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: () => void;
+}) {
+  const createStudent = useServerFn(createStudentAccount);
+  const createStaff = useServerFn(createStaffAccount);
+  const { data: settings } = useDomains();
+  const { data: batches } = useQuery(batchesQuery);
+
+  const domains = settings?.domains ?? [];
+  const [kind, setKind] = useState<"student" | "trainer">("student");
+  const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
+
+  // Student fields
+  const [roll, setRoll] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [domain, setDomain] = useState("");
+  const [branch, setBranch] = useState("");
+  const [year, setYear] = useState("");
+  const [section, setSection] = useState("");
+  const [batchId, setBatchId] = useState(NONE);
+
+  // Trainer fields
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [staffBranch, setStaffBranch] = useState("");
+  const [role, setRole] = useState<"trainer" | "placement" | "admin">("trainer");
+  const [password, setPassword] = useState(randomPassword());
+
+  const activeDomain = domain || settings?.defaultDomain || domains[0] || "";
+  const normalisedRoll = roll.trim() ? normaliseRoll(roll) : "";
+  const previewEmail = normalisedRoll && activeDomain ? rollToEmail(normalisedRoll, activeDomain) : "";
+
+  const reset = () => {
+    setRoll("");
+    setStudentName("");
+    setBranch("");
+    setYear("");
+    setSection("");
+    setBatchId(NONE);
+    setFullName("");
+    setEmail("");
+    setStaffBranch("");
+    setPassword(randomPassword());
+  };
+
+  const studentMutation = useMutation({
+    mutationFn: () =>
+      createStudent({
+        data: {
+          roll,
+          fullName: studentName,
+          domain: activeDomain,
+          branch,
+          year,
+          section,
+          batchId: batchId === NONE ? null : batchId,
+          batchName:
+            batchId === NONE
+              ? ""
+              : ((batches ?? []).find((b: { id: string; name: string }) => b.id === batchId)?.name ?? ""),
+        },
+      }),
+    onSuccess: (data) => {
+      setIssued({ email: data.email, password: data.password });
+      reset();
+      onCreated();
+      toast.success("Student credential created");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const staffMutation = useMutation({
+    mutationFn: () =>
+      createStaff({ data: { fullName, email, password, branch: staffBranch, role } }),
+    onSuccess: (data) => {
+      setIssued({ email: data.email, password: data.password });
+      reset();
+      onCreated();
+      toast.success("Trainer credential created");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy = studentMutation.isPending || staffMutation.isPending;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setIssued(null);
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display">Create new credential</DialogTitle>
+          <DialogDescription>
+            Issue a single login. The account is active immediately — no email confirmation.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs value={kind} onValueChange={(v) => { setKind(v as "student" | "trainer"); setIssued(null); }}>
+          <TabsList className="w-full">
+            <TabsTrigger value="student" className="flex-1">
+              Student
+            </TabsTrigger>
+            <TabsTrigger value="trainer" className="flex-1">
+              Trainer
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="student" className="mt-4 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="c-roll">Roll number</Label>
+                <Input
+                  id="c-roll"
+                  value={roll}
+                  maxLength={30}
+                  placeholder="23Q61A0501"
+                  onChange={(e) => setRoll(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-name">Full name (optional)</Label>
+                <Input
+                  id="c-name"
+                  value={studentName}
+                  maxLength={120}
+                  onChange={(e) => setStudentName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email domain</Label>
+                <Select value={activeDomain} onValueChange={setDomain}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a domain" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {domains.map((d: string) => (
+                      <SelectItem key={d} value={d}>
+                        @{d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Batch</Label>
+                <Select value={batchId} onValueChange={setBatchId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="No batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>No batch</SelectItem>
+                    {(batches ?? []).map((b: { id: string; name: string }) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-branch">Branch</Label>
+                <Input id="c-branch" value={branch} maxLength={60} onChange={(e) => setBranch(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-year">Year</Label>
+                <Input id="c-year" value={year} maxLength={20} onChange={(e) => setYear(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-section">Section</Label>
+                <Input
+                  id="c-section"
+                  value={section}
+                  maxLength={20}
+                  onChange={(e) => setSection(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {previewEmail && (
+              <p className="rounded-md bg-muted p-2 font-mono text-xs">
+                {previewEmail} / {normalisedRoll}
+              </p>
+            )}
+
+            <Button
+              className="w-full"
+              disabled={busy || normalisedRoll.length < 3 || !activeDomain}
+              onClick={() => studentMutation.mutate()}
+            >
+              {studentMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="mr-2 h-4 w-4" />
+              )}
+              Create student login
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="trainer" className="mt-4 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="c-sname">Full name</Label>
+                <Input id="c-sname" value={fullName} maxLength={120} onChange={(e) => setFullName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-semail">Username (email)</Label>
+                <Input id="c-semail" value={email} maxLength={160} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-sbranch">Branch</Label>
+                <Input
+                  id="c-sbranch"
+                  value={staffBranch}
+                  maxLength={60}
+                  onChange={(e) => setStaffBranch(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Role</Label>
+                <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trainer">Trainer</SelectItem>
+                    <SelectItem value="placement">Placement cell</SelectItem>
+                    <SelectItem value="admin">Super admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="c-spass">Password</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="c-spass"
+                    value={password}
+                    maxLength={72}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <Button variant="outline" size="icon" onClick={() => setPassword(randomPassword())}>
+                    <Wand2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              disabled={busy || fullName.trim().length < 2 || !email.trim() || password.length < 8}
+              onClick={() => staffMutation.mutate()}
+            >
+              {staffMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="mr-2 h-4 w-4" />
+              )}
+              Create trainer login
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        {issued && <IssuedCredentials email={issued.email} password={issued.password} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
 function ConfirmDelete({
   open,
   onOpenChange,
@@ -763,6 +1075,7 @@ function Directory() {
   const [selected, setSelected] = useState<string[]>([]);
   const [pendingRow, setPendingRow] = useState<{ userId: string; label: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const filters = {
     search,
@@ -856,7 +1169,12 @@ function Directory() {
             <Download className="mr-2 h-4 w-4" />
             Export list
           </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Create new credential
+          </Button>
         </div>
+
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-4">
@@ -984,7 +1302,17 @@ function Directory() {
           setBulkOpen(false);
         }}
       />
+
+      <CreateCredentialDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: ["student-credentials"] });
+          void queryClient.invalidateQueries({ queryKey: ["staff-accounts"] });
+        }}
+      />
     </Card>
+
   );
 }
 

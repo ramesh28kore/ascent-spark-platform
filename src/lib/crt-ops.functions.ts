@@ -143,6 +143,18 @@ export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => roleSchema.parse(input))
   .handler(async ({ data, context }) => {
+    // The super admin role is permanent: it can neither be taken away nor granted.
+    const { data: current } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user_id);
+    if ((current ?? []).some((r: { role: string }) => r.role === "admin")) {
+      throw new Error("The super admin role is permanent and cannot be changed.");
+    }
+    if (data.role === "admin") {
+      throw new Error("The super admin role cannot be assigned to another account.");
+    }
+
     const { error: delErr } = await context.supabase
       .from("user_roles")
       .delete()
@@ -154,6 +166,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 /* -------------------------------------------------------- mock interviews */
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Lock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { setUserRole } from "@/lib/crt-ops.functions";
@@ -126,7 +126,7 @@ function RolesPage() {
                   <TableCell>{p.email ?? "—"}</TableCell>
                   <TableCell>{p.roll_number ?? "—"}</TableCell>
                   <TableCell>
-                    {isAdmin ? (
+                    {isAdmin && roleFor(p.user_id!) !== "admin" ? (
                       <Select
                         value={roleFor(p.user_id!)}
                         onValueChange={(v) =>
@@ -137,13 +137,19 @@ function RolesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {ROLES.map((r) => (
+                          {ROLES.filter((r) => r !== "admin").map((r) => (
                             <SelectItem key={r} value={r}>
                               {r}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : roleFor(p.user_id!) === "admin" ? (
+                      <span className="flex items-center gap-2">
+                        <Badge>super admin</Badge>
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">permanent</span>
+                      </span>
                     ) : (
                       <Badge variant="secondary">{roleFor(p.user_id!)}</Badge>
                     )}
@@ -154,11 +160,17 @@ function RolesPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        disabled={p.user_id === myUserId || remove.isPending}
+                        disabled={
+                          p.user_id === myUserId ||
+                          roleFor(p.user_id!) === "admin" ||
+                          remove.isPending
+                        }
                         title={
-                          p.user_id === myUserId
-                            ? "You cannot remove your own account"
-                            : "Delete account"
+                          roleFor(p.user_id!) === "admin"
+                            ? "The super admin account is permanent"
+                            : p.user_id === myUserId
+                              ? "You cannot remove your own account"
+                              : "Delete account"
                         }
                         onClick={() =>
                           setPendingDelete({ userId: p.user_id!, name: p.full_name })
@@ -169,6 +181,7 @@ function RolesPage() {
                       </Button>
                     </TableCell>
                   )}
+
                 </TableRow>
               ))}
             </TableBody>

@@ -39,15 +39,29 @@ async function audit(
   });
 }
 
+/** True when the account holds the permanent super-admin role. */
+async function isSuperAdmin(db: AdminClient, userId: string) {
+  const { data } = await db
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin");
+  return (data ?? []).length > 0;
+}
+
 /** Replace whatever role the signup trigger assigned with the intended one. */
 async function setRole(
   db: AdminClient,
   userId: string,
   role: "admin" | "trainer" | "student" | "placement",
 ) {
+  if (role !== "admin" && (await isSuperAdmin(db, userId))) {
+    throw new Error("The super admin role is permanent and cannot be changed.");
+  }
   await db.from("user_roles").delete().eq("user_id", userId).neq("role", role);
   await db.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
 }
+
 
 async function findUserIdByEmail(db: AdminClient, email: string): Promise<string | null> {
   const { data } = await db
@@ -210,8 +224,12 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await requireAdmin(context);
     if (data.userId === context.userId) throw new Error("You cannot remove your own account.");
     const db = await admin();
+    if (await isSuperAdmin(db, data.userId)) {
+      throw new Error("The super admin account is permanent and cannot be deleted.");
+    }
     const { error } = await db.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+
     await audit(db, context.userId, "delete_account", "auth.users", { user_id: data.userId });
     return { ok: true as const };
   });
@@ -243,7 +261,15 @@ export const deleteAccounts = createServerFn({ method: "POST" })
         continue;
       }
       try {
+        if (await isSuperAdmin(db, userId)) {
+          failed.push({
+            userId,
+            reason: "The super admin account is permanent and cannot be deleted.",
+          });
+          continue;
+        }
         const { error } = await db.auth.admin.deleteUser(userId);
+
         if (error) failed.push({ userId, reason: error.message });
         else deleted += 1;
       } catch (err) {

@@ -59,8 +59,11 @@ function RolesPage() {
   const data = useQuery(rolesQuery);
   const queryClient = useQueryClient();
   const assign = useServerFn(setUserRole);
+  const removeAccount = useServerFn(deleteAccount);
+  const [pendingDelete, setPendingDelete] = useState<{ userId: string; name: string } | null>(null);
 
   const isAdmin = !!me.data?.isAdmin;
+  const myUserId = me.data?.profile?.user_id ?? null;
 
   const change = useMutation({
     mutationFn: (vars: { user_id: string; role: (typeof ROLES)[number] }) => assign({ data: vars }),
@@ -68,6 +71,16 @@ function RolesPage() {
       toast.success("Role updated");
       queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (userId: string) => removeAccount({ data: { userId } }),
+    onSuccess: () => {
+      toast.success("Account deleted");
+      setPendingDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["role-assignments"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });

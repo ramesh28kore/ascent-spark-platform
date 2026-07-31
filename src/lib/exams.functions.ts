@@ -382,3 +382,67 @@ export const getAnalytics = createServerFn({ method: "GET" })
         .slice(-56),
     };
   });
+
+/* ------------------------------------------------------- export reporting */
+
+/**
+ * Row-level dataset backing the analytics Export Centre.
+ * Staff read the whole batch; a student only ever sees their own rows via RLS.
+ */
+export const getReportData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const s = context.supabase;
+    const [
+      students,
+      batches,
+      modules,
+      assessments,
+      scores,
+      attempts,
+      tests,
+      submissions,
+      questions,
+      attendance,
+      sessions,
+      practiceProblems,
+      practiceProgress,
+      mocks,
+    ] = await Promise.all([
+      s.from("profiles").select("id, full_name, roll_number, branch, year, batch, batch_id, email"),
+      s.from("batches").select("id, name, academic_year, branch, active"),
+      s.from("modules").select("id, code, title, weight_percent, hours, sort_order"),
+      s.from("assessments").select("id, title, kind, module_id, max_marks, scheduled_on"),
+      s.from("scores").select("id, student_id, assessment_id, marks, attempts, recorded_at"),
+      s
+        .from("test_attempts")
+        .select("id, test_id, student_id, score, max_score, submitted_at, started_at, blur_count"),
+      s.from("tests").select("id, title, module_id, batch_id, exam_kind, starts_at"),
+      s
+        .from("coding_submissions")
+        .select("id, question_id, student_id, ai_score, max_score, verdict, created_at"),
+      s.from("questions").select("id, module_id, level"),
+      s.from("attendance").select("id, session_id, student_id, present, marked_at"),
+      s.from("sessions").select("id, batch_id, module_id, scheduled_at"),
+      s.from("practice_problems").select("id, points, module_id"),
+      s.from("practice_progress").select("student_id, problem_id, status, updated_at"),
+      s.from("mock_interviews").select("student_id, rating, held_on"),
+    ]);
+
+    return {
+      students: students.data ?? [],
+      batches: batches.data ?? [],
+      modules: modules.data ?? [],
+      assessments: assessments.data ?? [],
+      scores: scores.data ?? [],
+      attempts: attempts.data ?? [],
+      tests: tests.data ?? [],
+      submissions: submissions.data ?? [],
+      questions: questions.data ?? [],
+      attendance: attendance.data ?? [],
+      sessions: sessions.data ?? [],
+      practiceProblems: practiceProblems.data ?? [],
+      practiceProgress: practiceProgress.data ?? [],
+      mocks: mocks.data ?? [],
+    };
+  });

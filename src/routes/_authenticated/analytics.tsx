@@ -12,6 +12,7 @@ import {
 } from "recharts";
 
 import { getAnalytics } from "@/lib/exams.functions";
+import { ExportCentre } from "@/components/ExportCentre";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,6 +80,8 @@ function AnalyticsPage() {
           </Card>
         ))}
       </div>
+
+      <ExportCentre />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

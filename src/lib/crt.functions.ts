@@ -16,14 +16,16 @@ export const getMe = createServerFn({ method: "GET" })
     const isTrainerRole = roleList.includes("trainer");
     return {
       profile: profile ?? null,
-      isTrainer: isTrainerRole || isAdmin,
+      // The super admin is strictly an account-management role: it is not
+      // training staff and holds no access to training data.
+      isTrainer: isTrainerRole,
       isAdmin,
       isPlacement,
-      isStaff: isTrainerRole || isAdmin,
-      canViewAll: isTrainerRole || isAdmin || isPlacement,
+      isStaff: isTrainerRole,
+      canViewAll: isTrainerRole || isPlacement,
       isStudent: roleList.includes("student"),
       roleLabel: isAdmin
-        ? "Admin"
+        ? "Super Admin"
         : isTrainerRole
           ? "Trainer"
           : isPlacement
@@ -31,6 +33,7 @@ export const getMe = createServerFn({ method: "GET" })
             : "Student",
       roles: roleList,
     };
+
   });
 
 

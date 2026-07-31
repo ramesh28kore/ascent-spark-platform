@@ -79,7 +79,17 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
     let memory_kb = 0;
     let casesPassed = data.cases_passed;
     let casesTotal = data.cases_total;
-    let caseResults: unknown[] = [];
+    let caseResults: {
+      index: number;
+      hidden: boolean;
+      passed: boolean;
+      input?: string;
+      expected?: string;
+      actual?: string;
+      runtime_ms?: number;
+      error?: string;
+    }[] = [];
+
 
     // 1) Authoritative judging: run every case (including hidden) in the sandbox.
     if (cases.length > 0) {

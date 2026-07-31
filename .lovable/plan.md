@@ -1,48 +1,47 @@
 ## Goal
 
-Add a proper export toolbar to the Analytics dashboard so staff can pull **student-wise**, **batch-wise**, and **module-wise** reports in **PDF**, **Excel (.xlsx)**, and **CSV** — all from one place.
+Add a **super admin** account (`avanthi`) that can create trainer logins and generate student logins in bulk, with usernames and passwords derived automatically from roll numbers.
 
-## What exists today
+## Credential rules
 
-- `src/lib/crt-report.ts` already builds a per-student report with scores plus CO/PO attainment, and can emit **PDF** (jsPDF + autotable) and **CSV**. There is also a batch CSV summary.
-- Those exports are only reachable from the Students roster and My Scores pages — the Analytics dashboard has **no export controls at all**.
-- There is **no Excel export anywhere**; the `xlsx` package is installed but currently only used for bulk *import*.
-- `getAnalytics` returns aggregate numbers (score distribution, weakest modules, heatmap, proctoring flags) but not the row-level data needed for a module-wise report.
+- Student username = `<ROLL>@<domain>`, password = `<ROLL>` exactly as typed (e.g. `23Q61A0501@gmail.com` / `23Q61A0501`).
+- The domain is chosen by the admin at generation time: a dropdown with `gmail.com` plus any saved college domains, and a field to add/change a domain. Saved domains persist so the choice is remembered next time.
+- Accounts are created pre-confirmed (no confirmation email), since these are placeholder addresses.
+- Roll numbers are normalised to uppercase; a roll that already has an account is skipped, never duplicated.
 
-## What gets built
+## Super admin sign-in
 
-### 1. Report data
-Extend the analytics server function with a companion `getReportData` server function (staff-only, same auth middleware) that returns the rows the three report types need: students with their batch, modules, assessments, scores, attempts, coding submissions, and attendance.
+The login box gets a "Username or email" field. Typing `avanthi` maps internally to a fixed reserved address; typing a full email works as before. The account is created once at setup with the password you supplied, gets the `admin` role, and is excluded from the "first signup becomes trainer" rule. Email-based password recovery will not work for this account — the password is changeable from inside the app instead.
 
-### 2. Three report builders
-A new `src/lib/report-builders.ts` producing a shared, format-agnostic table shape (title, subtitle, columns, rows, summary lines) for:
+## New Admin console (visible only to `admin`)
 
-- **Student-wise** — one row per student: batch, attendance %, weekly-test avg, coding avg, mock rating, overall readiness index and colour band, plus a per-module percentage column set.
-- **Batch-wise** — one row per batch: headcount, average readiness, band distribution (ready / borderline / at-risk counts), attendance %, average test and coding scores, and top/bottom performers.
-- **Module-wise** — one row per module (M1–M12): mapped CO, weight, attempts, average attainment %, attainment level 0–3, weakest topics, and count of students below threshold.
+**1. Trainers tab**
+- Form: full name, email, password (with a "generate strong password" button), optional branch.
+- Creates the auth account, profile, and `trainer` role in one action.
+- Table of existing trainers with reset-password and deactivate actions.
+- The created credentials are shown once on screen with a copy button and a CSV download.
 
-Readiness numbers reuse the existing `computeReadiness` weighting (15/30/30/15/10) so exports always match what's on screen.
+**2. Generate students tab** — two input modes in one screen:
+- **Range mode**: prefix (e.g. `23Q61A05`), start number, end number, zero-padding width. Live preview of the first/last generated rolls and their emails before anything is created.
+- **List mode**: paste roll numbers (one per line or comma-separated) or upload the existing spreadsheet template.
+- Common fields applied to the whole batch: **batch**, **branch/section**, **year**, and the email domain. These are the "section-wise / batch-wise / year-wise" grouping — every generated student is tagged with them so later filtering, attendance and reports work.
+- Preview table before commit showing roll, username, password, and a "already exists" flag.
+- On generate: creates auth users, profiles linked to the batch, and `student` roles, then shows a result summary (created / skipped / failed) and a **Download credentials** button producing an Excel + CSV sheet of roll, username, password, batch, section, year for distribution.
 
-### 3. Three output formats
-A new `src/lib/export-formats.ts` that turns any report table into:
+**3. Existing credentials tab**
+- Search students by batch/section/year, view usernames, and reset an individual student's password back to their roll number.
 
-- **CSV** — plain download, reusing the existing `downloadText` helper.
-- **Excel** — `xlsx` workbook with one sheet per report section, a bold header row, frozen top row, and sized columns. Batch export gets a Summary sheet plus one sheet per batch.
-- **PDF** — landscape A4 via jsPDF + autotable, with the console header, generated-on date, filters applied, striped tables, page numbers, and colour-coded readiness bands.
+## Access control
 
-### 4. Export Centre UI on the analytics page
-A new `src/components/ExportCentre.tsx` card added to `src/routes/_authenticated/analytics.tsx`:
-
-- Report-type selector: Student-wise / Batch-wise / Module-wise.
-- Filters: batch, module, and date range (applies to scores and attempts).
-- Three buttons — **PDF**, **Excel**, **CSV** — each showing a spinner while the report is generated.
-- A short preview table of the first rows so the user sees what they will get before downloading.
-- Filenames follow `crt-<type>-<filter>-<YYYY-MM-DD>.<ext>`.
-
-Existing per-student PDF/CSV exports on the Students and My Scores pages stay exactly as they are.
+- The `admin` role gains full access wherever trainers have it, plus exclusive access to the Admin console.
+- All account creation happens server-side with privileged credentials; the browser never receives service keys. Every action checks the caller holds the `admin` role first, and is written to the existing audit log.
+- Password values are returned once in the creation response for distribution and are never stored in the database in plain form.
 
 ## Technical notes
 
-- All generation runs client-side from data fetched by one authenticated server function; no new tables, no schema migration.
-- Access is limited to trainer / admin / placement roles, matching the rest of the analytics page; a student hitting the route still only sees their own data through RLS.
-- `xlsx` and `jspdf` are already dependencies, so no new packages.
+- New server functions in `src/lib/admin.functions.ts` using the Supabase Admin API (`createUser` with `email_confirm: true`) inside handlers, guarded by an admin-role check.
+- New table `credential_settings` (or a small `app_settings` row) to persist the list of email domains and the default one.
+- Role check helper extended so `admin` counts as staff in existing RLS policies.
+- One-time idempotent bootstrap of the `avanthi` account; the password is stored as a backend secret and applied at creation, not committed to code.
+- New route `src/routes/_authenticated/admin.tsx`, gated on the admin role, plus an "Admin" entry in the sidebar for that role.
+- Bulk generation runs in chunks with per-row error capture so one bad roll doesn't abort the batch.

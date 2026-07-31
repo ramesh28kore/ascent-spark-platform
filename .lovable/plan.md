@@ -1,41 +1,48 @@
 ## Goal
 
-After a student submits a coding answer, show a breakdown of every test case: pass/fail verdict, and for visible (non-hidden) cases the input, expected output, and actual output side by side with the differing lines highlighted.
+Add a proper export toolbar to the Analytics dashboard so staff can pull **student-wise**, **batch-wise**, and **module-wise** reports in **PDF**, **Excel (.xlsx)**, and **CSV** — all from one place.
 
-The per-case data is already produced by the sandbox judge and stored on each submission (`coding_submissions.case_results`), with hidden cases already stripped down to `{ index, hidden, passed, runtime_ms }` so answers never leak. Nothing new needs to be computed or stored — this is a display gap.
+## What exists today
 
-## What students will see
+- `src/lib/crt-report.ts` already builds a per-student report with scores plus CO/PO attainment, and can emit **PDF** (jsPDF + autotable) and **CSV**. There is also a batch CSV summary.
+- Those exports are only reachable from the Students roster and My Scores pages — the Analytics dashboard has **no export controls at all**.
+- There is **no Excel export anywhere**; the `xlsx` package is installed but currently only used for bulk *import*.
+- `getAnalytics` returns aggregate numbers (score distribution, weakest modules, heatmap, proctoring flags) but not the row-level data needed for a module-wise report.
 
-A "Test case results" panel inside the graded-submission card:
+## What gets built
 
-- One row per case: `Case 1 · Passed` / `Case 2 · Failed`, plus runtime in ms.
-- Hidden cases render as `Hidden case · Passed/Failed` with no input/expected/actual (padlock icon).
-- Visible failing cases expand to a two-column diff: **Expected** vs **Your output**, with mismatching lines tinted red and matching lines neutral; extra/missing lines are shown as blank-padded rows so the columns stay aligned.
-- Errors (runtime error, timeout, compile error) show the captured message instead of the actual-output column.
-- A summary line above the list: `3/5 cases passed · judged in sandbox · 42 ms · 3.5 MB`, or a note when the score came from AI review because the sandbox was unavailable.
+### 1. Report data
+Extend the analytics server function with a companion `getReportData` server function (staff-only, same auth middleware) that returns the rows the three report types need: students with their batch, modules, assessments, scores, attempts, coding submissions, and attendance.
 
-## Changes
+### 2. Three report builders
+A new `src/lib/report-builders.ts` producing a shared, format-agnostic table shape (title, subtitle, columns, rows, summary lines) for:
 
-**New component `src/components/CaseResults.tsx`**
-- Props: `results` (the stored `case_results` array), `passed`, `total`, `judgedBy`, `runtimeMs`, `memoryKb`.
-- Parses the JSON defensively (older submissions have `[]`) and renders nothing but a plain `x/y cases passed` line when the array is empty.
-- Line-level diff helper: split both sides on newline, trim trailing whitespace, compare index by index, mark rows equal/different.
-- Failing visible cases start expanded; passing cases are collapsed behind a click.
+- **Student-wise** — one row per student: batch, attendance %, weekly-test avg, coding avg, mock rating, overall readiness index and colour band, plus a per-module percentage column set.
+- **Batch-wise** — one row per batch: headcount, average readiness, band distribution (ready / borderline / at-risk counts), attendance %, average test and coding scores, and top/bottom performers.
+- **Module-wise** — one row per module (M1–M12): mapped CO, weight, attempts, average attainment %, attainment level 0–3, weakest topics, and count of students below threshold.
 
-**`src/components/CodeRunner.tsx`**
-- Render `<CaseResults />` in the graded-submission branch, replacing the current "N/M cases passed locally" text.
-- Accept the case data through the existing `submission` prop (extend `CodingSubmissionView` with `case_results`, `judged_by`, `runtime_ms`, `memory_kb`).
+Readiness numbers reuse the existing `computeReadiness` weighting (15/30/30/15/10) so exports always match what's on screen.
 
-**`src/lib/coding.functions.ts`**
-- Return `case_results`, and the already-computed `judged_by`/`runtime_ms`/`memory_kb`, from `gradeCodingSubmission` so the panel appears immediately on submit rather than only after a refetch.
+### 3. Three output formats
+A new `src/lib/export-formats.ts` that turns any report table into:
 
-**`src/routes/_authenticated/tests.$testId.tsx`**
-- Pass the extra fields from the loaded submission rows into `CodeRunner` (the paper already selects `*` from `coding_submissions`).
+- **CSV** — plain download, reusing the existing `downloadText` helper.
+- **Excel** — `xlsx` workbook with one sheet per report section, a bold header row, frozen top row, and sized columns. Batch export gets a Summary sheet plus one sheet per batch.
+- **PDF** — landscape A4 via jsPDF + autotable, with the console header, generated-on date, filters applied, striped tables, page numbers, and colour-coded readiness bands.
 
-**`src/routes/_authenticated/evaluate.tsx`**
-- Reuse the same component on the trainer evaluation desk, with hidden cases fully expanded (input/expected/actual visible to staff) so overrides can be judged against the real failure.
+### 4. Export Centre UI on the analytics page
+A new `src/components/ExportCentre.tsx` card added to `src/routes/_authenticated/analytics.tsx`:
+
+- Report-type selector: Student-wise / Batch-wise / Module-wise.
+- Filters: batch, module, and date range (applies to scores and attempts).
+- Three buttons — **PDF**, **Excel**, **CSV** — each showing a spinner while the report is generated.
+- A short preview table of the first rows so the user sees what they will get before downloading.
+- Filenames follow `crt-<type>-<filter>-<YYYY-MM-DD>.<ext>`.
+
+Existing per-student PDF/CSV exports on the Students and My Scores pages stay exactly as they are.
 
 ## Technical notes
 
-- Hidden-case redaction stays server-side where it already happens; the component's "staff" mode only reveals what the server chose to send, so a student's payload has nothing extra to unlock.
-- No migration and no schema change — `case_results` already exists and is populated by the sandbox path.
+- All generation runs client-side from data fetched by one authenticated server function; no new tables, no schema migration.
+- Access is limited to trainer / admin / placement roles, matching the rest of the analytics page; a student hitting the route still only sees their own data through RLS.
+- `xlsx` and `jspdf` are already dependencies, so no new packages.

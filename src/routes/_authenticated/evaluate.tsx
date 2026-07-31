@@ -208,7 +208,7 @@ function EvaluatePage() {
                     <SelectValue placeholder="Pick a test" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(tests.data ?? []).map((t) => (
+                    {(tests.data?.tests ?? []).map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.title}
                       </SelectItem>

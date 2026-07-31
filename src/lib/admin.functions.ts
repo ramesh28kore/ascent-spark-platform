@@ -224,8 +224,12 @@ export const deleteAccount = createServerFn({ method: "POST" })
     await requireAdmin(context);
     if (data.userId === context.userId) throw new Error("You cannot remove your own account.");
     const db = await admin();
+    if (await isSuperAdmin(db, data.userId)) {
+      throw new Error("The super admin account is permanent and cannot be deleted.");
+    }
     const { error } = await db.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+
     await audit(db, context.userId, "delete_account", "auth.users", { user_id: data.userId });
     return { ok: true as const };
   });

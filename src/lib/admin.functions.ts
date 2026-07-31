@@ -364,6 +364,87 @@ export const generateStudentCredentials = createServerFn({ method: "POST" })
     return { created, skipped };
   });
 
+/** Issue a single student login from the credentials directory. */
+export const createStudentAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        roll: z.string().trim().min(3, "Enter a roll number").max(30, "Roll number is too long"),
+        fullName: z.string().trim().max(120).optional().default(""),
+        domain: z.string().trim().min(3).max(80),
+        branch: z.string().trim().max(60).optional().default(""),
+        year: z.string().trim().max(20).optional().default(""),
+        section: z.string().trim().max(20).optional().default(""),
+        batchId: z.string().uuid().nullable().optional().default(null),
+        batchName: z.string().trim().max(80).optional().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const db = await admin();
+
+    const { data: settings } = await db
+      .from("credential_settings")
+      .select("domains, default_domain")
+      .maybeSingle();
+    const allowed = settings?.domains ?? [DEFAULT_DOMAIN];
+    const domain = data.domain.toLowerCase().replace(/^@/, "").trim();
+    if (!allowed.includes(domain)) {
+      throw new Error(`${domain} is not one of the configured email domains.`);
+    }
+
+    const roll = normaliseRoll(data.roll);
+    const email = rollToEmail(roll, domain);
+
+    if (await findUserIdByEmail(db, email)) {
+      throw new Error(`An account already exists for ${email}.`);
+    }
+
+    const fullName = data.fullName || roll;
+    const { data: created, error } = await db.auth.admin.createUser({
+      email,
+      password: roll,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+        roll_number: roll,
+        branch: data.branch,
+        year: data.year,
+        batch: data.batchName,
+      },
+    });
+    if (error || !created.user) {
+      throw new Error(error?.message ?? "Could not create the account.");
+    }
+
+    await setRole(db, created.user.id, "student");
+    await db
+      .from("profiles")
+      .update({
+        full_name: fullName,
+        email,
+        roll_number: roll,
+        branch: data.branch || null,
+        year: data.year || null,
+        section: data.section || null,
+        batch: data.batchName || null,
+        batch_id: data.batchId ?? null,
+      })
+      .eq("user_id", created.user.id);
+
+    await audit(db, context.userId, "create_student_account", "profiles", {
+      roll,
+      email,
+      batch: data.batchName,
+      section: data.section,
+      year: data.year,
+    });
+
+    return { roll, email, password: roll };
+  });
+
 export const listStudentCredentials = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>

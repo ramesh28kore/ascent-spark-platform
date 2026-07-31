@@ -28,10 +28,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { meQuery, batchesQuery } from "@/lib/crt-queries";
 import {
   createStaffAccount,
   deleteAccount,
+  deleteAccounts,
   generateStudentCredentials,
   getCredentialSettings,
   listStaffAccounts,
@@ -41,6 +53,7 @@ import {
   saveCredentialSettings,
   authoriseCredentialExport,
 } from "@/lib/admin.functions";
+
 import {
   csvEscape,
   expandRange,

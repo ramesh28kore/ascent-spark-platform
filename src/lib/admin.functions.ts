@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-import { DEFAULT_DOMAIN, SUPER_ADMIN_EMAIL, normaliseRoll, rollToEmail } from "./admin-shared";
+import { DEFAULT_DOMAIN, normaliseRoll, rollToEmail } from "./admin-shared";
 
 type AdminClient = Awaited<
   typeof import("@/integrations/supabase/client.server")

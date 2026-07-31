@@ -1075,6 +1075,7 @@ function Directory() {
   const [selected, setSelected] = useState<string[]>([]);
   const [pendingRow, setPendingRow] = useState<{ userId: string; label: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const filters = {
     search,

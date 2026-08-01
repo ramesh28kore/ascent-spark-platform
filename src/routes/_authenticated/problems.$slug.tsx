@@ -28,6 +28,9 @@ import {
   starterFor,
   type ProblemLanguage,
 } from "@/lib/problems-shared";
+import { templateFor } from "@/lib/code-templates";
+import { useCodeSnapshots } from "@/hooks/useCodeSnapshots";
+import { CodeHistory } from "@/components/CodeHistory";
 import { CaseResults, type CaseResult } from "@/components/CaseResults";
 import { CodeEditor } from "@/components/CodeEditor";
 import { Badge } from "@/components/ui/badge";

@@ -27,6 +27,7 @@ import {
   getContest,
   listBookmarks,
   getDailyChallenge,
+  getMyContestStats,
 } from "@/lib/leetcode.functions";
 
 export const meQuery = queryOptions({ queryKey: ["me"], queryFn: () => getMe() });
@@ -134,4 +135,9 @@ export const bookmarksQuery = queryOptions({
 export const dailyChallengeQuery = queryOptions({
   queryKey: ["daily-challenge"],
   queryFn: () => getDailyChallenge(),
+});
+
+export const myContestStatsQuery = queryOptions({
+  queryKey: ["my-contest-stats"],
+  queryFn: () => getMyContestStats(),
 });

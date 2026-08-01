@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BadgeCard } from "@/components/leetcode/BadgeCard";
-import { nextUp } from "@/lib/achievements";
+import { nextUp, relativeDay } from "@/lib/achievements";
 import { useAchievements } from "@/lib/use-achievements";
 
 const LEVELS = ["easy", "medium", "hard"] as const;
@@ -41,7 +41,7 @@ function dailyIndex(length: number) {
 /** LeetCode-style home for students: solved ring, daily problem, streak, heatmap. */
 export function StudentHome() {
   const me = useQuery(meQuery);
-  const { badges, unlocked } = useAchievements();
+  const { badges, unlocked, timeline } = useAchievements();
   const problems = useQuery(problemsQuery);
   const profile = useQuery(problemProfileQuery);
   const assessments = useQuery(assessmentsQuery);
@@ -227,6 +227,12 @@ export function StudentHome() {
             </CardTitle>
             <CardDescription className="tabular-nums">
               {unlocked.length}/{badges.length} badges unlocked
+              {timeline[0] ? (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · latest {timeline[0].badge.name} ({relativeDay(timeline[0].earnedAt)})
+                </span>
+              ) : null}
             </CardDescription>
           </div>
           <Button asChild size="sm" variant="ghost">

@@ -20,6 +20,14 @@ import {
 } from "@/lib/crt-ops.functions";
 import { getTests } from "@/lib/tests.functions";
 import { listProblems, getProblem, getProblemProfile } from "@/lib/problems.functions";
+import {
+  listStudyPlans,
+  getStudyPlan,
+  listContests,
+  getContest,
+  listBookmarks,
+  getDailyChallenge,
+} from "@/lib/leetcode.functions";
 
 export const meQuery = queryOptions({ queryKey: ["me"], queryFn: () => getMe() });
 export const modulesQuery = queryOptions({ queryKey: ["modules"], queryFn: () => getModules() });
@@ -92,4 +100,38 @@ export const problemQuery = (slug: string) =>
 export const problemProfileQuery = queryOptions({
   queryKey: ["problem-profile"],
   queryFn: () => getProblemProfile(),
+});
+
+/* ------------------------------------- study plans, contests, bookmarks */
+
+export const studyPlansQuery = queryOptions({
+  queryKey: ["study-plans"],
+  queryFn: () => listStudyPlans(),
+});
+
+export const studyPlanQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ["study-plan", slug],
+    queryFn: () => getStudyPlan({ data: { slug } }),
+  });
+
+export const contestsQuery = queryOptions({
+  queryKey: ["contests"],
+  queryFn: () => listContests(),
+});
+
+export const contestQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ["contest", slug],
+    queryFn: () => getContest({ data: { slug } }),
+  });
+
+export const bookmarksQuery = queryOptions({
+  queryKey: ["bookmarks"],
+  queryFn: () => listBookmarks(),
+});
+
+export const dailyChallengeQuery = queryOptions({
+  queryKey: ["daily-challenge"],
+  queryFn: () => getDailyChallenge(),
 });

@@ -436,6 +436,120 @@ export type Database = {
           },
         ]
       }
+      contest_problems: {
+        Row: {
+          contest_id: string
+          created_at: string
+          id: string
+          points: number
+          problem_id: string
+          sort_order: number
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          id?: string
+          points?: number
+          problem_id: string
+          sort_order?: number
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          id?: string
+          points?: number
+          problem_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_problems_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contest_problems_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_registrations: {
+        Row: {
+          contest_id: string
+          created_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_registrations_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contest_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contests: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          published: boolean
+          slug: string
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          published?: boolean
+          slug: string
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          published?: boolean
+          slug?: string
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credential_settings: {
         Row: {
           default_domain: string
@@ -456,6 +570,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      daily_challenges: {
+        Row: {
+          created_at: string
+          id: string
+          on_date: string
+          problem_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          on_date: string
+          problem_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          on_date?: string
+          problem_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_challenges_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       discussion_posts: {
         Row: {
@@ -1271,6 +1414,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_plan_items: {
+        Row: {
+          created_at: string
+          day: number | null
+          id: string
+          plan_id: string
+          problem_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          day?: number | null
+          id?: string
+          plan_id: string
+          problem_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          day?: number | null
+          id?: string
+          plan_id?: string
+          problem_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_plan_items_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       test_attempts: {
         Row: {

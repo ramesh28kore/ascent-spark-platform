@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { myContestStatsQuery, problemProfileQuery, problemsQuery } from "@/lib/crt-queries";
-import { computeAchievements } from "@/lib/achievements";
+import { computeAchievements, computeAchievementTimeline } from "@/lib/achievements";
 import { countByDay, streakFromCounts } from "@/components/leetcode/SubmissionHeatmap";
 
 /** Derives the student's badge collection from data already cached by TanStack Query. */
@@ -37,8 +37,30 @@ export function useAchievements() {
     });
   }, [rows, submissions, contest.data]);
 
+  const timeline = useMemo(
+    () =>
+      computeAchievementTimeline(
+        badges,
+        submissions.map((s) => ({
+          id: s.id,
+          problem_id: s.problem_id,
+          verdict: s.verdict,
+          created_at: s.created_at,
+        })),
+        (profile.data?.problems ?? []).map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          title: p.title,
+          level: p.level,
+        })),
+        contest.data?.contests ?? [],
+      ),
+    [badges, submissions, profile.data, contest.data],
+  );
+
   return {
     badges,
+    timeline,
     unlocked: badges.filter((b) => b.unlocked),
     isLoading: problems.isLoading || profile.isLoading,
   };

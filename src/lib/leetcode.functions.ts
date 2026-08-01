@@ -344,7 +344,7 @@ export const getMyContestStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const profileId = await myProfileId(supabase as never, userId);
-    const empty = { registered: 0, participated: 0, bestRank: null as number | null, wins: 0, contests: [] as { slug: string; title: string; rank: number; solved: number; score: number }[] };
+    const empty = { registered: 0, participated: 0, bestRank: null as number | null, wins: 0, contests: [] as { slug: string; title: string; rank: number; solved: number; score: number; ends_at: string }[] };
     if (!profileId) return empty;
 
     const [{ data: contests }, { data: links }, { data: regs }] = await Promise.all([
@@ -368,7 +368,7 @@ export const getMyContestStats = createServerFn({ method: "GET" })
           .limit(20000)
       : { data: [] as { student_id: string; problem_id: string; created_at: string }[] };
 
-    const results: { slug: string; title: string; rank: number; solved: number; score: number }[] = [];
+    const results: { slug: string; title: string; rank: number; solved: number; score: number; ends_at: string }[] = [];
 
     for (const c of list) {
       const own = (links ?? []).filter((l) => l.contest_id === c.id);
@@ -396,7 +396,14 @@ export const getMyContestStats = createServerFn({ method: "GET" })
 
       const index = ranked.findIndex((r) => r.student_id === profileId);
       const mine = ranked[index]!;
-      results.push({ slug: c.slug, title: c.title, rank: index + 1, solved: mine.solved, score: mine.score });
+      results.push({
+        slug: c.slug,
+        title: c.title,
+        rank: index + 1,
+        solved: mine.solved,
+        score: mine.score,
+        ends_at: c.ends_at,
+      });
     }
 
     const ranks = results.map((r) => r.rank);

@@ -1,9 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CheckCircle2, CircleDashed, Circle, Shuffle, Flame } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDashed,
+  Circle,
+  Shuffle,
+  Flame,
+  CalendarCheck,
+  Star,
+} from "lucide-react";
 
-import { problemsQuery } from "@/lib/crt-queries";
+import { bookmarksQuery, dailyChallengeQuery, problemsQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE } from "@/lib/problems-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,13 +78,20 @@ function streakFrom(days: string[]) {
 
 function ProblemsPage() {
   const problems = useQuery(problemsQuery);
+  const daily = useQuery(dailyChallengeQuery);
+  const bookmarks = useQuery(bookmarksQuery);
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
   const [topic, setTopic] = useState("all");
   const [status, setStatus] = useState("all");
+  const [onlyFavourites, setOnlyFavourites] = useState(false);
 
   const rows = problems.data?.problems ?? [];
+  const favourites = useMemo(
+    () => new Set(bookmarks.data?.problemIds ?? []),
+    [bookmarks.data?.problemIds],
+  );
 
   const topics = useMemo(() => {
     const set = new Set<string>();
@@ -94,11 +109,12 @@ function ProblemsPage() {
           (level === "all" || p.level === level) &&
           (status === "all" || p.status === status) &&
           (topic === "all" || p.category === topic || p.tags.includes(topic)) &&
+          (!onlyFavourites || favourites.has(p.id)) &&
           `${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`
             .toLowerCase()
             .includes(search.toLowerCase()),
       ),
-    [rows, level, status, topic, search],
+    [rows, level, status, topic, search, onlyFavourites, favourites],
   );
 
   const stats = useMemo(() => {
@@ -249,6 +265,15 @@ function ProblemsPage() {
             <SelectItem value="solved">Solved</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={onlyFavourites ? "secondary" : "outline"}
+          size="sm"
+          className="gap-2"
+          onClick={() => setOnlyFavourites((v) => !v)}
+        >
+          <Star className={`size-4 ${onlyFavourites ? "fill-amber-400 text-amber-400" : ""}`} />
+          Favourites ({favourites.size})
+        </Button>
       </div>
 
       <Card>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const Route = createFileRoute("/_authenticated/problems/plans")({
+export const Route = createFileRoute("/_authenticated/problems/plans/")({
   head: () => ({
     meta: [
       { title: "Study plans — CRT Training Console" },

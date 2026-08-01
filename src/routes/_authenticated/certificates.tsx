@@ -8,6 +8,7 @@ import { Award, Download } from "lucide-react";
 import { issueCertificate, listCertificates } from "@/lib/exams.functions";
 import { meQuery, modulesQuery, studentsQuery } from "@/lib/crt-queries";
 import { downloadCertificatePdf } from "@/lib/certificate-pdf";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,12 +83,10 @@ function CertificatesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Certificates</h1>
-        <p className="text-sm text-muted-foreground">
-          Every certificate carries a unique code and QR that anyone can verify publicly.
-        </p>
-      </div>
+      <PageHeader
+        title="Certificates"
+        description="Every certificate carries a unique code and QR that anyone can verify publicly."
+      />
 
       {isStaff ? (
         <Card>

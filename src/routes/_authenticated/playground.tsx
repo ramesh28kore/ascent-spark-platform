@@ -8,6 +8,7 @@ import { Loader2, Play, Save, Trash2 } from "lucide-react";
 import { CodeEditor } from "@/components/CodeEditor";
 import { runCodeRemote } from "@/lib/judge.functions";
 import { deleteSnippet, listSnippets, saveSnippet } from "@/lib/snippets.functions";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

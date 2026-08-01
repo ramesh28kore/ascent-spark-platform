@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
@@ -12,7 +13,7 @@ async function admin(): Promise<AdminClient> {
 }
 
 /** Throws unless the calling user holds the `admin` role. */
-async function requireAdmin(context: { supabase: any; userId: string }) {
+async function requireAdmin(context: { supabase: SupabaseClient; userId: string }) {
   const { data } = await context.supabase
     .from("user_roles")
     .select("role")

@@ -40,6 +40,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests.index'
 import { Route as AuthenticatedProblemsIndexRouteImport } from './routes/_authenticated/problems.index'
 import { Route as AuthenticatedTestsTestIdRouteImport } from './routes/_authenticated/tests.$testId'
+import { Route as AuthenticatedProblemsProfileRouteImport } from './routes/_authenticated/problems.profile'
 import { Route as AuthenticatedProblemsSlugRouteImport } from './routes/_authenticated/problems.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -204,6 +205,12 @@ const AuthenticatedTestsTestIdRoute =
     path: '/tests/$testId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProblemsProfileRoute =
+  AuthenticatedProblemsProfileRouteImport.update({
+    id: '/problems/profile',
+    path: '/problems/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProblemsSlugRoute =
   AuthenticatedProblemsSlugRouteImport.update({
     id: '/problems/$slug',
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/problems/': typeof AuthenticatedProblemsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
@@ -288,6 +296,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/problems': typeof AuthenticatedProblemsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
@@ -325,6 +334,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/_authenticated/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/_authenticated/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/_authenticated/problems/': typeof AuthenticatedProblemsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/problems/$slug'
+    | '/problems/profile'
     | '/tests/$testId'
     | '/problems/'
     | '/tests/'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/problems/$slug'
+    | '/problems/profile'
     | '/tests/$testId'
     | '/problems'
     | '/tests'
@@ -433,6 +445,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/problems/$slug'
+    | '/_authenticated/problems/profile'
     | '/_authenticated/tests/$testId'
     | '/_authenticated/problems/'
     | '/_authenticated/tests/'
@@ -669,6 +682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestsTestIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/problems/profile': {
+      id: '/_authenticated/problems/profile'
+      path: '/problems/profile'
+      fullPath: '/problems/profile'
+      preLoaderRoute: typeof AuthenticatedProblemsProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/problems/$slug': {
       id: '/_authenticated/problems/$slug'
       path: '/problems/$slug'
@@ -716,6 +736,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
   AuthenticatedProblemsSlugRoute: typeof AuthenticatedProblemsSlugRoute
+  AuthenticatedProblemsProfileRoute: typeof AuthenticatedProblemsProfileRoute
   AuthenticatedTestsTestIdRoute: typeof AuthenticatedTestsTestIdRoute
   AuthenticatedProblemsIndexRoute: typeof AuthenticatedProblemsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
@@ -744,6 +765,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
   AuthenticatedProblemsSlugRoute: AuthenticatedProblemsSlugRoute,
+  AuthenticatedProblemsProfileRoute: AuthenticatedProblemsProfileRoute,
   AuthenticatedTestsTestIdRoute: AuthenticatedTestsTestIdRoute,
   AuthenticatedProblemsIndexRoute: AuthenticatedProblemsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,

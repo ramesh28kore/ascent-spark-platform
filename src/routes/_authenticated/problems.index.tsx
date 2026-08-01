@@ -1,9 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CheckCircle2, CircleDashed, Circle, Shuffle, Flame } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleDashed,
+  Circle,
+  Shuffle,
+  Flame,
+  CalendarCheck,
+  Star,
+} from "lucide-react";
 
-import { problemsQuery } from "@/lib/crt-queries";
+import { bookmarksQuery, dailyChallengeQuery, problemsQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE } from "@/lib/problems-shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,13 +78,20 @@ function streakFrom(days: string[]) {
 
 function ProblemsPage() {
   const problems = useQuery(problemsQuery);
+  const daily = useQuery(dailyChallengeQuery);
+  const bookmarks = useQuery(bookmarksQuery);
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
   const [topic, setTopic] = useState("all");
   const [status, setStatus] = useState("all");
+  const [onlyFavourites, setOnlyFavourites] = useState(false);
 
   const rows = problems.data?.problems ?? [];
+  const favourites = useMemo(
+    () => new Set(bookmarks.data?.problemIds ?? []),
+    [bookmarks.data?.problemIds],
+  );
 
   const topics = useMemo(() => {
     const set = new Set<string>();
@@ -94,11 +109,12 @@ function ProblemsPage() {
           (level === "all" || p.level === level) &&
           (status === "all" || p.status === status) &&
           (topic === "all" || p.category === topic || p.tags.includes(topic)) &&
+          (!onlyFavourites || favourites.has(p.id)) &&
           `${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`
             .toLowerCase()
             .includes(search.toLowerCase()),
       ),
-    [rows, level, status, topic, search],
+    [rows, level, status, topic, search, onlyFavourites, favourites],
   );
 
   const stats = useMemo(() => {
@@ -130,15 +146,53 @@ function ProblemsPage() {
             Write, run and submit — every submission is judged on hidden test cases.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2" onClick={pickRandom}>
             <Shuffle className="size-4" /> Pick one
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/problems/plans">Study plans</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/problems/contests">Contests</Link>
           </Button>
           <Button asChild size="sm" variant="secondary">
             <Link to="/problems/profile">My progress</Link>
           </Button>
         </div>
       </div>
+
+      {daily.data?.today ? (
+        <Card className="border-primary/30">
+          <CardContent className="flex flex-wrap items-center gap-3 p-4">
+            <CalendarCheck className="size-5 text-primary" />
+            <div className="mr-auto">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Daily challenge
+              </p>
+              <p className="font-medium">{daily.data.today.title}</p>
+            </div>
+            <span className={`text-xs capitalize ${LEVEL_TONE[daily.data.today.level]}`}>
+              {daily.data.today.level}
+            </span>
+            <span className="flex gap-[3px]">
+              {daily.data.days.slice(-30).map((d) => (
+                <span
+                  key={d.on_date}
+                  title={`${d.on_date}: ${d.title}${d.solved ? " (solved)" : ""}`}
+                  className={`size-2.5 rounded-[2px] ${d.solved ? "bg-emerald-500" : "bg-muted"}`}
+                />
+              ))}
+            </span>
+            <Button asChild size="sm">
+              <Link to="/problems/$slug" params={{ slug: daily.data.today.slug }}>
+                {daily.data.today.solved ? "Solved — revisit" : "Solve today"}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
 
       <Card>
         <CardContent className="grid gap-4 p-4 sm:grid-cols-4">
@@ -211,6 +265,15 @@ function ProblemsPage() {
             <SelectItem value="solved">Solved</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={onlyFavourites ? "secondary" : "outline"}
+          size="sm"
+          className="gap-2"
+          onClick={() => setOnlyFavourites((v) => !v)}
+        >
+          <Star className={`size-4 ${onlyFavourites ? "fill-amber-400 text-amber-400" : ""}`} />
+          Favourites ({favourites.size})
+        </Button>
       </div>
 
       <Card>

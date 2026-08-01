@@ -67,6 +67,40 @@ function StatusIcon({ status }: { status: string }) {
   return <Circle className="size-4 text-muted-foreground/40" />;
 }
 
+/** Clickable table header that drives the URL-backed sort. */
+function SortHead({
+  label,
+  sortKey,
+  filters,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  filters: Filters;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = filters.sort === sortKey;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(sortKey)}
+      aria-label={`Sort by ${label || "status"}`}
+      className={`flex items-center gap-1 hover:text-foreground ${
+        active ? "text-foreground" : "text-muted-foreground"
+      }`}
+    >
+      {label || <span className="sr-only">Status</span>}
+      {active ? (
+        filters.dir === "asc" ? (
+          <ArrowUp className="size-3.5" />
+        ) : (
+          <ArrowDown className="size-3.5" />
+        )
+      ) : null}
+    </button>
+  );
+}
+
 /** Counts consecutive days (ending today or yesterday) with a submission. */
 function streakFrom(days: string[]) {
   const set = new Set(days.map((d) => new Date(d).toISOString().slice(0, 10)));

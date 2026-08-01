@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { codingQuery, modulesQuery } from "@/lib/crt-queries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,12 +63,10 @@ function CodingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Coding practice library</h1>
-        <p className="text-sm text-muted-foreground">
-          Every problem follows Problem → Approach → Python → Output → Complexity → Follow-ups.
-        </p>
-      </div>
+      <PageHeader
+        title="Coding practice library"
+        description="Every problem follows Problem → Approach → Python → Output → Complexity → Follow-ups."
+      />
 
       <div className="flex flex-wrap gap-3">
         <Input

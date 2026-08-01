@@ -11,6 +11,7 @@ import {
   streakFromCounts,
 } from "@/components/leetcode/SubmissionHeatmap";
 
+import { EmptyState } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -215,7 +216,16 @@ function ProblemProfilePage() {
             );
           })}
           {submissions.length === 0 && (
-            <p className="text-sm text-muted-foreground">No submissions yet.</p>
+            <EmptyState
+              icon={Flame}
+              title="No submissions yet"
+              description="Solve today's challenge to start your streak."
+              action={
+                <Button asChild size="sm">
+                  <Link to="/problems">Browse problems</Link>
+                </Button>
+              }
+            />
           )}
         </CardContent>
       </Card>

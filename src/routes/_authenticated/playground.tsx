@@ -8,6 +8,7 @@ import { Loader2, Play, Save, Trash2 } from "lucide-react";
 import { CodeEditor } from "@/components/CodeEditor";
 import { runCodeRemote } from "@/lib/judge.functions";
 import { deleteSnippet, listSnippets, saveSnippet } from "@/lib/snippets.functions";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,13 +93,11 @@ function PlaygroundPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Playground</h1>
-        <p className="text-sm text-muted-foreground">
-          Practise freely. Code runs in an isolated sandbox on the server, exactly like the exam
-          judge.
-        </p>
-      </div>
+      <PageHeader
+        title="Playground"
+        description="Practise freely. Code runs in an isolated sandbox on the server, exactly like the exam judge."
+      />
+
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>

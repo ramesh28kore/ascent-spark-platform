@@ -99,7 +99,7 @@ function AttendancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Attendance</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Attendance</h1>
         <p className="text-sm text-muted-foreground">
           Mark presence session by session. Anyone below 75% is flagged for follow-up.
         </p>

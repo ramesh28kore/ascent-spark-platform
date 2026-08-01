@@ -92,7 +92,7 @@ function RolesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Roles &amp; access</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Roles &amp; access</h1>
         <p className="text-sm text-muted-foreground">
           Admins manage the console. Trainers deliver training, the placement cell reads readiness,
           students see their own data only.

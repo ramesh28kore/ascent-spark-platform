@@ -95,7 +95,7 @@ function ResourcesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Resources</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Resources</h1>
           <p className="text-sm text-muted-foreground">
             Slides, recordings and reference material mapped to modules.
           </p>

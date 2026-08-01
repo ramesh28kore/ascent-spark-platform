@@ -182,7 +182,7 @@ function ReadinessPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Placement readiness</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Placement readiness</h1>
           <p className="text-sm text-muted-foreground">
             {READINESS_WEIGHTS.map((w) => `${w.label} ${Math.round(w.weight * 100)}%`).join(" · ")}
           </p>

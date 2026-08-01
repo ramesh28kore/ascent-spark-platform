@@ -161,7 +161,7 @@ function ImportPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-semibold tracking-tight">Bulk import</h1>
+            <h1 className="font-display text-2xl font-bold tracking-tight">Bulk import</h1>
             <p className="text-sm text-muted-foreground">
               Upload a CSV or Excel file to load the roster and initial setup data in one pass.
             </p>

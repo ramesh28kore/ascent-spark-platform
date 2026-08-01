@@ -101,7 +101,7 @@ function BatchesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Batches</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Batches</h1>
           <p className="text-sm text-muted-foreground">
             Cohorts drive scheduling, attendance and test targeting.
           </p>

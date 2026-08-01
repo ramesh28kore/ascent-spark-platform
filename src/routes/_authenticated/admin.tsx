@@ -179,7 +179,7 @@ function AdminConsole() {
     <AppShell>
       <div className="space-y-6">
         <header>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Admin console</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Admin console</h1>
           <p className="text-sm text-muted-foreground">
             Create trainer logins and generate student usernames and passwords batch, section or
             year wise.

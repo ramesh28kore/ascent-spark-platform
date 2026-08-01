@@ -159,7 +159,10 @@ function ProblemWorkspace() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => submit({ data: { problem_id: problem!.id, language, code } }),
+    mutationFn: () => {
+      snapshots.snapshotNow("submitted", code);
+      return submit({ data: { problem_id: problem!.id, language, code } });
+    },
     onSuccess: (data) => {
       setResult({
         results: data.results as CaseResult[],

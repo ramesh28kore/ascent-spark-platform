@@ -31,15 +31,29 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — CRT Training Console" },
-      { name: "description", content: "Batch performance, module progress and upcoming CRT assessments." },
+      {
+        name: "description",
+        content:
+          "Coding progress, daily challenge and submission streak for students; batch performance for trainers.",
+      },
       { property: "og:title", content: "Dashboard — CRT Training Console" },
-      { property: "og:description", content: "Batch performance and module progress at a glance." },
+      {
+        property: "og:description",
+        content: "Solved problems, streaks and batch performance at a glance.",
+      },
     ],
   }),
   component: Dashboard,
 });
 
 function Dashboard() {
+  const me = useQuery(meQuery);
+  if (me.isLoading) return <Skeleton className="h-96 w-full" />;
+  if (!me.data?.isTrainer) return <StudentHome />;
+  return <TrainerDashboard />;
+}
+
+function TrainerDashboard() {
   const me = useQuery(meQuery);
   const modules = useQuery(modulesQuery);
   const students = useQuery(studentsQuery);
@@ -51,6 +65,7 @@ function Dashboard() {
   }
 
   const isTrainer = me.data?.isTrainer ?? false;
+
   const myProfileId = me.data?.profile?.id;
   const allScores = scores.data ?? [];
   const list = assessments.data ?? [];

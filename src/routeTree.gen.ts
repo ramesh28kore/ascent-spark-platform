@@ -45,6 +45,7 @@ import { Route as AuthenticatedProblemsSlugRouteImport } from './routes/_authent
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedProblemsPlansIndexRouteImport } from './routes/_authenticated/problems.plans.index'
+import { Route as AuthenticatedProblemsPlansSlugRouteImport } from './routes/_authenticated/problems.plans.$slug'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -235,6 +236,12 @@ const AuthenticatedProblemsPlansIndexRoute =
     path: '/problems/plans/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProblemsPlansSlugRoute =
+  AuthenticatedProblemsPlansSlugRouteImport.update({
+    id: '/problems/plans/$slug',
+    path: '/problems/plans/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/problems/': typeof AuthenticatedProblemsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
+  '/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
   '/problems/plans/': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRoutesByTo {
@@ -308,6 +316,7 @@ export interface FileRoutesByTo {
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/problems': typeof AuthenticatedProblemsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
+  '/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
   '/problems/plans': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRoutesById {
@@ -347,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/tests/$testId': typeof AuthenticatedTestsTestIdRoute
   '/_authenticated/problems/': typeof AuthenticatedProblemsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
+  '/_authenticated/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
   '/_authenticated/problems/plans/': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRouteTypes {
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/tests/$testId'
     | '/problems/'
     | '/tests/'
+    | '/problems/plans/$slug'
     | '/problems/plans/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -423,6 +434,7 @@ export interface FileRouteTypes {
     | '/tests/$testId'
     | '/problems'
     | '/tests'
+    | '/problems/plans/$slug'
     | '/problems/plans'
   id:
     | '__root__'
@@ -461,6 +473,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tests/$testId'
     | '/_authenticated/problems/'
     | '/_authenticated/tests/'
+    | '/_authenticated/problems/plans/$slug'
     | '/_authenticated/problems/plans/'
   fileRoutesById: FileRoutesById
 }
@@ -730,6 +743,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProblemsPlansIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/problems/plans/$slug': {
+      id: '/_authenticated/problems/plans/$slug'
+      path: '/problems/plans/$slug'
+      fullPath: '/problems/plans/$slug'
+      preLoaderRoute: typeof AuthenticatedProblemsPlansSlugRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -760,6 +780,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTestsTestIdRoute: typeof AuthenticatedTestsTestIdRoute
   AuthenticatedProblemsIndexRoute: typeof AuthenticatedProblemsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
+  AuthenticatedProblemsPlansSlugRoute: typeof AuthenticatedProblemsPlansSlugRoute
   AuthenticatedProblemsPlansIndexRoute: typeof AuthenticatedProblemsPlansIndexRoute
 }
 
@@ -790,6 +811,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTestsTestIdRoute: AuthenticatedTestsTestIdRoute,
   AuthenticatedProblemsIndexRoute: AuthenticatedProblemsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
+  AuthenticatedProblemsPlansSlugRoute: AuthenticatedProblemsPlansSlugRoute,
   AuthenticatedProblemsPlansIndexRoute: AuthenticatedProblemsPlansIndexRoute,
 }
 

@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { Loader2, Play, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Play, RotateCcw, Send } from "lucide-react";
+
+import { templateFor } from "@/lib/code-templates";
+import { useCodeSnapshots, type SnapshotScope } from "@/hooks/useCodeSnapshots";
+import { CodeHistory } from "@/components/CodeHistory";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +42,8 @@ export type CodingSubmissionView = {
 
 
 const STARTER: Record<Lang, string> = {
-  javascript: "// Read input with readline(), print with console.log()\n",
-  python: "# Read input with input(), print with print()\n",
+  javascript: templateFor("javascript"),
+  python: templateFor("python"),
 };
 
 const runIn = (lang: Lang, code: string, stdin: string) =>
@@ -54,6 +58,7 @@ export function CodeRunner({
   marks,
   submission,
   onSubmit,
+  snapshotScope,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -68,6 +73,7 @@ export function CodeRunner({
     cases_passed: number;
     cases_total: number;
   }) => Promise<unknown>;
+  snapshotScope?: SnapshotScope;
 }) {
   const [lang, setLang] = useState<Lang>("javascript");
   const [stdin, setStdin] = useState(sampleCases[0]?.input ?? "");
@@ -78,6 +84,21 @@ export function CodeRunner({
   const [caseReport, setCaseReport] = useState<string | null>(null);
 
   const locked = !!submission || !!disabled;
+
+  const snapshots = useCodeSnapshots({
+    scope: snapshotScope ?? { scope_kind: "exam" },
+    language: lang,
+    code: value,
+    enabled: !!snapshotScope && !locked,
+  });
+
+  // Resume the newest saved version for this attempt when the buffer is empty.
+  useEffect(() => {
+    if (locked || !snapshots.resumeReady || value.trim()) return;
+    if (snapshots.resumed?.code) onChange(snapshots.resumed.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshots.resumeReady, snapshots.resumed?.id, locked]);
+
 
   const run = async () => {
     if (!value.trim()) {
@@ -117,6 +138,7 @@ export function CodeRunner({
           ? `${passed}/${sampleCases.length} sample case(s) passed — sending for grading…`
           : "Sending for grading…",
       );
+      snapshots.snapshotNow("submitted", value);
       await onSubmit({ code: value, language: lang, cases_passed: passed, cases_total: total });
     } finally {
       setBooting(false);
@@ -128,7 +150,16 @@ export function CodeRunner({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={lang} onValueChange={(v) => setLang(v as Lang)} disabled={locked}>
+        <Select
+          value={lang}
+          onValueChange={(v) => {
+            const next = v as Lang;
+            // Swap to the other language's template when the buffer is untouched.
+            if (!value.trim() || value === STARTER[lang]) onChange(STARTER[next]);
+            setLang(next);
+          }}
+          disabled={locked}
+        >
           <SelectTrigger className="h-8 w-40">
             <SelectValue />
           </SelectTrigger>
@@ -160,9 +191,32 @@ export function CodeRunner({
             Submit for grading
           </Button>
         )}
-        {!value.trim() && !locked && (
-          <Button type="button" size="sm" variant="ghost" onClick={() => onChange(STARTER[lang])}>
-            Insert starter
+        {snapshotScope ? (
+          <CodeHistory
+            snapshots={snapshots.snapshots}
+            loading={snapshots.isLoadingHistory}
+            currentCode={value}
+            onRestore={(snap) => {
+              snapshots.snapshotNow("manual", value);
+              setLang(snap.language === "python" ? "python" : "javascript");
+              onChange(snap.code);
+            }}
+          />
+        ) : null}
+        {!locked && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-1.5"
+            onClick={() => {
+              if (value.trim() && !window.confirm("Reset to the starter template?")) return;
+              snapshots.snapshotNow("manual", value);
+              onChange(STARTER[lang]);
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {value.trim() ? "Reset template" : "Insert starter"}
           </Button>
         )}
         <span className="text-xs text-muted-foreground">

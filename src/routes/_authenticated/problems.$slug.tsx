@@ -10,6 +10,7 @@ import {
   Lock,
   MessageSquare,
   Play,
+  RotateCcw,
   Send,
   Star,
   XCircle,
@@ -28,6 +29,9 @@ import {
   starterFor,
   type ProblemLanguage,
 } from "@/lib/problems-shared";
+import { templateFor } from "@/lib/code-templates";
+import { useCodeSnapshots } from "@/hooks/useCodeSnapshots";
+import { CodeHistory } from "@/components/CodeHistory";
 import { CaseResults, type CaseResult } from "@/components/CaseResults";
 import { CodeEditor } from "@/components/CodeEditor";
 import { Badge } from "@/components/ui/badge";
@@ -97,13 +101,22 @@ function ProblemWorkspace() {
 
   const problem = detail.data?.problem;
 
-  // Restore the per-problem, per-language draft once the problem is known.
+  const snapshots = useCodeSnapshots({
+    scope: { scope_kind: "practice", problem_id: problem?.id ?? null },
+    language,
+    code,
+    enabled: !!problem,
+  });
+
+  // Restore the per-problem, per-language buffer: server snapshot wins, then
+  // the local draft, then the language template / problem starter.
   useEffect(() => {
-    if (!problem) return;
-    const saved =
+    if (!problem || !snapshots.resumeReady) return;
+    const local =
       typeof window !== "undefined" ? window.localStorage.getItem(draftKey(slug, language)) : null;
-    setCode(saved ?? starterFor(problem.starter_code, language));
-  }, [problem, slug, language]);
+    setCode(snapshots.resumed?.code ?? local ?? starterFor(problem.starter_code, language));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problem?.id, slug, language, snapshots.resumeReady, snapshots.resumed?.id]);
 
   useEffect(() => {
     if (!problem || !code) return;
@@ -146,7 +159,10 @@ function ProblemWorkspace() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => submit({ data: { problem_id: problem!.id, language, code } }),
+    mutationFn: () => {
+      snapshots.snapshotNow("submitted", code);
+      return submit({ data: { problem_id: problem!.id, language, code } });
+    },
     onSuccess: (data) => {
       setResult({
         results: data.results as CaseResult[],
@@ -415,7 +431,35 @@ function ProblemWorkspace() {
                     ))}
                   </SelectContent>
                 </Select>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <CodeHistory
+                    snapshots={snapshots.snapshots}
+                    loading={snapshots.isLoadingHistory}
+                    currentCode={code}
+                    onRestore={(snap) => {
+                      snapshots.snapshotNow("manual", code);
+                      setLanguage(snap.language as ProblemLanguage);
+                      setCode(snap.code);
+                      toast.success("Restored an earlier version");
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      if (!window.confirm("Reset the editor to the starter template?")) return;
+                      snapshots.snapshotNow("manual", code);
+                      setCode(
+                        problem.starter_code
+                          ? starterFor(problem.starter_code, language)
+                          : templateFor(language),
+                      );
+                    }}
+                  >
+                    <RotateCcw className="size-4" />
+                    Reset
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

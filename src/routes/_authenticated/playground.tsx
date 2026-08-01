@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, Play, Save, Trash2 } from "lucide-react";
 
 import { CodeEditor } from "@/components/CodeEditor";
+import { templateFor } from "@/lib/code-templates";
 import { runCodeRemote } from "@/lib/judge.functions";
 import { deleteSnippet, listSnippets, saveSnippet } from "@/lib/snippets.functions";
 import { PageHeader } from "@/components/PageHeader";
@@ -44,10 +45,7 @@ export const Route = createFileRoute("/_authenticated/playground")({
   component: PlaygroundPage,
 });
 
-const STARTER = `# Read input with input(), print your answer.
-name = input().strip() or "world"
-print(f"Hello, {name}!")
-`;
+const STARTER = templateFor("python");
 
 function PlaygroundPage() {
   const queryClient = useQueryClient();
@@ -107,7 +105,13 @@ function PlaygroundPage() {
               <CardDescription>Monaco editor with syntax highlighting.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={language} onValueChange={setLanguage}>
+              <Select
+                value={language}
+                onValueChange={(next) => {
+                  if (!code.trim() || code === templateFor(language)) setCode(templateFor(next));
+                  setLanguage(next);
+                }}
+              >
                 <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>

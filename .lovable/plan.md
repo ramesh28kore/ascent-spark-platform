@@ -1,50 +1,48 @@
 ## Goal
 
-Make the student experience feel like one coherent, LeetCode-style product: a grouped, self-explanatory sidebar and identical page framing on every student page.
+Give every code editor a proper language-specific starting template, and keep an automatic version history of the student's code that they can browse and restore — synced through the backend so it survives logouts and device changes.
 
-## What's inconsistent today (verified)
+## 1. Language templates
 
-- The student sidebar is one flat list of 15 items with no grouping, and three different destinations (Practice ladder, Playground, Coding library) all use the same `Code2` icon.
-- Page titles are styled four different ways: `font-display text-2xl font-bold` (Coding library, My scores, Modules), `font-display text-2xl font-semibold` (Practice, Resources, Schedule), and plain `text-2xl font-semibold` with no display font (Playground, Certificates).
-- Only the sidebar footer offers sign-out; there is no account/profile entry point, and "My progress" (the LeetCode-style profile at `/problems/profile`) is reachable only from inside the problem set.
+Add a shared template library (`src/lib/code-templates.ts`) with rich, ready-to-run boilerplate per language:
 
-## Sidebar restructure (student role)
+- **Python 3**: stdin reader helpers, a `solve()` stub, and a `if __name__ == "__main__"` driver with comments.
+- **JavaScript**: `readFileSync(0, "utf8")` input parsing, a `solve()` stub, and output printing.
 
-Replace the flat list with labelled groups, each collapsible, with the group containing the active route open by default:
+Rules for which code appears in the editor:
+1. The problem's own starter code for that language, when it exists.
+2. Otherwise the language template.
+3. A saved snapshot/draft always wins over both.
 
-```text
-LEARN        Dashboard · Modules · Schedule · Resources
-PRACTICE     Problem set · Study plans · Contests · Practice ladder · Playground
-ASSESS       Online tests · Assessments · My scores · Certificates
-YOU          My progress · Alerts
-```
+`starterFor()` in `src/lib/problems-shared.ts` switches from its one-line comment fallback to these templates, so the practice workspace, the exam coding editor (`CodeRunner`), and the playground all share one source of truth. Switching language in the editor swaps to that language's template (or that language's last snapshot) instead of leaving stale code behind.
 
-- Distinct icons per item (Braces / Target / Trophy / ListChecks / TerminalSquare / Timer / ClipboardList / LineChart / Award / UserRound / Bell) — no repeated icons.
-- "Coding library" folds under Practice as a secondary link rather than a top-level peer, so the three code-ish entries stop competing.
-- Active state matches nested routes too (`/problems/plans/xyz` keeps "Study plans" highlighted), not just exact equality as it does now.
-- Alerts shows its unread count as a sidebar badge, mirroring the header bell.
-- Icon-collapsed mode keeps tooltips so every item stays identifiable at `w-14`.
-- Staff, placement and admin navs keep their current items; staff simply gets the same grouping treatment so the shell has one implementation.
+Also add a "Reset to template" action in the editor toolbar (with a confirm) so a student can get back to a clean scaffold.
 
-## LeetCode-style consistency layer
+## 2. Autosaved snapshots per attempt
 
-Add a small shared `PageHeader` component (title, one-line description, optional right-side actions, optional breadcrumb) and apply it to every student page: Dashboard, Modules, Schedule, Online tests, Assessments, Problem set, Study plans, Contests, Practice ladder, Playground, Coding library, Certificates, Resources, Alerts, My scores, My progress. One heading treatment everywhere (`font-display text-2xl font-bold tracking-tight`), one description tone, consistent spacing.
+New backend table `code_snapshots` holding, per student: an attempt scope (practice problem, or a test attempt + question), language, code, a label (`autosave` / `manual` / `submitted`), and a timestamp. Access is limited so a student can only read and write their own snapshots; staff keep their existing read access to graded work only.
 
-Alongside it, per-page polish so each screen reads like the problem set:
+Behaviour:
+- **Autosave**: debounced (~5s idle, and on language switch / tab close). Only writes when the code actually changed since the last snapshot, so history stays meaningful.
+- **Retention**: newest 20 autosaves per attempt scope; older autosaves are trimmed automatically. Snapshots created at submit time are labelled and never trimmed.
+- **Resume**: opening a problem or resuming a test attempt loads the latest snapshot for that scope + language; local storage stays as an offline-first fast path but the server copy is authoritative once loaded.
 
-- **Difficulty and status chips** use the existing `LEVEL_TONE` / `VERDICT_TONE` tokens everywhere they appear (practice ladder, coding library, contests), instead of ad-hoc colours.
-- **Empty states** get a consistent icon + sentence + primary action ("No submissions yet — solve today's challenge") rather than bare grey text.
-- **Loading states** use skeletons shaped like the final content on every page.
-- **Streak / solved counters** from the dashboard appear as a compact strip in the sidebar footer (solved count + streak flame), the way LeetCode surfaces progress persistently.
-- **Header**: add an avatar menu (name, role, My progress, Sign out) so account actions live in one predictable place; keep the bell.
+## 3. Version history UI
+
+A "History" panel in the editor (side sheet in the practice workspace at `/problems/:slug`, and a compact popover in the exam coding editor):
+
+- List of snapshots: relative time, language, label badge (Autosave / Submitted), and first line preview.
+- Selecting one shows it read-only in a preview pane with a diff-style highlight against the current buffer.
+- **Restore** replaces the editor buffer, and first stores the current buffer as a snapshot so nothing is lost.
+- History is per problem/question and per attempt, so an exam attempt's versions are separate from practice runs.
 
 ## Technical notes
 
-- Work is confined to `src/components/AppShell.tsx`, a new `src/components/PageHeader.tsx`, and the header/empty/loading blocks of the student route files under `src/routes/_authenticated/`. No schema, server-function or query changes.
-- Sidebar groups use shadcn `SidebarGroup` + `Collapsible` with `defaultOpen` derived from the current pathname via `useRouterState`.
-- All colour usage stays on semantic tokens; no hardcoded colour utilities.
-- Sidebar progress strip reuses the existing `problemProfileQuery` already used by `/problems/profile`, so no new data fetching.
+- Migration creates `public.code_snapshots` with grants, RLS scoped to `auth.uid()` via the student's profile, an index on (student, scope, created_at), and a trigger that trims autosaves beyond 20.
+- New server functions in `src/lib/snapshots.functions.ts`: `saveSnapshot`, `listSnapshots`, `latestSnapshot`, all behind `requireSupabaseAuth`; the owner is derived from the bearer token, never from the request body.
+- `src/components/CodeEditor.tsx` gains an optional history/toolbar slot; snapshot logic lives in a `useCodeSnapshots` hook so both the practice workspace and `CodeRunner` reuse it.
+- Exam integrity is unchanged: snapshots are code-only, carry no test cases or answers, and cannot be written for another student.
 
 ## Verification
 
-Sign in as the QA student and screenshot each sidebar group's pages at desktop and mobile widths, confirming: identical header treatment, correct active highlighting on nested routes, working collapse/expand, tooltips in icon mode, and no console errors.
+Sign in as the QA student and check end to end: open a problem (template appears), edit and wait for autosave, reload and confirm the code returns, switch language and confirm the correct template/snapshot, open History and restore an older version, then repeat inside a coding test attempt.

@@ -259,6 +259,12 @@ function TestRunner() {
                     onChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
                     disabled={submitted || isStaff}
                     marks={q.marks}
+                    snapshotScope={{
+                      scope_kind: "exam",
+                      question_id: q.question_id,
+                      test_id: testId,
+                      attempt_id: attempt?.id ?? null,
+                    }}
                     sampleCases={q.sample_cases ?? []}
                     totalCases={q.total_cases ?? 0}
                     submission={submissionFor(q.question_id)}

@@ -1,4 +1,5 @@
 /** Client-safe shapes and parsers for the LeetCode-style problem workspace. */
+import { templateFor } from "@/lib/code-templates";
 
 export type ProblemExample = { input: string; output: string; explanation?: string };
 export type ProblemCase = { input: string; expected_output: string; hidden: boolean };
@@ -81,12 +82,7 @@ export function parseStarter(raw: unknown): Record<string, string> {
 
 export function starterFor(raw: unknown, language: ProblemLanguage) {
   const map = parseStarter(raw);
-  return (
-    map[language] ??
-    (language === "python"
-      ? "# Read input with input(), print with print()\n"
-      : '// Read stdin with require("fs").readFileSync(0, "utf8")\n')
-  );
+  return map[language] ?? templateFor(language);
 }
 
 export const draftKey = (slug: string, language: string) => `problem-draft:${slug}:${language}`;

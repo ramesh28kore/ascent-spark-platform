@@ -295,6 +295,84 @@ export type Database = {
           },
         ]
       }
+      code_snapshots: {
+        Row: {
+          attempt_id: string | null
+          code: string
+          created_at: string
+          id: string
+          label: string
+          language: string
+          problem_id: string | null
+          question_id: string | null
+          scope_kind: string
+          student_id: string
+          test_id: string | null
+        }
+        Insert: {
+          attempt_id?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          label?: string
+          language?: string
+          problem_id?: string | null
+          question_id?: string | null
+          scope_kind: string
+          student_id: string
+          test_id?: string | null
+        }
+        Update: {
+          attempt_id?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          language?: string
+          problem_id?: string | null
+          question_id?: string | null
+          scope_kind?: string
+          student_id?: string
+          test_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_snapshots_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "test_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snapshots_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snapshots_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snapshots_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snapshots_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coding_problems: {
         Row: {
           approach: string

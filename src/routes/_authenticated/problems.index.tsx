@@ -271,75 +271,48 @@ function ProblemsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-2">
-        <Input
-          placeholder="Search problems, tags or company"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          maxLength={60}
-          className="max-w-xs"
-        />
-        <Select value={level} onValueChange={setLevel}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All levels</SelectItem>
-            {LEVELS.map((l) => (
-              <SelectItem key={l} value={l} className="capitalize">
-                {l}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={topic} onValueChange={setTopic}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All topics</SelectItem>
-            {topics.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any status</SelectItem>
-            <SelectItem value="todo">Todo</SelectItem>
-            <SelectItem value="attempted">Attempted</SelectItem>
-            <SelectItem value="solved">Solved</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant={onlyFavourites ? "secondary" : "outline"}
-          size="sm"
-          className="gap-2"
-          onClick={() => setOnlyFavourites((v) => !v)}
-        >
-          <Star className={`size-4 ${onlyFavourites ? "fill-amber-400 text-amber-400" : ""}`} />
-          Favourites ({favourites.size})
-        </Button>
-      </div>
+      <ProblemFilters
+        filters={filters}
+        onChange={setFilters}
+        tagCounts={tagCounts}
+        companies={companies}
+        favouriteCount={favourites.size}
+        shown={list.length}
+        total={rows.length}
+      />
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10" />
+                <TableHead className="w-10">
+                  <SortHead label="" sortKey="status" filters={filters} onSort={toggleSort} />
+                </TableHead>
                 <TableHead className="w-12">#</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead>
+                  <SortHead label="Title" sortKey="title" filters={filters} onSort={toggleSort} />
+                </TableHead>
                 <TableHead className="hidden md:table-cell">Topics</TableHead>
-                <TableHead className="w-28">Acceptance</TableHead>
-                <TableHead className="w-24">Difficulty</TableHead>
+                <TableHead className="w-28">
+                  <SortHead
+                    label="Acceptance"
+                    sortKey="acceptance"
+                    filters={filters}
+                    onSort={toggleSort}
+                  />
+                </TableHead>
+                <TableHead className="w-24">
+                  <SortHead
+                    label="Difficulty"
+                    sortKey="difficulty"
+                    filters={filters}
+                    onSort={toggleSort}
+                  />
+                </TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {list.map((p, index) => (
                 <TableRow key={p.id} className="group">

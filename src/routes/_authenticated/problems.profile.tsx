@@ -5,6 +5,12 @@ import { ArrowLeft, Flame } from "lucide-react";
 
 import { problemProfileQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE, VERDICT_TONE } from "@/lib/problems-shared";
+import {
+  SubmissionHeatmap,
+  countByDay,
+  streakFromCounts,
+} from "@/components/leetcode/SubmissionHeatmap";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

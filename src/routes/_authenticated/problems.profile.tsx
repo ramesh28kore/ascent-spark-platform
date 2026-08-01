@@ -36,8 +36,6 @@ export const Route = createFileRoute("/_authenticated/problems/profile")({
   component: ProblemProfilePage,
 });
 
-const DAY = 86_400_000;
-const dayKey = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
 
 function ProblemProfilePage() {
   const profile = useQuery(problemProfileQuery);

@@ -105,7 +105,13 @@ function PlaygroundPage() {
               <CardDescription>Monaco editor with syntax highlighting.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={language} onValueChange={setLanguage}>
+              <Select
+                value={language}
+                onValueChange={(next) => {
+                  if (!code.trim() || code === templateFor(language)) setCode(templateFor(next));
+                  setLanguage(next);
+                }}
+              >
                 <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>

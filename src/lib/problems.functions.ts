@@ -102,15 +102,13 @@ export const getProblem = createServerFn({ method: "GET" })
     if (!problem) throw new Error("Problem not found.");
 
     const [{ data: submissions }, { data: posts }, { data: staff }] = await Promise.all([
-      profileId
-        ? supabase
-            .from("problem_submissions")
-            .select("*")
-            .eq("problem_id", problem.id)
-            .eq("student_id", profileId)
-            .order("created_at", { ascending: false })
-            .limit(50)
-        : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      supabase
+        .from("problem_submissions")
+        .select("*")
+        .eq("problem_id", problem.id)
+        .eq("student_id", profileId ?? "00000000-0000-0000-0000-000000000000")
+        .order("created_at", { ascending: false })
+        .limit(50),
       supabase
         .from("discussion_posts")
         .select("id, body, created_at, author_id, profiles:author_id (full_name)")
@@ -122,7 +120,7 @@ export const getProblem = createServerFn({ method: "GET" })
 
     const isStaff = (staff ?? []).some((r) => r.role === "trainer" || r.role === "placement");
     const attempts = (submissions ?? []).length;
-    const solved = (submissions ?? []).some((s) => (s as { verdict?: string }).verdict === "accepted");
+    const solved = (submissions ?? []).some((s) => s.verdict === "accepted");
     const unlocked = isStaff || solved || attempts >= 3;
 
     const cases = parseCases(problem.test_cases);

@@ -138,6 +138,7 @@ export function CodeRunner({
           ? `${passed}/${sampleCases.length} sample case(s) passed — sending for grading…`
           : "Sending for grading…",
       );
+      snapshots.snapshotNow("submitted", value);
       await onSubmit({ code: value, language: lang, cases_passed: passed, cases_total: total });
     } finally {
       setBooting(false);
@@ -149,7 +150,16 @@ export function CodeRunner({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={lang} onValueChange={(v) => setLang(v as Lang)} disabled={locked}>
+        <Select
+          value={lang}
+          onValueChange={(v) => {
+            const next = v as Lang;
+            // Swap to the other language's template when the buffer is untouched.
+            if (!value.trim() || value === STARTER[lang]) onChange(STARTER[next]);
+            setLang(next);
+          }}
+          disabled={locked}
+        >
           <SelectTrigger className="h-8 w-40">
             <SelectValue />
           </SelectTrigger>
@@ -181,9 +191,32 @@ export function CodeRunner({
             Submit for grading
           </Button>
         )}
-        {!value.trim() && !locked && (
-          <Button type="button" size="sm" variant="ghost" onClick={() => onChange(STARTER[lang])}>
-            Insert starter
+        {snapshotScope ? (
+          <CodeHistory
+            snapshots={snapshots.snapshots}
+            loading={snapshots.isLoadingHistory}
+            currentCode={value}
+            onRestore={(snap) => {
+              snapshots.snapshotNow("manual", value);
+              setLang(snap.language === "python" ? "python" : "javascript");
+              onChange(snap.code);
+            }}
+          />
+        ) : null}
+        {!locked && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-1.5"
+            onClick={() => {
+              if (value.trim() && !window.confirm("Reset to the starter template?")) return;
+              snapshots.snapshotNow("manual", value);
+              onChange(STARTER[lang]);
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {value.trim() ? "Reset template" : "Insert starter"}
           </Button>
         )}
         <span className="text-xs text-muted-foreground">

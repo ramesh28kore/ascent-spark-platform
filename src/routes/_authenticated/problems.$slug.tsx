@@ -176,6 +176,24 @@ function ProblemWorkspace() {
 
   if (detail.isLoading) return <Skeleton className="h-[70vh] w-full" />;
   if (!problem) return <p className="text-sm text-muted-foreground">Problem not found.</p>;
+  if (!problem.statement)
+    return (
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h1 className="font-display text-xl font-semibold">{problem.title}</h1>
+          <p className="text-sm text-muted-foreground">
+            This problem has no statement or test cases yet, so it cannot be attempted in the
+            workspace.
+          </p>
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link to="/problems">
+              <ArrowLeft className="size-4" /> Back to problem set
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+
 
   const submissions = detail.data?.submissions ?? [];
   const posts = detail.data?.posts ?? [];

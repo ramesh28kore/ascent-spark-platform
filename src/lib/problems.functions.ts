@@ -31,7 +31,11 @@ export const listProblems = createServerFn({ method: "GET" })
 
     const anon = "00000000-0000-0000-0000-000000000000";
     const [{ data: problems, error }, { data: progress }, { data: mine }] = await Promise.all([
-      supabase.from("practice_problems").select(LIST_COLUMNS).order("sort_order"),
+      supabase
+        .from("practice_problems")
+        .select(LIST_COLUMNS)
+        .not("statement", "is", null)
+        .order("sort_order"),
       supabase
         .from("practice_progress")
         .select("problem_id, status")
@@ -334,7 +338,10 @@ export const getProblemProfile = createServerFn({ method: "GET" })
         .eq("student_id", profileId)
         .order("created_at", { ascending: false })
         .limit(1000),
-      supabase.from("practice_problems").select("id, slug, title, level, category, tags"),
+      supabase
+        .from("practice_problems")
+        .select("id, slug, title, level, category, tags")
+        .not("statement", "is", null),
     ]);
 
     return {

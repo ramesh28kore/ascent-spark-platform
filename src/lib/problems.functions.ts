@@ -29,19 +29,19 @@ export const listProblems = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const profileId = await myProfileId(supabase as never, userId);
 
+    const anon = "00000000-0000-0000-0000-000000000000";
     const [{ data: problems, error }, { data: progress }, { data: mine }] = await Promise.all([
       supabase.from("practice_problems").select(LIST_COLUMNS).order("sort_order"),
-      profileId
-        ? supabase.from("practice_progress").select("problem_id, status").eq("student_id", profileId)
-        : Promise.resolve({ data: [] as { problem_id: string; status: string }[] }),
-      profileId
-        ? supabase
-            .from("problem_submissions")
-            .select("problem_id, verdict, created_at")
-            .eq("student_id", profileId)
-            .order("created_at", { ascending: false })
-            .limit(2000)
-        : Promise.resolve({ data: [] as { problem_id: string; verdict: string; created_at: string }[] }),
+      supabase
+        .from("practice_progress")
+        .select("problem_id, status")
+        .eq("student_id", profileId ?? anon),
+      supabase
+        .from("problem_submissions")
+        .select("problem_id, verdict, created_at")
+        .eq("student_id", profileId ?? anon)
+        .order("created_at", { ascending: false })
+        .limit(2000),
     ]);
     if (error) throw new Error(error.message);
 

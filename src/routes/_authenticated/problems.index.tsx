@@ -86,11 +86,18 @@ function ProblemsPage() {
   const daily = useQuery(dailyChallengeQuery);
   const bookmarks = useQuery(bookmarksQuery);
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [level, setLevel] = useState("all");
-  const [topic, setTopic] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [onlyFavourites, setOnlyFavourites] = useState(false);
+  const search = Route.useSearch();
+
+  const filters = useMemo(() => parseFilters(search as Record<string, unknown>), [search]);
+  const setFilters = (next: Filters) =>
+    navigate({ to: "/problems", search: serialiseFilters(next), replace: true });
+
+  const toggleSort = (key: SortKey) =>
+    setFilters({
+      ...filters,
+      sort: key,
+      dir: filters.sort === key && filters.dir === "asc" ? "desc" : "asc",
+    });
 
   const rows = problems.data?.problems ?? [];
   const favourites = useMemo(
@@ -98,29 +105,68 @@ function ProblemsPage() {
     [bookmarks.data?.problemIds],
   );
 
-  const topics = useMemo(() => {
-    const set = new Set<string>();
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>();
     for (const p of rows) {
-      if (p.category) set.add(p.category);
-      for (const tag of p.tags) set.add(tag);
+      const bag = new Set<string>([...(p.category ? [p.category] : []), ...p.tags]);
+      for (const tag of bag) counts.set(tag, (counts.get(tag) ?? 0) + 1);
     }
-    return [...set].sort();
+    return [...counts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
   }, [rows]);
 
-  const list = useMemo(
-    () =>
-      rows.filter(
-        (p) =>
-          (level === "all" || p.level === level) &&
-          (status === "all" || p.status === status) &&
-          (topic === "all" || p.category === topic || p.tags.includes(topic)) &&
-          (!onlyFavourites || favourites.has(p.id)) &&
-          `${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`
-            .toLowerCase()
-            .includes(search.toLowerCase()),
-      ),
-    [rows, level, status, topic, search, onlyFavourites, favourites],
+  const companies = useMemo(
+    () => [...new Set(rows.map((p) => p.company).filter(Boolean) as string[])].sort(),
+    [rows],
   );
+
+  const list = useMemo(() => {
+    const query = filters.q.trim().toLowerCase();
+    const filtered = rows.filter((p) => {
+      if (filters.levels.length && !filters.levels.includes(p.level)) return false;
+      if (filters.status !== "all" && p.status !== filters.status) return false;
+      if (filters.company !== "all" && p.company !== filters.company) return false;
+      if (filters.fav && !favourites.has(p.id)) return false;
+      if (
+        filters.tags.length &&
+        !filters.tags.some((t) => p.category === t || p.tags.includes(t))
+      )
+        return false;
+      if (
+        query &&
+        !`${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`.toLowerCase().includes(query)
+      )
+        return false;
+      return true;
+    });
+
+    if (filters.sort === "default") return filtered;
+    const sign = filters.dir === "desc" ? -1 : 1;
+    const value = (p: (typeof filtered)[number]) => {
+      switch (filters.sort) {
+        case "title":
+          return p.title.toLowerCase();
+        case "acceptance":
+          return p.acceptance ?? -1;
+        case "difficulty":
+          return LEVEL_RANK[p.level] ?? 0;
+        case "status":
+          return STATUS_RANK[p.status] ?? 0;
+        case "submissions":
+          return p.submissions ?? 0;
+        default:
+          return 0;
+      }
+    };
+    return [...filtered].sort((a, b) => {
+      const av = value(a);
+      const bv = value(b);
+      if (av === bv) return a.title.localeCompare(b.title);
+      return (av > bv ? 1 : -1) * sign;
+    });
+  }, [rows, filters, favourites]);
+
 
   const stats = useMemo(() => {
     const by = (l: string) => rows.filter((p) => p.level === l);

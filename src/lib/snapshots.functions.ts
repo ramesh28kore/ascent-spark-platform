@@ -28,15 +28,25 @@ export const saveSnapshot = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!profile) throw new Error("No profile linked to this account.");
 
-    const { data: last } = await context.supabase
+    let lastQuery = context.supabase
       .from("code_snapshots")
       .select("id, code")
       .eq("student_id", profile.id)
       .eq("scope_kind", data.scope_kind)
       .eq("language", data.language)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+    lastQuery = data.problem_id
+      ? lastQuery.eq("problem_id", data.problem_id)
+      : lastQuery.is("problem_id", null);
+    lastQuery = data.question_id
+      ? lastQuery.eq("question_id", data.question_id)
+      : lastQuery.is("question_id", null);
+    lastQuery = data.attempt_id
+      ? lastQuery.eq("attempt_id", data.attempt_id)
+      : lastQuery.is("attempt_id", null);
+    const { data: lastRows } = await lastQuery;
+    const last = lastRows?.[0];
     if (last && last.code === data.code) return { id: last.id, skipped: true };
 
     const { data: row, error } = await context.supabase

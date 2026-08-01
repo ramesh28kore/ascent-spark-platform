@@ -199,23 +199,8 @@ function ProblemProfilePage() {
           <CardDescription>Last 12 months</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
-            {heatmap.map((cell) => (
-              <span
-                key={cell.key}
-                title={`${cell.key}: ${cell.count} submission${cell.count === 1 ? "" : "s"}`}
-                className={`size-[10px] rounded-[2px] ${
-                  cell.count === 0
-                    ? "bg-muted"
-                    : cell.count < 3
-                      ? "bg-emerald-300 dark:bg-emerald-900"
-                      : cell.count < 6
-                        ? "bg-emerald-500 dark:bg-emerald-700"
-                        : "bg-emerald-700 dark:bg-emerald-500"
-                }`}
-              />
-            ))}
-          </div>
+          <SubmissionHeatmap counts={counts} />
+
         </CardContent>
       </Card>
 

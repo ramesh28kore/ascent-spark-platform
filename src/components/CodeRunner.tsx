@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { Loader2, Play, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Play, RotateCcw, Send } from "lucide-react";
+
+import { templateFor } from "@/lib/code-templates";
+import { useCodeSnapshots, type SnapshotScope } from "@/hooks/useCodeSnapshots";
+import { CodeHistory } from "@/components/CodeHistory";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

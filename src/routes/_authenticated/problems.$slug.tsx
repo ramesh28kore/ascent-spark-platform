@@ -97,13 +97,22 @@ function ProblemWorkspace() {
 
   const problem = detail.data?.problem;
 
-  // Restore the per-problem, per-language draft once the problem is known.
+  const snapshots = useCodeSnapshots({
+    scope: { scope_kind: "practice", problem_id: problem?.id ?? null },
+    language,
+    code,
+    enabled: !!problem,
+  });
+
+  // Restore the per-problem, per-language buffer: server snapshot wins, then
+  // the local draft, then the language template / problem starter.
   useEffect(() => {
-    if (!problem) return;
-    const saved =
+    if (!problem || !snapshots.resumeReady) return;
+    const local =
       typeof window !== "undefined" ? window.localStorage.getItem(draftKey(slug, language)) : null;
-    setCode(saved ?? starterFor(problem.starter_code, language));
-  }, [problem, slug, language]);
+    setCode(snapshots.resumed?.code ?? local ?? starterFor(problem.starter_code, language));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problem?.id, slug, language, snapshots.resumeReady, snapshots.resumed?.id]);
 
   useEffect(() => {
     if (!problem || !code) return;

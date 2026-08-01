@@ -659,48 +659,72 @@ export type Database = {
         Row: {
           category: string
           company: string | null
+          constraints: string | null
           created_at: string
+          examples: Json
           hints: Json
           id: string
           level: Database["public"]["Enums"]["difficulty"]
+          memory_limit_kb: number
           module_id: string | null
           platform: string
           points: number
+          slug: string | null
           solution: string | null
           sort_order: number
+          starter_code: Json
           statement: string | null
+          tags: string[]
+          test_cases: Json
+          time_limit_ms: number
           title: string
           url: string | null
         }
         Insert: {
           category?: string
           company?: string | null
+          constraints?: string | null
           created_at?: string
+          examples?: Json
           hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
+          memory_limit_kb?: number
           module_id?: string | null
           platform?: string
           points?: number
+          slug?: string | null
           solution?: string | null
           sort_order?: number
+          starter_code?: Json
           statement?: string | null
+          tags?: string[]
+          test_cases?: Json
+          time_limit_ms?: number
           title: string
           url?: string | null
         }
         Update: {
           category?: string
           company?: string | null
+          constraints?: string | null
           created_at?: string
+          examples?: Json
           hints?: Json
           id?: string
           level?: Database["public"]["Enums"]["difficulty"]
+          memory_limit_kb?: number
           module_id?: string | null
           platform?: string
           points?: number
+          slug?: string | null
           solution?: string | null
           sort_order?: number
+          starter_code?: Json
           statement?: string | null
+          tags?: string[]
+          test_cases?: Json
+          time_limit_ms?: number
           title?: string
           url?: string | null
         }
@@ -746,6 +770,66 @@ export type Database = {
           },
           {
             foreignKeyName: "practice_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      problem_submissions: {
+        Row: {
+          case_results: Json
+          cases_passed: number
+          cases_total: number
+          code: string
+          created_at: string
+          id: string
+          language: string
+          memory_kb: number
+          problem_id: string
+          runtime_ms: number
+          student_id: string
+          verdict: string
+        }
+        Insert: {
+          case_results?: Json
+          cases_passed?: number
+          cases_total?: number
+          code: string
+          created_at?: string
+          id?: string
+          language?: string
+          memory_kb?: number
+          problem_id: string
+          runtime_ms?: number
+          student_id: string
+          verdict?: string
+        }
+        Update: {
+          case_results?: Json
+          cases_passed?: number
+          cases_total?: number
+          code?: string
+          created_at?: string
+          id?: string
+          language?: string
+          memory_kb?: number
+          problem_id?: string
+          runtime_ms?: number
+          student_id?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_submissions_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_submissions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"

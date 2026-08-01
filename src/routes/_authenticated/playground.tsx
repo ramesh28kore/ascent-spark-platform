@@ -92,13 +92,11 @@ function PlaygroundPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Playground</h1>
-        <p className="text-sm text-muted-foreground">
-          Practise freely. Code runs in an isolated sandbox on the server, exactly like the exam
-          judge.
-        </p>
-      </div>
+      <PageHeader
+        title="Playground"
+        description="Practise freely. Code runs in an isolated sandbox on the server, exactly like the exam judge."
+      />
+
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>

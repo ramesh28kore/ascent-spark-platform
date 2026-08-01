@@ -77,32 +77,13 @@ function ProblemProfilePage() {
       .sort((a, b) => b.total - a.total);
   }, [problems, solvedIds]);
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const s of submissions) map.set(dayKey(s.created_at), (map.get(dayKey(s.created_at)) ?? 0) + 1);
-    return map;
-  }, [submissions]);
+  const counts = useMemo(
+    () => countByDay(submissions.map((s) => s.created_at)),
+    [submissions],
+  );
 
-  const heatmap = useMemo(() => {
-    const today = new Date();
-    const cells: { key: string; count: number }[] = [];
-    for (let i = 363; i >= 0; i -= 1) {
-      const key = dayKey(new Date(today.getTime() - i * DAY));
-      cells.push({ key, count: counts.get(key) ?? 0 });
-    }
-    return cells;
-  }, [counts]);
+  const streak = useMemo(() => streakFromCounts(counts), [counts]);
 
-  const streak = useMemo(() => {
-    const day = new Date();
-    if (!counts.has(dayKey(day))) day.setDate(day.getDate() - 1);
-    let n = 0;
-    while (counts.has(dayKey(day))) {
-      n += 1;
-      day.setDate(day.getDate() - 1);
-    }
-    return n;
-  }, [counts]);
 
   if (profile.isLoading) return <Skeleton className="h-96 w-full" />;
 

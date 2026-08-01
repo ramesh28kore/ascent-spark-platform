@@ -10,6 +10,7 @@ import {
   Lock,
   MessageSquare,
   Play,
+  RotateCcw,
   Send,
   Star,
   XCircle,

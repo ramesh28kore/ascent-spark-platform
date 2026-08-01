@@ -244,36 +244,27 @@ export const issueCertificate = createServerFn({ method: "POST" })
     return row;
   });
 
-/** Public verification — no session required, returns only non-sensitive fields. */
+/** Public verification — no session required. Runs server-side against one exact code
+ *  and returns only non-sensitive fields; the certificates table itself is never
+ *  readable by anonymous clients. */
 export const verifyCertificate = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z.object({ code: z.string().trim().min(4).max(60) }).parse(input),
   )
   .handler(async ({ data }) => {
-    const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-    const client = createClient<Database>(process.env.SUPABASE_URL!, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (input, init) => {
-          const headers = new Headers(init?.headers);
-          if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-            headers.delete("Authorization");
-          }
-          headers.set("apikey", key);
-          return fetch(input, { ...init, headers });
-        },
-      },
-    });
+    const code = data.code.trim().toUpperCase();
+    if (!/^[A-Z0-9-]{4,60}$/.test(code)) return { valid: false as const };
 
-    const { data: row } = await client
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
       .from("certificates")
       .select("code, holder_name, title, kind, score, max_score, issued_on")
-      .eq("code", data.code.toUpperCase())
+      .eq("code", code)
       .maybeSingle();
 
     return row ? { valid: true as const, certificate: row } : { valid: false as const };
   });
+
 
 /* ---------------------------------------------------------------- analytics */
 

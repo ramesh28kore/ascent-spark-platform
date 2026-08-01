@@ -386,7 +386,14 @@ function ProblemsPage() {
             </TableBody>
           </Table>
           {list.length === 0 && (
-            <p className="p-6 text-sm text-muted-foreground">No problems match this filter.</p>
+            <div className="flex flex-col items-start gap-2 p-6">
+              <p className="text-sm text-muted-foreground">
+                No problems match these filters yet.
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setFilters({ ...EMPTY_FILTERS })}>
+                Clear filters
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

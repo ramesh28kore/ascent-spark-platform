@@ -1,4 +1,5 @@
 /** Client-safe shapes and parsers for the LeetCode-style problem workspace. */
+import { templateFor } from "@/lib/code-templates";
 
 export type ProblemExample = { input: string; output: string; explanation?: string };
 export type ProblemCase = { input: string; expected_output: string; hidden: boolean };

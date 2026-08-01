@@ -40,6 +40,7 @@ import {
 
 
 export const Route = createFileRoute("/_authenticated/problems/")({
+  validateSearch: (search: Record<string, unknown>) => serialiseFilters(parseFilters(search)),
   head: () => ({
     meta: [
       { title: "Problem set — CRT Training Console" },

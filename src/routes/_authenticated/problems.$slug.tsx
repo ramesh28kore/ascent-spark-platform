@@ -427,7 +427,35 @@ function ProblemWorkspace() {
                     ))}
                   </SelectContent>
                 </Select>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <CodeHistory
+                    snapshots={snapshots.snapshots}
+                    loading={snapshots.isLoadingHistory}
+                    currentCode={code}
+                    onRestore={(snap) => {
+                      snapshots.snapshotNow("manual", code);
+                      setLanguage(snap.language as ProblemLanguage);
+                      setCode(snap.code);
+                      toast.success("Restored an earlier version");
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      if (!window.confirm("Reset the editor to the starter template?")) return;
+                      snapshots.snapshotNow("manual", code);
+                      setCode(
+                        problem.starter_code
+                          ? starterFor(problem.starter_code, language)
+                          : templateFor(language),
+                      );
+                    }}
+                  >
+                    <RotateCcw className="size-4" />
+                    Reset
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

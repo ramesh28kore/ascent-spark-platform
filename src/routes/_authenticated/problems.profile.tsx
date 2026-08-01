@@ -5,6 +5,12 @@ import { ArrowLeft, Flame } from "lucide-react";
 
 import { problemProfileQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE, VERDICT_TONE } from "@/lib/problems-shared";
+import {
+  SubmissionHeatmap,
+  countByDay,
+  streakFromCounts,
+} from "@/components/leetcode/SubmissionHeatmap";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +36,6 @@ export const Route = createFileRoute("/_authenticated/problems/profile")({
   component: ProblemProfilePage,
 });
 
-const DAY = 86_400_000;
-const dayKey = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
 
 function ProblemProfilePage() {
   const profile = useQuery(problemProfileQuery);
@@ -71,32 +75,13 @@ function ProblemProfilePage() {
       .sort((a, b) => b.total - a.total);
   }, [problems, solvedIds]);
 
-  const counts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const s of submissions) map.set(dayKey(s.created_at), (map.get(dayKey(s.created_at)) ?? 0) + 1);
-    return map;
-  }, [submissions]);
+  const counts = useMemo(
+    () => countByDay(submissions.map((s) => s.created_at)),
+    [submissions],
+  );
 
-  const heatmap = useMemo(() => {
-    const today = new Date();
-    const cells: { key: string; count: number }[] = [];
-    for (let i = 363; i >= 0; i -= 1) {
-      const key = dayKey(new Date(today.getTime() - i * DAY));
-      cells.push({ key, count: counts.get(key) ?? 0 });
-    }
-    return cells;
-  }, [counts]);
+  const streak = useMemo(() => streakFromCounts(counts), [counts]);
 
-  const streak = useMemo(() => {
-    const day = new Date();
-    if (!counts.has(dayKey(day))) day.setDate(day.getDate() - 1);
-    let n = 0;
-    while (counts.has(dayKey(day))) {
-      n += 1;
-      day.setDate(day.getDate() - 1);
-    }
-    return n;
-  }, [counts]);
 
   if (profile.isLoading) return <Skeleton className="h-96 w-full" />;
 
@@ -193,23 +178,8 @@ function ProblemProfilePage() {
           <CardDescription>Last 12 months</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <div className="grid grid-flow-col grid-rows-7 gap-[3px]">
-            {heatmap.map((cell) => (
-              <span
-                key={cell.key}
-                title={`${cell.key}: ${cell.count} submission${cell.count === 1 ? "" : "s"}`}
-                className={`size-[10px] rounded-[2px] ${
-                  cell.count === 0
-                    ? "bg-muted"
-                    : cell.count < 3
-                      ? "bg-emerald-300 dark:bg-emerald-900"
-                      : cell.count < 6
-                        ? "bg-emerald-500 dark:bg-emerald-700"
-                        : "bg-emerald-700 dark:bg-emerald-500"
-                }`}
-              />
-            ))}
-          </div>
+          <SubmissionHeatmap counts={counts} />
+
         </CardContent>
       </Card>
 

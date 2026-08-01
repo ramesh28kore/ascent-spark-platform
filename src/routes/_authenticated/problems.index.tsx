@@ -1,31 +1,34 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
   CircleDashed,
   Circle,
   Shuffle,
   Flame,
   CalendarCheck,
-  Star,
 } from "lucide-react";
 
 import { bookmarksQuery, dailyChallengeQuery, problemsQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE } from "@/lib/problems-shared";
+import { ProblemFilters } from "@/components/leetcode/ProblemFilters";
+import {
+  EMPTY_FILTERS,
+  LEVEL_RANK,
+  STATUS_RANK,
+  parseFilters,
+  serialiseFilters,
+  type ProblemFilters as Filters,
+  type SortKey,
+} from "@/lib/problem-presets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -35,7 +38,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+
 export const Route = createFileRoute("/_authenticated/problems/")({
+  validateSearch: (search: Record<string, unknown>) => serialiseFilters(parseFilters(search)),
   head: () => ({
     meta: [
       { title: "Problem set — CRT Training Console" },
@@ -62,6 +67,40 @@ function StatusIcon({ status }: { status: string }) {
   return <Circle className="size-4 text-muted-foreground/40" />;
 }
 
+/** Clickable table header that drives the URL-backed sort. */
+function SortHead({
+  label,
+  sortKey,
+  filters,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  filters: Filters;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = filters.sort === sortKey;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(sortKey)}
+      aria-label={`Sort by ${label || "status"}`}
+      className={`flex items-center gap-1 hover:text-foreground ${
+        active ? "text-foreground" : "text-muted-foreground"
+      }`}
+    >
+      {label || <span className="sr-only">Status</span>}
+      {active ? (
+        filters.dir === "asc" ? (
+          <ArrowUp className="size-3.5" />
+        ) : (
+          <ArrowDown className="size-3.5" />
+        )
+      ) : null}
+    </button>
+  );
+}
+
 /** Counts consecutive days (ending today or yesterday) with a submission. */
 function streakFrom(days: string[]) {
   const set = new Set(days.map((d) => new Date(d).toISOString().slice(0, 10)));
@@ -81,11 +120,18 @@ function ProblemsPage() {
   const daily = useQuery(dailyChallengeQuery);
   const bookmarks = useQuery(bookmarksQuery);
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [level, setLevel] = useState("all");
-  const [topic, setTopic] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [onlyFavourites, setOnlyFavourites] = useState(false);
+  const search = Route.useSearch();
+
+  const filters = useMemo(() => parseFilters(search as Record<string, unknown>), [search]);
+  const setFilters = (next: Filters) =>
+    navigate({ to: "/problems", search: serialiseFilters(next), replace: true });
+
+  const toggleSort = (key: SortKey) =>
+    setFilters({
+      ...filters,
+      sort: key,
+      dir: filters.sort === key && filters.dir === "asc" ? "desc" : "asc",
+    });
 
   const rows = problems.data?.problems ?? [];
   const favourites = useMemo(
@@ -93,29 +139,68 @@ function ProblemsPage() {
     [bookmarks.data?.problemIds],
   );
 
-  const topics = useMemo(() => {
-    const set = new Set<string>();
+  const tagCounts = useMemo(() => {
+    const counts = new Map<string, number>();
     for (const p of rows) {
-      if (p.category) set.add(p.category);
-      for (const tag of p.tags) set.add(tag);
+      const bag = new Set<string>([...(p.category ? [p.category] : []), ...p.tags]);
+      for (const tag of bag) counts.set(tag, (counts.get(tag) ?? 0) + 1);
     }
-    return [...set].sort();
+    return [...counts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
   }, [rows]);
 
-  const list = useMemo(
-    () =>
-      rows.filter(
-        (p) =>
-          (level === "all" || p.level === level) &&
-          (status === "all" || p.status === status) &&
-          (topic === "all" || p.category === topic || p.tags.includes(topic)) &&
-          (!onlyFavourites || favourites.has(p.id)) &&
-          `${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`
-            .toLowerCase()
-            .includes(search.toLowerCase()),
-      ),
-    [rows, level, status, topic, search, onlyFavourites, favourites],
+  const companies = useMemo(
+    () => [...new Set(rows.map((p) => p.company).filter(Boolean) as string[])].sort(),
+    [rows],
   );
+
+  const list = useMemo(() => {
+    const query = filters.q.trim().toLowerCase();
+    const filtered = rows.filter((p) => {
+      if (filters.levels.length && !filters.levels.includes(p.level)) return false;
+      if (filters.status !== "all" && p.status !== filters.status) return false;
+      if (filters.company !== "all" && p.company !== filters.company) return false;
+      if (filters.fav && !favourites.has(p.id)) return false;
+      if (
+        filters.tags.length &&
+        !filters.tags.some((t) => p.category === t || p.tags.includes(t))
+      )
+        return false;
+      if (
+        query &&
+        !`${p.title} ${p.company ?? ""} ${p.tags.join(" ")}`.toLowerCase().includes(query)
+      )
+        return false;
+      return true;
+    });
+
+    if (filters.sort === "default") return filtered;
+    const sign = filters.dir === "desc" ? -1 : 1;
+    const value = (p: (typeof filtered)[number]) => {
+      switch (filters.sort) {
+        case "title":
+          return p.title.toLowerCase();
+        case "acceptance":
+          return p.acceptance ?? -1;
+        case "difficulty":
+          return LEVEL_RANK[p.level] ?? 0;
+        case "status":
+          return STATUS_RANK[p.status] ?? 0;
+        case "submissions":
+          return p.submissions ?? 0;
+        default:
+          return 0;
+      }
+    };
+    return [...filtered].sort((a, b) => {
+      const av = value(a);
+      const bv = value(b);
+      if (av === bv) return a.title.localeCompare(b.title);
+      return (av > bv ? 1 : -1) * sign;
+    });
+  }, [rows, filters, favourites]);
+
 
   const stats = useMemo(() => {
     const by = (l: string) => rows.filter((p) => p.level === l);
@@ -220,75 +305,48 @@ function ProblemsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-2">
-        <Input
-          placeholder="Search problems, tags or company"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          maxLength={60}
-          className="max-w-xs"
-        />
-        <Select value={level} onValueChange={setLevel}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All levels</SelectItem>
-            {LEVELS.map((l) => (
-              <SelectItem key={l} value={l} className="capitalize">
-                {l}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={topic} onValueChange={setTopic}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All topics</SelectItem>
-            {topics.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any status</SelectItem>
-            <SelectItem value="todo">Todo</SelectItem>
-            <SelectItem value="attempted">Attempted</SelectItem>
-            <SelectItem value="solved">Solved</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant={onlyFavourites ? "secondary" : "outline"}
-          size="sm"
-          className="gap-2"
-          onClick={() => setOnlyFavourites((v) => !v)}
-        >
-          <Star className={`size-4 ${onlyFavourites ? "fill-amber-400 text-amber-400" : ""}`} />
-          Favourites ({favourites.size})
-        </Button>
-      </div>
+      <ProblemFilters
+        filters={filters}
+        onChange={setFilters}
+        tagCounts={tagCounts}
+        companies={companies}
+        favouriteCount={favourites.size}
+        shown={list.length}
+        total={rows.length}
+      />
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10" />
+                <TableHead className="w-10">
+                  <SortHead label="" sortKey="status" filters={filters} onSort={toggleSort} />
+                </TableHead>
                 <TableHead className="w-12">#</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead>
+                  <SortHead label="Title" sortKey="title" filters={filters} onSort={toggleSort} />
+                </TableHead>
                 <TableHead className="hidden md:table-cell">Topics</TableHead>
-                <TableHead className="w-28">Acceptance</TableHead>
-                <TableHead className="w-24">Difficulty</TableHead>
+                <TableHead className="w-28">
+                  <SortHead
+                    label="Acceptance"
+                    sortKey="acceptance"
+                    filters={filters}
+                    onSort={toggleSort}
+                  />
+                </TableHead>
+                <TableHead className="w-24">
+                  <SortHead
+                    label="Difficulty"
+                    sortKey="difficulty"
+                    filters={filters}
+                    onSort={toggleSort}
+                  />
+                </TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {list.map((p, index) => (
                 <TableRow key={p.id} className="group">
@@ -328,7 +386,14 @@ function ProblemsPage() {
             </TableBody>
           </Table>
           {list.length === 0 && (
-            <p className="p-6 text-sm text-muted-foreground">No problems match this filter.</p>
+            <div className="flex flex-col items-start gap-2 p-6">
+              <p className="text-sm text-muted-foreground">
+                No problems match these filters yet.
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setFilters({ ...EMPTY_FILTERS })}>
+                Clear filters
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

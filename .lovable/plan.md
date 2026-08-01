@@ -1,47 +1,50 @@
 ## Goal
 
-Every badge currently shows only "unlocked / locked". Add a timeline that says **when** each badge was earned and links to the exact submission (or contest) that unlocked it.
+Upgrade the Problem set page (`/problems`) from its current four single-select filters into a LeetCode-style filter bar: multi-select topic tags, company filter, difficulty and status toggles, favourites, sortable columns, saved presets, and shareable URLs.
 
-## Approach
+## What already exists
 
-No new tables. The full submission history is already loaded (`problem_submissions` with `verdict`, `problem_id`, `created_at`, plus each problem's `level`/`slug`/`title`), so earn dates can be replayed chronologically and are always consistent — even for badges earned before this feature exists.
+The page today has: text search, one difficulty select, one topic select, one status select, a favourites toggle, and a static table ordered by `sort_order`. All state is local component state — nothing survives a refresh or can be shared.
 
-### 1. Replay engine (`src/lib/achievements.ts`)
+## What gets built
 
-Add `computeAchievementTimeline(input)`:
-- Sort submissions oldest → newest.
-- Walk them, maintaining running counters: total solved, solved per difficulty, submission count, acceptance rate, streak length, and early-bird / night-owl tallies.
-- The first submission that pushes a counter to a badge's target becomes that badge's **unlock event**: `{ badgeId, earnedAt, submissionId, problemSlug, problemTitle, verdict }`.
-- Contest badges (Contender, In the arena, Top 10, Champion) are stamped with the contest's end date and link to the contest page instead of a submission.
-- Existing `computeAchievements` stays the source of truth for progress; the timeline attaches `earnedAt` + `source` to each unlocked badge.
+**1. Filter bar (replaces the current row of selects)**
 
-Note: "first solve of a problem" is what counts, so re-submissions on an already-solved problem don't move the counters.
+- Difficulty: segmented Easy / Medium / Hard toggles, multi-select (LeetCode style) instead of a single dropdown.
+- Topic tags: multi-select popover with a search box and counts per tag; selected tags render as removable chips under the bar. Match mode "any tag" by default.
+- Status: All / Todo / Attempted / Solved.
+- Company: dropdown built from the company values on the problems.
+- Favourites: existing star toggle, kept.
+- Search box: kept, matches title, tags and company.
+- "Clear all" button plus a live result count ("42 of 137 problems").
 
-### 2. Contest timestamps
+**2. Sorting**
 
-`getMyContestStats` (in `src/lib/leetcode.functions.ts`) currently returns slug, title, rank, solved, score. Add `ends_at` so contest badges can be placed on the timeline in the right order.
+Clickable table headers with asc/desc arrows on: #, Title, Acceptance, Difficulty (easy→hard order, not alphabetical), and Status. Default stays the curated `sort_order`. Adds a Frequency-like "Most solved" option using the acceptance/attempt counts already returned by the server.
 
-### 3. Timeline UI (`src/components/leetcode/AchievementTimeline.tsx`)
+**3. Presets**
 
-A vertical timeline, newest first:
-- Tier-coloured medal icon on a connector rail.
-- Badge name + description, relative date ("3 days ago") with the exact date on hover.
-- "Unlocked by" row linking to the problem workspace (`/problems/$slug`) or contest (`/problems/contests/$slug`).
-- Grouped by month heading when the history spans multiple months.
-- Empty state when nothing is earned yet, pointing to the problem set.
+A row of one-click preset chips that set several filters at once:
 
-### 4. Placement
+- Top interview picks (favourites + company tagged)
+- Unsolved easy warm-up
+- Needs another go (attempted, not solved)
+- Hard grind (hard + unsolved)
+- Company focus (opens the company dropdown)
 
-- `/achievements`: timeline shown above the category grids, with a Grid / Timeline toggle so the full collection stays browsable.
-- Dashboard (`StudentHome.tsx`): the achievements strip gains a "Recently earned" line showing the newest unlock and its date.
-- My progress (`problems.profile.tsx`): last 3 timeline entries under the badge showcase.
+Selecting a preset fills the filter bar; the user can then tweak any field, which drops the preset back to "Custom".
 
-### 5. Verification
+**4. Shareable / sticky state**
 
-Sign in as the QA student, confirm the timeline order matches the submission history, that dates are correct, and that each "unlocked by" link opens the right problem.
+All filters and the sort live in the URL search params, validated with the router's `validateSearch` + `fallback()`. Refreshing keeps the view, and a filtered list can be copy-pasted to a peer. Last-used filters are not otherwise persisted.
+
+**5. Empty state**
+
+When filters match nothing, show a short message with a "Clear filters" action instead of the current bare line.
 
 ## Technical notes
 
-- Pure client-side derivation from cached TanStack Query data — no migration, no writes, no extra round trips beyond the one added `ends_at` field.
-- Replay is O(submissions) and memoised, so it stays cheap at the 1000-submission fetch cap.
-- Streak-badge earn dates are reconstructed from day-bucketed activity, matching the existing `streakFromCounts` logic.
+- All filtering and sorting stay client-side over the existing `problemsQuery` payload — no new server functions, no database changes. The list already carries `level`, `status`, `tags`, `category`, `company` and `acceptance`.
+- New route search schema on `src/routes/_authenticated/problems.index.tsx` using `zodValidator` + `fallback` (arrays for `levels` and `tags`, strings for `status`, `company`, `sort`, `dir`, `q`, boolean for `fav`).
+- Extract the filter bar into `src/components/leetcode/ProblemFilters.tsx` and the presets into `src/lib/problem-presets.ts` so the page component stays readable.
+- Reuse existing shadcn primitives (Popover, Command, Toggle Group, Badge); no new dependencies.

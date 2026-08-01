@@ -1,31 +1,34 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
   CircleDashed,
   Circle,
   Shuffle,
   Flame,
   CalendarCheck,
-  Star,
 } from "lucide-react";
 
 import { bookmarksQuery, dailyChallengeQuery, problemsQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE } from "@/lib/problems-shared";
+import { ProblemFilters } from "@/components/leetcode/ProblemFilters";
+import {
+  EMPTY_FILTERS,
+  LEVEL_RANK,
+  STATUS_RANK,
+  parseFilters,
+  serialiseFilters,
+  type ProblemFilters as Filters,
+  type SortKey,
+} from "@/lib/problem-presets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -34,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 
 export const Route = createFileRoute("/_authenticated/problems/")({
   head: () => ({

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORY_LABEL, type AchievementCategory } from "@/lib/achievements";
+import { AchievementTimeline } from "@/components/leetcode/AchievementTimeline";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAchievements } from "@/lib/use-achievements";
 
 export const Route = createFileRoute("/_authenticated/achievements")({
@@ -34,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/achievements")({
 const ORDER: AchievementCategory[] = ["solving", "difficulty", "consistency", "contest"];
 
 function AchievementsPage() {
-  const { badges, unlocked, isLoading } = useAchievements();
+  const { badges, unlocked, timeline, isLoading } = useAchievements();
 
   if (isLoading) return <Skeleton className="h-96 w-full" />;
 
@@ -76,7 +78,29 @@ function AchievementsPage() {
         </CardContent>
       </Card>
 
-      {ORDER.map((category) => {
+      <Tabs defaultValue="timeline" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="grid">All badges</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="timeline">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 font-display text-base">
+                <Medal className="size-4 text-muted-foreground" />
+                Achievement history
+              </CardTitle>
+              <CardDescription>When each badge was earned, and what earned it</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AchievementTimeline events={timeline} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="grid" className="space-y-4">
+          {ORDER.map((category) => {
         const rows = badges.filter((b) => b.category === category);
         const earned = rows.filter((b) => b.unlocked).length;
         return (
@@ -96,8 +120,10 @@ function AchievementsPage() {
               ))}
             </CardContent>
           </Card>
-        );
-      })}
+            );
+          })}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

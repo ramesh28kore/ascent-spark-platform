@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { ArrowLeft, Flame } from "lucide-react";
+import { ArrowLeft, Flame, Medal } from "lucide-react";
 
 import { problemProfileQuery } from "@/lib/crt-queries";
 import { LEVEL_TONE, VERDICT_TONE } from "@/lib/problems-shared";
@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BadgeCard } from "@/components/leetcode/BadgeCard";
+import { useAchievements } from "@/lib/use-achievements";
 
 export const Route = createFileRoute("/_authenticated/problems/profile")({
   head: () => ({
@@ -40,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/problems/profile")({
 
 function ProblemProfilePage() {
   const profile = useQuery(problemProfileQuery);
+  const { badges, unlocked } = useAchievements();
   const submissions = profile.data?.submissions ?? [];
   const problems = profile.data?.problems ?? [];
 
@@ -172,6 +175,32 @@ function ProblemProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Medal className="size-4 text-amber-500" /> Achievements
+            </CardTitle>
+            <CardDescription className="tabular-nums">
+              {unlocked.length}/{badges.length} badges unlocked
+            </CardDescription>
+          </div>
+          <Button asChild size="sm" variant="ghost">
+            <Link to="/achievements">View all</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {unlocked.slice(0, 4).map((badge) => (
+            <BadgeCard key={badge.id} badge={badge} compact />
+          ))}
+          {unlocked.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No badges yet — solve a problem to unlock your first one.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">

@@ -19,6 +19,7 @@ import {
   getRoleAssignments,
 } from "@/lib/crt-ops.functions";
 import { getTests } from "@/lib/tests.functions";
+import { listProblems, getProblem, getProblemProfile } from "@/lib/problems.functions";
 
 export const meQuery = queryOptions({ queryKey: ["me"], queryFn: () => getMe() });
 export const modulesQuery = queryOptions({ queryKey: ["modules"], queryFn: () => getModules() });
@@ -74,3 +75,21 @@ export function pct(value: number, max: number) {
   if (!max) return 0;
   return Math.round((value / max) * 100);
 }
+
+/* --------------------------------------------------- problem set (LeetCode-style) */
+
+export const problemsQuery = queryOptions({
+  queryKey: ["problems"],
+  queryFn: () => listProblems(),
+});
+
+export const problemQuery = (slug: string) =>
+  queryOptions({
+    queryKey: ["problem", slug],
+    queryFn: () => getProblem({ data: { slug } }),
+  });
+
+export const problemProfileQuery = queryOptions({
+  queryKey: ["problem-profile"],
+  queryFn: () => getProblemProfile(),
+});

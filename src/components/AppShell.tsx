@@ -21,6 +21,7 @@ import {
   Bell,
   ShieldCheck,
   Timer,
+  Braces,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -56,6 +57,7 @@ const staffNav = [
   { title: "Online tests", url: "/tests", icon: Timer },
   { title: "Evaluation desk", url: "/evaluate", icon: ClipboardList },
   { title: "Question bank", url: "/questions", icon: FileQuestion },
+  { title: "Problem set", url: "/problems", icon: Braces },
   { title: "Coding library", url: "/coding", icon: Code2 },
   { title: "Practice ladder", url: "/practice", icon: Code2 },
   { title: "Playground", url: "/playground", icon: Code2 },
@@ -80,6 +82,7 @@ const studentNav = [
   { title: "Schedule", url: "/schedule", icon: CalendarDays },
   { title: "Online tests", url: "/tests", icon: Timer },
   { title: "Assessments", url: "/assessments", icon: ClipboardList },
+  { title: "Problem set", url: "/problems", icon: Braces },
   { title: "Practice ladder", url: "/practice", icon: Code2 },
   { title: "Playground", url: "/playground", icon: Code2 },
   { title: "Coding library", url: "/coding", icon: Code2 },

@@ -38,7 +38,10 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedTestsIndexRouteImport } from './routes/_authenticated/tests.index'
+import { Route as AuthenticatedProblemsIndexRouteImport } from './routes/_authenticated/problems.index'
 import { Route as AuthenticatedTestsTestIdRouteImport } from './routes/_authenticated/tests.$testId'
+import { Route as AuthenticatedProblemsProfileRouteImport } from './routes/_authenticated/problems.profile'
+import { Route as AuthenticatedProblemsSlugRouteImport } from './routes/_authenticated/problems.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -190,10 +193,28 @@ const AuthenticatedTestsIndexRoute = AuthenticatedTestsIndexRouteImport.update({
   path: '/tests/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProblemsIndexRoute =
+  AuthenticatedProblemsIndexRouteImport.update({
+    id: '/problems/',
+    path: '/problems/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTestsTestIdRoute =
   AuthenticatedTestsTestIdRouteImport.update({
     id: '/tests/$testId',
     path: '/tests/$testId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProblemsProfileRoute =
+  AuthenticatedProblemsProfileRouteImport.update({
+    id: '/problems/profile',
+    path: '/problems/profile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProblemsSlugRoute =
+  AuthenticatedProblemsSlugRouteImport.update({
+    id: '/problems/$slug',
+    path: '/problems/$slug',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -238,7 +259,10 @@ export interface FileRoutesByFullPath {
   '/students': typeof AuthenticatedStudentsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/problems/': typeof AuthenticatedProblemsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -271,7 +295,10 @@ export interface FileRoutesByTo {
   '/students': typeof AuthenticatedStudentsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/problems': typeof AuthenticatedProblemsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRoutesById {
@@ -306,7 +333,10 @@ export interface FileRoutesById {
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/problems/$slug': typeof AuthenticatedProblemsSlugRoute
+  '/_authenticated/problems/profile': typeof AuthenticatedProblemsProfileRoute
   '/_authenticated/tests/$testId': typeof AuthenticatedTestsTestIdRoute
+  '/_authenticated/problems/': typeof AuthenticatedProblemsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
 }
 export interface FileRouteTypes {
@@ -341,7 +371,10 @@ export interface FileRouteTypes {
     | '/students'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/problems/$slug'
+    | '/problems/profile'
     | '/tests/$testId'
+    | '/problems/'
     | '/tests/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -374,7 +407,10 @@ export interface FileRouteTypes {
     | '/students'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/problems/$slug'
+    | '/problems/profile'
     | '/tests/$testId'
+    | '/problems'
     | '/tests'
   id:
     | '__root__'
@@ -408,7 +444,10 @@ export interface FileRouteTypes {
     | '/_authenticated/students'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/problems/$slug'
+    | '/_authenticated/problems/profile'
     | '/_authenticated/tests/$testId'
+    | '/_authenticated/problems/'
     | '/_authenticated/tests/'
   fileRoutesById: FileRoutesById
 }
@@ -629,11 +668,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/problems/': {
+      id: '/_authenticated/problems/'
+      path: '/problems'
+      fullPath: '/problems/'
+      preLoaderRoute: typeof AuthenticatedProblemsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tests/$testId': {
       id: '/_authenticated/tests/$testId'
       path: '/tests/$testId'
       fullPath: '/tests/$testId'
       preLoaderRoute: typeof AuthenticatedTestsTestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/problems/profile': {
+      id: '/_authenticated/problems/profile'
+      path: '/problems/profile'
+      fullPath: '/problems/profile'
+      preLoaderRoute: typeof AuthenticatedProblemsProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/problems/$slug': {
+      id: '/_authenticated/problems/$slug'
+      path: '/problems/$slug'
+      fullPath: '/problems/$slug'
+      preLoaderRoute: typeof AuthenticatedProblemsSlugRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/.mcp/invoke-tool/$tool': {
@@ -675,7 +735,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRolesRoute: typeof AuthenticatedRolesRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+  AuthenticatedProblemsSlugRoute: typeof AuthenticatedProblemsSlugRoute
+  AuthenticatedProblemsProfileRoute: typeof AuthenticatedProblemsProfileRoute
   AuthenticatedTestsTestIdRoute: typeof AuthenticatedTestsTestIdRoute
+  AuthenticatedProblemsIndexRoute: typeof AuthenticatedProblemsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
 }
 
@@ -701,7 +764,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRolesRoute: AuthenticatedRolesRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+  AuthenticatedProblemsSlugRoute: AuthenticatedProblemsSlugRoute,
+  AuthenticatedProblemsProfileRoute: AuthenticatedProblemsProfileRoute,
   AuthenticatedTestsTestIdRoute: AuthenticatedTestsTestIdRoute,
+  AuthenticatedProblemsIndexRoute: AuthenticatedProblemsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
 }
 

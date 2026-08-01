@@ -29,6 +29,7 @@ import {
   UserRound,
   Flame,
   ChevronDown,
+  Medal,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
@@ -105,6 +106,7 @@ const studentNav: NavGroup[] = [
     label: "You",
     items: [
       { title: "My progress", url: "/problems/profile", icon: UserRound },
+      { title: "Achievements", url: "/achievements", icon: Medal },
       { title: "Alerts", url: "/alerts", icon: Bell },
     ],
   },

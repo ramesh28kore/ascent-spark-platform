@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { CalendarClock, Flame, ListChecks, Play, Target, Trophy } from "lucide-react";
+import { CalendarClock, Flame, ListChecks, Medal, Play, Target, Trophy } from "lucide-react";
 
 import {
   assessmentsQuery,
@@ -23,6 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BadgeCard } from "@/components/leetcode/BadgeCard";
+import { nextUp } from "@/lib/achievements";
+import { useAchievements } from "@/lib/use-achievements";
 
 const LEVELS = ["easy", "medium", "hard"] as const;
 
@@ -38,6 +41,7 @@ function dailyIndex(length: number) {
 /** LeetCode-style home for students: solved ring, daily problem, streak, heatmap. */
 export function StudentHome() {
   const me = useQuery(meQuery);
+  const { badges, unlocked } = useAchievements();
   const problems = useQuery(problemsQuery);
   const profile = useQuery(problemProfileQuery);
   const assessments = useQuery(assessmentsQuery);
@@ -214,6 +218,29 @@ export function StudentHome() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 font-display text-base">
+              <Medal className="size-4 text-amber-500" /> Achievements
+            </CardTitle>
+            <CardDescription className="tabular-nums">
+              {unlocked.length}/{badges.length} badges unlocked
+            </CardDescription>
+          </div>
+          <Button asChild size="sm" variant="ghost">
+            <Link to="/achievements">View all</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[...unlocked.slice(-3).reverse(), ...nextUp(badges, 3)]
+            .slice(0, 3)
+            .map((badge) => (
+              <BadgeCard key={badge.id} badge={badge} compact />
+            ))}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">

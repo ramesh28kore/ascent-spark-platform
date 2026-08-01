@@ -1,48 +1,36 @@
 ## Goal
 
-Give every code editor a proper language-specific starting template, and keep an automatic version history of the student's code that they can browse and restore — synced through the backend so it survives logouts and device changes.
+Give students badges for solving problems, keeping streaks, and competing in contests — shown as a strip on the dashboard and in full on a new **Achievements** page.
 
-## 1. Language templates
+## Approach
 
-Add a shared template library (`src/lib/code-templates.ts`) with rich, ready-to-run boilerplate per language:
+Badges are **derived** from data already in the app (submissions, solved problems, contest registrations/results) rather than stored in a new table. That means no migration, no risk of stale rows, and badges unlock instantly when a student solves something. Earned dates come from the submission that triggered the unlock.
 
-- **Python 3**: stdin reader helpers, a `solve()` stub, and a `if __name__ == "__main__"` driver with comments.
-- **JavaScript**: `readFileSync(0, "utf8")` input parsing, a `solve()` stub, and output printing.
+## Badge catalogue
 
-Rules for which code appears in the editor:
-1. The problem's own starter code for that language, when it exists.
-2. Otherwise the language template.
-3. A saved snapshot/draft always wins over both.
+Four tracks, each with tiers (locked badges are shown greyed with progress toward the next tier):
 
-`starterFor()` in `src/lib/problems-shared.ts` switches from its one-line comment fallback to these templates, so the practice workspace, the exam coding editor (`CodeRunner`), and the playground all share one source of truth. Switching language in the editor swaps to that language's template (or that language's last snapshot) instead of leaving stale code behind.
+- **Solved** — 1, 10, 25, 50, 100 problems solved
+- **Difficulty** — first Medium solved, first Hard solved, 10 Hards
+- **Streak** — 3, 7, 30, 100 consecutive days with a submission (uses the existing streak helper)
+- **Contest** — registered for a contest, completed a contest, finished top 10, finished top 3
+- Plus a couple of flavour badges: "Night Owl" (submission after 11pm), "Perfectionist" (accepted on first attempt for a problem)
 
-Also add a "Reset to template" action in the editor toolbar (with a confirm) so a student can get back to a clean scaffold.
+## What gets built
 
-## 2. Autosaved snapshots per attempt
-
-New backend table `code_snapshots` holding, per student: an attempt scope (practice problem, or a test attempt + question), language, code, a label (`autosave` / `manual` / `submitted`), and a timestamp. Access is limited so a student can only read and write their own snapshots; staff keep their existing read access to graded work only.
-
-Behaviour:
-- **Autosave**: debounced (~5s idle, and on language switch / tab close). Only writes when the code actually changed since the last snapshot, so history stays meaningful.
-- **Retention**: newest 20 autosaves per attempt scope; older autosaves are trimmed automatically. Snapshots created at submit time are labelled and never trimmed.
-- **Resume**: opening a problem or resuming a test attempt loads the latest snapshot for that scope + language; local storage stays as an offline-first fast path but the server copy is authoritative once loaded.
-
-## 3. Version history UI
-
-A "History" panel in the editor (side sheet in the practice workspace at `/problems/:slug`, and a compact popover in the exam coding editor):
-
-- List of snapshots: relative time, language, label badge (Autosave / Submitted), and first line preview.
-- Selecting one shows it read-only in a preview pane with a diff-style highlight against the current buffer.
-- **Restore** replaces the editor buffer, and first stores the current buffer as a snapshot so nothing is lost.
-- History is per problem/question and per attempt, so an exam attempt's versions are separate from practice runs.
+1. **`src/lib/achievements.ts`** — badge definitions (id, title, description, icon, tier, threshold) and a pure `computeAchievements(...)` function taking solved problems, submissions, streak, and contest results; returns each badge with `earned`, `progress`, `earnedAt`.
+2. **`src/components/leetcode/BadgeCard.tsx`** — single badge tile: icon medal, title, description, tier colour, progress bar when locked.
+3. **Achievements page** at `/achievements` (`src/routes/_authenticated/achievements.tsx`) — summary header (X of Y unlocked, tier breakdown), grouped grid by track, own head() metadata.
+4. **Dashboard strip** in `src/components/StudentHome.tsx` — the most recent 4–5 earned badges plus the closest badge to unlocking, linking to the full page.
+5. **Sidebar entry** — "Achievements" under the **You** group in `src/components/AppShell.tsx`, next to Progress.
+6. **Progress page cross-link** — small earned-badge row on `/problems/profile`.
 
 ## Technical notes
 
-- Migration creates `public.code_snapshots` with grants, RLS scoped to `auth.uid()` via the student's profile, an index on (student, scope, created_at), and a trigger that trims autosaves beyond 20.
-- New server functions in `src/lib/snapshots.functions.ts`: `saveSnapshot`, `listSnapshots`, `latestSnapshot`, all behind `requireSupabaseAuth`; the owner is derived from the bearer token, never from the request body.
-- `src/components/CodeEditor.tsx` gains an optional history/toolbar slot; snapshot logic lives in a `useCodeSnapshots` hook so both the practice workspace and `CodeRunner` reuse it.
-- Exam integrity is unchanged: snapshots are code-only, carry no test cases or answers, and cannot be written for another student.
+- Contest performance needs a per-student result read; the existing contest queries return contest and leaderboard data, so I'll add a small server function that returns the signed-in student's contest participations and ranks (read-only, RLS-scoped to the caller) if the current queries don't already expose it.
+- No schema changes and no new tables.
+- All colours use existing semantic tokens; medal tiers map to existing chart/accent tokens so dark mode keeps working.
 
 ## Verification
 
-Sign in as the QA student and check end to end: open a problem (template appears), edit and wait for autosave, reload and confirm the code returns, switch language and confirm the correct template/snapshot, open History and restore an older version, then repeat inside a coding test attempt.
+Sign in as the QA student with Playwright, check the dashboard strip renders, open `/achievements`, and confirm earned vs locked states and progress bars match the student's real solved/streak numbers with no console errors.

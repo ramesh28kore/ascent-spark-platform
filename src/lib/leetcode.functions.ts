@@ -337,3 +337,74 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
 
     return { days, today: days.at(-1) ?? null };
   });
+
+/** Per-student contest participation summary used by the achievements page. */
+export const getMyContestStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const profileId = await myProfileId(supabase as never, userId);
+    const empty = { registered: 0, participated: 0, bestRank: null as number | null, wins: 0, contests: [] as { slug: string; title: string; rank: number; solved: number; score: number }[] };
+    if (!profileId) return empty;
+
+    const [{ data: contests }, { data: links }, { data: regs }] = await Promise.all([
+      supabase.from("contests").select("id, slug, title, starts_at, ends_at").eq("published", true),
+      supabase.from("contest_problems").select("contest_id, problem_id, points"),
+      supabase.from("contest_registrations").select("contest_id").eq("student_id", profileId),
+    ]);
+
+    const registered = new Set((regs ?? []).map((r) => r.contest_id));
+    const list = contests ?? [];
+    if (!list.length) return { ...empty, registered: registered.size };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const allIds = [...new Set((links ?? []).map((l) => l.problem_id))];
+    const { data: subs } = allIds.length
+      ? await supabaseAdmin
+          .from("problem_submissions")
+          .select("student_id, problem_id, created_at")
+          .in("problem_id", allIds)
+          .eq("verdict", "accepted")
+          .limit(20000)
+      : { data: [] as { student_id: string; problem_id: string; created_at: string }[] };
+
+    const results: { slug: string; title: string; rank: number; solved: number; score: number }[] = [];
+
+    for (const c of list) {
+      const own = (links ?? []).filter((l) => l.contest_id === c.id);
+      if (!own.length) continue;
+      const pointsById = new Map(own.map((l) => [l.problem_id, l.points ?? 0]));
+      const perStudent = new Map<string, { problems: Set<string>; last: string }>();
+      for (const s of subs ?? []) {
+        if (!pointsById.has(s.problem_id)) continue;
+        if (s.created_at < c.starts_at || s.created_at > c.ends_at) continue;
+        const entry = perStudent.get(s.student_id) ?? { problems: new Set<string>(), last: s.created_at };
+        entry.problems.add(s.problem_id);
+        if (s.created_at > entry.last) entry.last = s.created_at;
+        perStudent.set(s.student_id, entry);
+      }
+      if (!perStudent.has(profileId)) continue;
+
+      const ranked = [...perStudent.entries()]
+        .map(([student_id, e]) => ({
+          student_id,
+          solved: e.problems.size,
+          score: [...e.problems].reduce((sum, id) => sum + (pointsById.get(id) ?? 0), 0),
+          last: e.last,
+        }))
+        .sort((a, b) => b.score - a.score || a.last.localeCompare(b.last));
+
+      const index = ranked.findIndex((r) => r.student_id === profileId);
+      const mine = ranked[index]!;
+      results.push({ slug: c.slug, title: c.title, rank: index + 1, solved: mine.solved, score: mine.score });
+    }
+
+    const ranks = results.map((r) => r.rank);
+    return {
+      registered: registered.size,
+      participated: results.length,
+      bestRank: ranks.length ? Math.min(...ranks) : null,
+      wins: results.filter((r) => r.rank === 1).length,
+      contests: results.sort((a, b) => a.rank - b.rank),
+    };
+  });

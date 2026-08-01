@@ -25,16 +25,18 @@ export function BadgeCard({ badge, compact = false }: { badge: Achievement; comp
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className={`truncate text-sm font-semibold ${badge.unlocked ? "" : "text-muted-foreground"}`}>
+            <p
+              className={`truncate text-sm font-semibold ${badge.unlocked ? "" : "text-muted-foreground"}`}
+            >
               {badge.name}
             </p>
-            <span className={`shrink-0 text-[10px] font-medium uppercase tracking-wide ${badge.unlocked ? tier.text : "text-muted-foreground"}`}>
+            <span
+              className={`shrink-0 text-[10px] font-medium uppercase tracking-wide ${badge.unlocked ? tier.text : "text-muted-foreground"}`}
+            >
               {tier.label}
             </span>
           </div>
-          {!compact && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{badge.description}</p>
-          )}
+          {!compact && <p className="mt-0.5 text-xs text-muted-foreground">{badge.description}</p>}
           {!badge.unlocked && (
             <div className="mt-2 space-y-1">
               <Progress value={percent} className="h-1.5" />

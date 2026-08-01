@@ -13,7 +13,12 @@ export default defineTool({
     marks: z.number().min(0).max(500).describe("Marks obtained."),
     attempts: z.number().int().min(1).max(10).optional().describe("Attempt number (default 1)."),
   },
-  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   handler: async (input, ctx) => {
     const denied = requireAuth(ctx);
     if (denied) return denied;

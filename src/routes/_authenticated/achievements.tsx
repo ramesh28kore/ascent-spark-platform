@@ -63,7 +63,9 @@ function AchievementsPage() {
             <div>
               <p className="font-display text-2xl font-bold tabular-nums leading-none">
                 {unlocked.length}
-                <span className="text-base font-normal text-muted-foreground">/{badges.length}</span>
+                <span className="text-base font-normal text-muted-foreground">
+                  /{badges.length}
+                </span>
               </p>
               <p className="text-xs text-muted-foreground">badges unlocked</p>
             </div>
@@ -101,25 +103,25 @@ function AchievementsPage() {
 
         <TabsContent value="grid" className="space-y-4">
           {ORDER.map((category) => {
-        const rows = badges.filter((b) => b.category === category);
-        const earned = rows.filter((b) => b.unlocked).length;
-        return (
-          <Card key={category}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 font-display text-base">
-                <Medal className="size-4 text-muted-foreground" />
-                {CATEGORY_LABEL[category]}
-              </CardTitle>
-              <CardDescription className="tabular-nums">
-                {earned}/{rows.length} unlocked
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {rows.map((badge) => (
-                <BadgeCard key={badge.id} badge={badge} />
-              ))}
-            </CardContent>
-          </Card>
+            const rows = badges.filter((b) => b.category === category);
+            const earned = rows.filter((b) => b.unlocked).length;
+            return (
+              <Card key={category}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 font-display text-base">
+                    <Medal className="size-4 text-muted-foreground" />
+                    {CATEGORY_LABEL[category]}
+                  </CardTitle>
+                  <CardDescription className="tabular-nums">
+                    {earned}/{rows.length} unlocked
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {rows.map((badge) => (
+                    <BadgeCard key={badge.id} badge={badge} />
+                  ))}
+                </CardContent>
+              </Card>
             );
           })}
         </TabsContent>

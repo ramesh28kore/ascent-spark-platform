@@ -405,8 +405,7 @@ export function buildPdfDoc(report: StudentReport) {
     alternateRowStyles: { fillColor: [244, 246, 249] },
   });
 
-  const footY =
-    (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
+  const footY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
   doc.setFontSize(7.5);
   doc.setTextColor(110, 110, 110);
   doc.text(

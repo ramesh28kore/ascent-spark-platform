@@ -69,7 +69,9 @@ function PlaygroundPage() {
 
   const save = useMutation({
     mutationFn: () =>
-      saveFn({ data: { id: snippetId, title: title.trim() || "Untitled snippet", language, code } }),
+      saveFn({
+        data: { id: snippetId, title: title.trim() || "Untitled snippet", language, code },
+      }),
     onSuccess: (res) => {
       setSnippetId(res.id);
       toast.success("Snippet saved");
@@ -95,7 +97,6 @@ function PlaygroundPage() {
         title="Playground"
         description="Practise freely. Code runs in an isolated sandbox on the server, exactly like the exam judge."
       />
-
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>

@@ -10,7 +10,6 @@ export type DatasetKey =
   | "sessions"
   | "attendance";
 
-
 export type FieldSpec = {
   key: string;
   label: string;
@@ -30,7 +29,8 @@ export const DATASETS: DatasetSpec[] = [
   {
     key: "students",
     label: "Students",
-    description: "Batch roster. Matched on roll number (or email) so re-uploads update instead of duplicating.",
+    description:
+      "Batch roster. Matched on roll number (or email) so re-uploads update instead of duplicating.",
     fields: [
       { key: "full_name", label: "full_name", required: true },
       { key: "roll_number", label: "roll_number", hint: "unique key" },
@@ -233,7 +233,6 @@ export const DATASETS: DatasetSpec[] = [
     },
   },
 ];
-
 
 export function datasetSpec(key: DatasetKey) {
   return DATASETS.find((d) => d.key === key)!;

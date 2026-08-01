@@ -54,7 +54,6 @@ export const bulkImport = createServerFn({ method: "POST" })
     if (
       ["topics", "assessments", "questions", "coding", "modules", "sessions"].includes(data.dataset)
     ) {
-
       const { data: mods } = await supabase.from("modules").select("id, code");
       (mods ?? []).forEach((m) => modulesByCode.set(m.code.toLowerCase(), m.id));
     }
@@ -258,7 +257,10 @@ export const bulkImport = createServerFn({ method: "POST" })
             .eq("title", title)
             .maybeSingle();
           if (ex?.id) {
-            const { error } = await supabase.from("coding_problems").update(payload).eq("id", ex.id);
+            const { error } = await supabase
+              .from("coding_problems")
+              .update(payload)
+              .eq("id", ex.id);
             if (error) throw new Error(error.message);
             updated += 1;
           } else {
@@ -368,7 +370,6 @@ export const bulkImport = createServerFn({ method: "POST" })
           if (error) throw new Error(error.message);
           inserted += 1;
         } else {
-
           const roll = clean(r.roll_number);
           const title = clean(r.assessment_title);
           const { data: student } = await supabase

@@ -40,7 +40,6 @@ export type CodingSubmissionView = {
   memory_kb?: number | null;
 };
 
-
 const STARTER: Record<Lang, string> = {
   javascript: templateFor("javascript"),
   python: templateFor("python"),
@@ -98,7 +97,6 @@ export function CodeRunner({
     if (snapshots.resumed?.code) onChange(snapshots.resumed.code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshots.resumeReady, snapshots.resumed?.id, locked]);
-
 
   const run = async () => {
     if (!value.trim()) {
@@ -176,7 +174,11 @@ export function CodeRunner({
           disabled={locked || running || submitting}
           className="gap-1.5"
         >
-          {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+          {running ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Play className="h-3.5 w-3.5" />
+          )}
           Run
         </Button>
         {onSubmit && (
@@ -187,7 +189,11 @@ export function CodeRunner({
             disabled={locked || running || submitting}
             className="gap-1.5"
           >
-            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            {submitting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
             Submit for grading
           </Button>
         )}
@@ -258,7 +264,6 @@ export function CodeRunner({
             height={320}
             readOnly={locked}
           />
-
 
           {sampleCases.length > 0 && (
             <div className="rounded-md border p-2">

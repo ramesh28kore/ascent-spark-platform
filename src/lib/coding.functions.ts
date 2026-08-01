@@ -39,8 +39,7 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!attempt) throw new Error("Start the test before submitting an answer.");
     if (attempt.submitted_at) throw new Error("This attempt has already been submitted.");
-    const deadline =
-      new Date(attempt.started_at).getTime() + test.duration_min * 60_000 + 10_000;
+    const deadline = new Date(attempt.started_at).getTime() + test.duration_min * 60_000 + 10_000;
     if (Date.now() > deadline) throw new Error("Time limit exceeded.");
 
     const { data: item } = await supabase
@@ -89,7 +88,6 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
       runtime_ms?: number;
       error?: string;
     }[] = [];
-
 
     // 1) Authoritative judging: run every case (including hidden) in the sandbox.
     if (cases.length > 0) {
@@ -219,9 +217,7 @@ export const gradeCodingSubmission = createServerFn({ method: "POST" })
       cases_total: casesTotal,
       case_results: caseResults,
     };
-
   });
-
 
 export const getCodingSubmissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

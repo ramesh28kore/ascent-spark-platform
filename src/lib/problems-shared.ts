@@ -50,7 +50,9 @@ export function parseExamples(raw: unknown): ProblemExample[] {
 }
 
 export function parseHints(raw: unknown): string[] {
-  return asArray(raw).map((item) => asString(item)).filter(Boolean);
+  return asArray(raw)
+    .map((item) => asString(item))
+    .filter(Boolean);
 }
 
 export function parseCases(raw: unknown): ProblemCase[] {

@@ -8,13 +8,7 @@ import { meQuery } from "@/lib/crt-queries";
 import { bulkImport } from "@/lib/import.functions";
 import { DATASETS, datasetSpec, type DatasetKey } from "@/lib/import-schema";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -23,7 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 
@@ -86,9 +87,7 @@ function ImportPage() {
     .map((f) => f.key)
     .filter((key) => !sheet?.headers.includes(key));
 
-  const unmatched = (sheet?.headers ?? []).filter(
-    (h) => !spec.fields.some((f) => f.key === h),
-  );
+  const unmatched = (sheet?.headers ?? []).filter((h) => !spec.fields.some((f) => f.key === h));
 
   async function handleFile(file: File) {
     setResult(null);

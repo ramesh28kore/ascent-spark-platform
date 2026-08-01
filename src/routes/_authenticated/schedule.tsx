@@ -76,7 +76,6 @@ function SchedulePage() {
   const whenValid = !!when && !Number.isNaN(new Date(when).getTime());
   const formValid = titleValid && durationValid && whenValid;
 
-
   const create = useMutation({
     mutationFn: () =>
       save({
@@ -99,7 +98,6 @@ function SchedulePage() {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
     },
     onError: (e: unknown) => toast.error(formatFormError(e, "Could not save the session.")),
-
   });
 
   const setStatus = useMutation({
@@ -179,7 +177,6 @@ function SchedulePage() {
                       Give the session a title of at least 3 characters.
                     </p>
                   )}
-
                 </div>
                 <div className="space-y-1.5">
                   <Label>Batch</Label>
@@ -240,7 +237,6 @@ function SchedulePage() {
                       Duration must be a whole number between 15 and 600 minutes.
                     </p>
                   )}
-
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Trainer</Label>

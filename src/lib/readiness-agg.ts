@@ -3,7 +3,12 @@ import { readinessIndex, practiceScore, type ReadinessBand } from "@/lib/readine
 export type AggInputs = {
   students: { id: string; full_name: string; batch_id?: string | null; batch?: string | null }[];
   attendance: { student_id: string; present: boolean }[];
-  attempts: { student_id: string; score: number | string; max_score: number | string; submitted_at: string | null }[];
+  attempts: {
+    student_id: string;
+    score: number | string;
+    max_score: number | string;
+    submitted_at: string | null;
+  }[];
   practiceProblems: { id: string; points: number }[];
   practiceProgress: { student_id: string; problem_id: string; status: string }[];
   mocks: { student_id: string; rating: number | string }[];

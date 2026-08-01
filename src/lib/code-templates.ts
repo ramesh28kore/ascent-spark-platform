@@ -51,7 +51,7 @@ export const CODE_TEMPLATES: Record<TemplateLanguage, string> = {
 
 /** Rich boilerplate for a language, falling back to Python when unknown. */
 export function templateFor(language: string): string {
-  return CODE_TEMPLATES[(language as TemplateLanguage) in CODE_TEMPLATES
-    ? (language as TemplateLanguage)
-    : "python"];
+  return CODE_TEMPLATES[
+    (language as TemplateLanguage) in CODE_TEMPLATES ? (language as TemplateLanguage) : "python"
+  ];
 }

@@ -221,7 +221,11 @@ function ReadinessPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Rating (0-100)</Label>
-                    <Input type="number" value={rating} onChange={(e) => setRating(e.target.value)} />
+                    <Input
+                      type="number"
+                      value={rating}
+                      onChange={(e) => setRating(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Interviewer</Label>
@@ -233,7 +237,10 @@ function ReadinessPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => saveMock.mutate()} disabled={!studentId || saveMock.isPending}>
+                  <Button
+                    onClick={() => saveMock.mutate()}
+                    disabled={!studentId || saveMock.isPending}
+                  >
                     Save
                   </Button>
                 </DialogFooter>

@@ -40,7 +40,6 @@ export const Route = createFileRoute("/_authenticated/problems/profile")({
   component: ProblemProfilePage,
 });
 
-
 function ProblemProfilePage() {
   const profile = useQuery(problemProfileQuery);
   const { badges, unlocked, timeline } = useAchievements();
@@ -80,13 +79,9 @@ function ProblemProfilePage() {
       .sort((a, b) => b.total - a.total);
   }, [problems, solvedIds]);
 
-  const counts = useMemo(
-    () => countByDay(submissions.map((s) => s.created_at)),
-    [submissions],
-  );
+  const counts = useMemo(() => countByDay(submissions.map((s) => s.created_at)), [submissions]);
 
   const streak = useMemo(() => streakFromCounts(counts), [counts]);
-
 
   if (profile.isLoading) return <Skeleton className="h-96 w-full" />;
 
@@ -122,7 +117,10 @@ function ProblemProfilePage() {
                     {row.solved}/{row.total}
                   </span>
                 </div>
-                <Progress value={row.total ? (row.solved / row.total) * 100 : 0} className="h-1.5" />
+                <Progress
+                  value={row.total ? (row.solved / row.total) * 100 : 0}
+                  className="h-1.5"
+                />
               </div>
             ))}
           </CardContent>
@@ -139,8 +137,7 @@ function ProblemProfilePage() {
               <span className="text-sm font-normal text-muted-foreground">day streak</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              Accepted:{" "}
-              {submissions.filter((s) => s.verdict === "accepted").length} · Acceptance{" "}
+              Accepted: {submissions.filter((s) => s.verdict === "accepted").length} · Acceptance{" "}
               {submissions.length
                 ? Math.round(
                     (submissions.filter((s) => s.verdict === "accepted").length /
@@ -167,7 +164,10 @@ function ProblemProfilePage() {
                     {row.solved}/{row.total}
                   </span>
                 </div>
-                <Progress value={row.total ? (row.solved / row.total) * 100 : 0} className="h-1.5" />
+                <Progress
+                  value={row.total ? (row.solved / row.total) * 100 : 0}
+                  className="h-1.5"
+                />
               </div>
             ))}
             {byTopic.length === 0 && (
@@ -218,7 +218,6 @@ function ProblemProfilePage() {
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <SubmissionHeatmap counts={counts} />
-
         </CardContent>
       </Card>
 
@@ -243,7 +242,9 @@ function ProblemProfilePage() {
                 </Link>
                 <span className="flex shrink-0 items-center gap-2">
                   <Badge variant="outline">{s.language}</Badge>
-                  <span className={`text-xs font-medium capitalize ${VERDICT_TONE[s.verdict] ?? ""}`}>
+                  <span
+                    className={`text-xs font-medium capitalize ${VERDICT_TONE[s.verdict] ?? ""}`}
+                  >
                     {s.verdict}
                   </span>
                   <span className="text-xs text-muted-foreground">

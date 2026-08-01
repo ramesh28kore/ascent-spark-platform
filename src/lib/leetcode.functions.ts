@@ -13,7 +13,10 @@ async function myProfileId(supabase: Client | never, userId: string) {
   const client = supabase as unknown as {
     from: (t: string) => {
       select: (c: string) => {
-        eq: (a: string, b: string) => { maybeSingle: () => Promise<{ data: { id: string } | null }> };
+        eq: (
+          a: string,
+          b: string,
+        ) => { maybeSingle: () => Promise<{ data: { id: string } | null }> };
       };
     };
   };
@@ -26,7 +29,10 @@ async function solvedIds(supabase: Client | never, profileId: string | null) {
   const client = supabase as unknown as {
     from: (t: string) => {
       select: (c: string) => {
-        eq: (a: string, b: string) => {
+        eq: (
+          a: string,
+          b: string,
+        ) => {
           eq: (a: string, b: string) => Promise<{ data: { problem_id: string }[] | null }>;
         };
       };
@@ -202,7 +208,10 @@ export const getContest = createServerFn({ method: "GET" })
 
       const perStudent = new Map<string, { problems: Set<string>; last: string }>();
       for (const s of subs ?? []) {
-        const entry = perStudent.get(s.student_id) ?? { problems: new Set<string>(), last: s.created_at };
+        const entry = perStudent.get(s.student_id) ?? {
+          problems: new Set<string>(),
+          last: s.created_at,
+        };
         entry.problems.add(s.problem_id);
         if (s.created_at > entry.last) entry.last = s.created_at;
         perStudent.set(s.student_id, entry);
@@ -344,7 +353,20 @@ export const getMyContestStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const profileId = await myProfileId(supabase as never, userId);
-    const empty = { registered: 0, participated: 0, bestRank: null as number | null, wins: 0, contests: [] as { slug: string; title: string; rank: number; solved: number; score: number; ends_at: string }[] };
+    const empty = {
+      registered: 0,
+      participated: 0,
+      bestRank: null as number | null,
+      wins: 0,
+      contests: [] as {
+        slug: string;
+        title: string;
+        rank: number;
+        solved: number;
+        score: number;
+        ends_at: string;
+      }[],
+    };
     if (!profileId) return empty;
 
     const [{ data: contests }, { data: links }, { data: regs }] = await Promise.all([
@@ -368,7 +390,14 @@ export const getMyContestStats = createServerFn({ method: "GET" })
           .limit(20000)
       : { data: [] as { student_id: string; problem_id: string; created_at: string }[] };
 
-    const results: { slug: string; title: string; rank: number; solved: number; score: number; ends_at: string }[] = [];
+    const results: {
+      slug: string;
+      title: string;
+      rank: number;
+      solved: number;
+      score: number;
+      ends_at: string;
+    }[] = [];
 
     for (const c of list) {
       const own = (links ?? []).filter((l) => l.contest_id === c.id);
@@ -378,7 +407,10 @@ export const getMyContestStats = createServerFn({ method: "GET" })
       for (const s of subs ?? []) {
         if (!pointsById.has(s.problem_id)) continue;
         if (s.created_at < c.starts_at || s.created_at > c.ends_at) continue;
-        const entry = perStudent.get(s.student_id) ?? { problems: new Set<string>(), last: s.created_at };
+        const entry = perStudent.get(s.student_id) ?? {
+          problems: new Set<string>(),
+          last: s.created_at,
+        };
         entry.problems.add(s.problem_id);
         if (s.created_at > entry.last) entry.last = s.created_at;
         perStudent.set(s.student_id, entry);

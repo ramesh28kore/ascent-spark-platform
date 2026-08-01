@@ -225,8 +225,6 @@ function ProblemWorkspace() {
       </Card>
     );
 
-
-
   const isFavourite = (bookmarks.data?.problemIds ?? []).includes(problem.id);
   const submissions = detail.data?.submissions ?? [];
   const posts = detail.data?.posts ?? [];

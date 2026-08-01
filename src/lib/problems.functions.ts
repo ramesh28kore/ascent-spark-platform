@@ -13,7 +13,10 @@ async function myProfileId(supabase: { from: (t: string) => never } | never, use
   const client = supabase as unknown as {
     from: (t: string) => {
       select: (c: string) => {
-        eq: (a: string, b: string) => { maybeSingle: () => Promise<{ data: { id: string } | null }> };
+        eq: (
+          a: string,
+          b: string,
+        ) => { maybeSingle: () => Promise<{ data: { id: string } | null }> };
       };
     };
   };
@@ -252,7 +255,8 @@ export const submitProblem = createServerFn({ method: "POST" })
       memoryKb: problem.memory_limit_kb ?? 128000,
     });
 
-    if (judged.unreachable) throw new Error("The judge is unavailable right now. Try again shortly.");
+    if (judged.unreachable)
+      throw new Error("The judge is unavailable right now. Try again shortly.");
 
     const first = judged.results.find((r) => !r.passed);
     const verdict =
@@ -331,7 +335,11 @@ export const getProblemProfile = createServerFn({ method: "GET" })
     if (!profileId) return { submissions: [], problems: [], profile: null };
 
     const [{ data: profile }, { data: submissions }, { data: problems }] = await Promise.all([
-      supabase.from("profiles").select("full_name, roll_number, batch").eq("id", profileId).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("full_name, roll_number, batch")
+        .eq("id", profileId)
+        .maybeSingle(),
       supabase
         .from("problem_submissions")
         .select("id, problem_id, verdict, language, runtime_ms, created_at")

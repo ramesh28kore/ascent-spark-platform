@@ -43,10 +43,7 @@ export function bandVariant(band: ReadinessBand): "default" | "secondary" | "des
 }
 
 /** Difficulty-weighted practice score, normalised to 0-100 against the full ladder. */
-export function practiceScore(
-  solvedPoints: number,
-  totalPoints: number,
-): number {
+export function practiceScore(solvedPoints: number, totalPoints: number): number {
   if (!totalPoints) return 0;
   return clamp((solvedPoints / totalPoints) * 100);
 }

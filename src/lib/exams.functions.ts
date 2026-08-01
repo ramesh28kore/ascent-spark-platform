@@ -14,7 +14,6 @@ async function profileOf(supabase: SupabaseClient<Database>, userId: string) {
   return data.id;
 }
 
-
 /* ------------------------------------------------------------------ theory */
 
 export const saveTheoryAnswer = createServerFn({ method: "POST" })
@@ -24,7 +23,11 @@ export const saveTheoryAnswer = createServerFn({ method: "POST" })
       .object({
         test_id: z.string().uuid(),
         question_id: z.string().uuid(),
-        answer: z.string().trim().min(1, { message: "write your answer before submitting" }).max(20000),
+        answer: z
+          .string()
+          .trim()
+          .min(1, { message: "write your answer before submitting" })
+          .max(20000),
         max_marks: z.number().min(1).max(100),
       })
       .parse(input),
@@ -208,7 +211,10 @@ export const issueCertificate = createServerFn({ method: "POST" })
     z
       .object({
         student_id: z.string().uuid(),
-        title: z.string().trim().min(3, { message: "the certificate title needs at least 3 characters" }),
+        title: z
+          .string()
+          .trim()
+          .min(3, { message: "the certificate title needs at least 3 characters" }),
         kind: z.string().trim().min(2).default("completion"),
         module_id: z.string().uuid().nullable().default(null),
         score: z.number().min(0),
@@ -265,7 +271,6 @@ export const verifyCertificate = createServerFn({ method: "POST" })
     return row ? { valid: true as const, certificate: row } : { valid: false as const };
   });
 
-
 /* ---------------------------------------------------------------- analytics */
 
 /** Aggregated performance data for the staff analytics dashboard. */
@@ -279,7 +284,9 @@ export const getAnalytics = createServerFn({ method: "GET" })
           .select("id, test_id, student_id, score, max_score, submitted_at, blur_count"),
         context.supabase
           .from("coding_submissions")
-          .select("id, question_id, student_id, ai_score, max_score, verdict, judged_by, runtime_ms, created_at"),
+          .select(
+            "id, question_id, student_id, ai_score, max_score, verdict, judged_by, runtime_ms, created_at",
+          ),
         context.supabase.from("scores").select("id, student_id, assessment_id, marks"),
         context.supabase.from("assessments").select("id, title, kind, module_id, max_marks"),
         context.supabase.from("modules").select("id, code, title"),
@@ -307,7 +314,11 @@ export const getAnalytics = createServerFn({ method: "GET" })
     };
 
     for (const row of submissionRows) {
-      bump(moduleOfQuestion.get(row.question_id) ?? null, Number(row.ai_score), Number(row.max_score));
+      bump(
+        moduleOfQuestion.get(row.question_id) ?? null,
+        Number(row.ai_score),
+        Number(row.max_score),
+      );
     }
     const assessmentById = new Map(assessmentRows.map((a) => [a.id, a]));
     for (const row of scoreRows) {

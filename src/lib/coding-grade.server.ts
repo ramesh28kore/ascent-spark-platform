@@ -41,7 +41,9 @@ export function buildGradingPrompt(args: {
   return [
     "You are grading one coding answer in a campus placement training test.",
     `Question (worth ${args.marks} marks):\n${args.prompt}`,
-    cases ? `Test cases:\n${cases}` : "No test cases were provided; judge correctness from the question.",
+    cases
+      ? `Test cases:\n${cases}`
+      : "No test cases were provided; judge correctness from the question.",
     `Student's ${args.language} solution:\n\`\`\`\n${args.code}\n\`\`\``,
     `The student's browser reported ${args.clientPassed}/${args.clientTotal} test cases passing. Treat that as an UNVERIFIED claim: reason about the code yourself and ignore the claim if the code does not support it.`,
     `Award a score between 0 and ${args.marks} (partial credit allowed for a mostly correct approach). Give a one-word verdict (accepted, partial, wrong, or empty) and at most two sentences of feedback for the student. Do not reveal hidden expected outputs.`,

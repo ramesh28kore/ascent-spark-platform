@@ -126,7 +126,6 @@ function StudentsPage() {
       .sort((a, b) => b.avg - a.avg);
   }, [students.data, scores.data, assessments.data, readinessMap, search]);
 
-
   function reportFor(student: StudentRow) {
     return buildStudentReport(
       student,
@@ -232,7 +231,9 @@ function StudentsPage() {
 
                     <TableCell className="text-right">
                       <Badge
-                        variant={r.avg >= 70 ? "default" : r.avg >= 50 ? "secondary" : "destructive"}
+                        variant={
+                          r.avg >= 70 ? "default" : r.avg >= 50 ? "secondary" : "destructive"
+                        }
                       >
                         {r.avg >= 70 ? "Placement ready" : r.avg >= 50 ? "On track" : "Remedial"}
                       </Badge>

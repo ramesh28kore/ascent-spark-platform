@@ -88,7 +88,9 @@ export const listSnapshots = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(60);
 
-    query = data.problem_id ? query.eq("problem_id", data.problem_id) : query.is("problem_id", null);
+    query = data.problem_id
+      ? query.eq("problem_id", data.problem_id)
+      : query.is("problem_id", null);
     query = data.question_id
       ? query.eq("question_id", data.question_id)
       : query.is("question_id", null);
@@ -122,7 +124,9 @@ export const latestSnapshot = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1);
 
-    query = data.problem_id ? query.eq("problem_id", data.problem_id) : query.is("problem_id", null);
+    query = data.problem_id
+      ? query.eq("problem_id", data.problem_id)
+      : query.is("problem_id", null);
     query = data.question_id
       ? query.eq("question_id", data.question_id)
       : query.is("question_id", null);

@@ -174,8 +174,29 @@ function ProblemWorkspace() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (detail.isLoading) return <Skeleton className="h-[70vh] w-full" />;
-  if (!problem) return <p className="text-sm text-muted-foreground">Problem not found.</p>;
+  if (detail.isPending && !detail.isError) return <Skeleton className="h-[70vh] w-full" />;
+  if (!problem || !problem.statement)
+    return (
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <h1 className="font-display text-xl font-semibold">
+            {problem?.title ?? "Problem unavailable"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {detail.isError
+              ? "This problem is not available in the workspace — it has no statement or test cases yet."
+              : "This problem has no statement or test cases yet, so it cannot be attempted here."}
+          </p>
+          <Button asChild variant="outline" size="sm" className="gap-2">
+            <Link to="/problems">
+              <ArrowLeft className="size-4" /> Back to problem set
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+
+
 
   const submissions = detail.data?.submissions ?? [];
   const posts = detail.data?.posts ?? [];

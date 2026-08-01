@@ -141,7 +141,7 @@ export function ProblemFilters({
         </Popover>
 
         <Select value={filters.status} onValueChange={(status) => set({ status })}>
-          <SelectTrigger className="w-32" size="sm">
+          <SelectTrigger className="h-8 w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -153,7 +153,7 @@ export function ProblemFilters({
         </Select>
 
         <Select value={filters.company} onValueChange={(company) => set({ company })}>
-          <SelectTrigger className="w-40" size="sm">
+          <SelectTrigger className="h-8 w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -21,7 +21,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { CodeRunner } from "@/components/CodeRunner";
 import { Leaderboard } from "@/components/Leaderboard";
 
-
 export const Route = createFileRoute("/_authenticated/tests/$testId")({
   head: () => ({
     meta: [
@@ -78,9 +77,7 @@ function TestRunner() {
   });
 
   const submissionFor = (questionId: string) => {
-    const row = (paper.data?.codingSubmissions ?? []).find(
-      (s) => s.question_id === questionId,
-    );
+    const row = (paper.data?.codingSubmissions ?? []).find((s) => s.question_id === questionId);
     return row
       ? {
           ai_score: Number(row.ai_score ?? 0),
@@ -97,7 +94,6 @@ function TestRunner() {
           runtime_ms: Number(row.runtime_ms ?? 0),
           memory_kb: Number(row.memory_kb ?? 0),
         }
-
       : null;
   };
 
@@ -128,8 +124,6 @@ function TestRunner() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-
 
   // Start the attempt once for students.
   useEffect(() => {
@@ -193,7 +187,10 @@ function TestRunner() {
         </div>
         <div className="flex items-center gap-3">
           {!isStaff && !submitted && (
-            <Badge variant={remaining !== null && remaining < 120 ? "destructive" : "secondary"} className="gap-1">
+            <Badge
+              variant={remaining !== null && remaining < 120 ? "destructive" : "secondary"}
+              className="gap-1"
+            >
               <Timer className="h-3.5 w-3.5" /> {mmss}
             </Badge>
           )}
@@ -243,7 +240,9 @@ function TestRunner() {
               </CardTitle>
               <CardDescription>
                 {q.marks} mark(s) · {q.level}
-                {q.qtype && q.qtype !== "mcq" ? ` · ${q.qtype === "coding" ? "Coding" : "Written"}` : ""}
+                {q.qtype && q.qtype !== "mcq"
+                  ? ` · ${q.qtype === "coding" ? "Coding" : "Written"}`
+                  : ""}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -253,7 +252,9 @@ function TestRunner() {
                     value={
                       responses[q.question_id] ??
                       (submitted
-                        ? String((attempt?.responses as Record<string, string>)?.[q.question_id] ?? "")
+                        ? String(
+                            (attempt?.responses as Record<string, string>)?.[q.question_id] ?? "",
+                          )
                         : "")
                     }
                     onChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
@@ -284,13 +285,14 @@ function TestRunner() {
                   </p>
                 </div>
               ) : q.qtype && q.qtype !== "mcq" ? (
-
                 <div className="space-y-2">
                   <Textarea
                     value={
                       responses[q.question_id] ??
                       (submitted
-                        ? String((attempt?.responses as Record<string, string>)?.[q.question_id] ?? "")
+                        ? String(
+                            (attempt?.responses as Record<string, string>)?.[q.question_id] ?? "",
+                          )
                         : "")
                     }
                     onChange={(e) =>
@@ -306,22 +308,28 @@ function TestRunner() {
                   </p>
                 </div>
               ) : (
-
-              <RadioGroup
-                value={responses[q.question_id] ?? (submitted ? String((attempt?.responses as Record<string, string>)?.[q.question_id] ?? "") : "")}
-                onValueChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
-                disabled={submitted || isStaff}
-                className="space-y-2"
-              >
-                {(q.options ?? []).map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <RadioGroupItem value={String(opt)} id={`${q.question_id}-${i}`} />
-                    <Label htmlFor={`${q.question_id}-${i}`} className="font-normal">
-                      {String(opt)}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+                <RadioGroup
+                  value={
+                    responses[q.question_id] ??
+                    (submitted
+                      ? String(
+                          (attempt?.responses as Record<string, string>)?.[q.question_id] ?? "",
+                        )
+                      : "")
+                  }
+                  onValueChange={(v) => setResponses((r) => ({ ...r, [q.question_id]: v }))}
+                  disabled={submitted || isStaff}
+                  className="space-y-2"
+                >
+                  {(q.options ?? []).map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <RadioGroupItem value={String(opt)} id={`${q.question_id}-${i}`} />
+                      <Label htmlFor={`${q.question_id}-${i}`} className="font-normal">
+                        {String(opt)}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               )}
             </CardContent>
           </Card>
@@ -337,7 +345,6 @@ function TestRunner() {
       {paper.data?.test.leaderboard && (submitted || isStaff) ? (
         <Leaderboard testId={testId} />
       ) : null}
-
     </div>
   );
 }

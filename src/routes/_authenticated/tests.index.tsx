@@ -97,9 +97,7 @@ function TestsPage() {
     setOpen(true);
   }, [search.assessment, search.type]);
 
-  const linkedAssessment = (assessments.data ?? []).find(
-    (a) => a.id === assessmentId,
-  );
+  const linkedAssessment = (assessments.data ?? []).find((a) => a.id === assessmentId);
   useEffect(() => {
     if (!linkedAssessment) return;
     setTitle(linkedAssessment.title);
@@ -141,7 +139,11 @@ function TestsPage() {
           shuffle: true,
           publish: true,
           qtypes:
-            qtype === "mixed" ? ["mcq", "coding", "descriptive"] : qtype === "coding" ? ["coding"] : ["mcq"],
+            qtype === "mixed"
+              ? ["mcq", "coding", "descriptive"]
+              : qtype === "coding"
+                ? ["coding"]
+                : ["mcq"],
         },
       }),
     onSuccess: (r) => {
@@ -151,7 +153,6 @@ function TestsPage() {
     },
     onError: (e: unknown) => toast.error(formatFormError(e, "Could not generate the test.")),
   });
-
 
   const togglePublish = useMutation({
     mutationFn: (vars: { id: string; published: boolean }) => publish({ data: vars }),
@@ -323,7 +324,9 @@ function TestsPage() {
                     aria-invalid={!!fieldErrors.when}
                     onChange={(e) => setWhen(e.target.value)}
                   />
-                  {fieldErrors.when && <p className="text-xs text-destructive">{fieldErrors.when}</p>}
+                  {fieldErrors.when && (
+                    <p className="text-xs text-destructive">{fieldErrors.when}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -352,13 +355,9 @@ function TestsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  onClick={() => create.mutate()}
-                  disabled={create.isPending || !formValid}
-                >
+                <Button onClick={() => create.mutate()} disabled={create.isPending || !formValid}>
                   Generate
                 </Button>
-
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -383,7 +382,8 @@ function TestsPage() {
                   </span>
                 </CardTitle>
                 <CardDescription>
-                  {new Date(t.starts_at).toLocaleString()} · {t.duration_min} min · {qCount} questions
+                  {new Date(t.starts_at).toLocaleString()} · {t.duration_min} min · {qCount}{" "}
+                  questions
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap items-center gap-2">

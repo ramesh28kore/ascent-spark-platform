@@ -33,9 +33,7 @@ export const getMe = createServerFn({ method: "GET" })
             : "Student",
       roles: roleList,
     };
-
   });
-
 
 export const getModules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -150,7 +148,6 @@ export const getQuestions = createServerFn({ method: "GET" })
     return (data ?? []).map((q) => ({ ...q, answer: null, explanation: null }));
   });
 
-
 export const createQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -175,7 +172,6 @@ export const createQuestion = createServerFn({ method: "POST" })
           )
           .max(20)
           .default([]),
-
       })
       .parse(input),
   )
@@ -208,7 +204,6 @@ export const getCodingProblems = createServerFn({ method: "GET" })
       expected_output: null,
     }));
   });
-
 
 export const createCodingProblem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

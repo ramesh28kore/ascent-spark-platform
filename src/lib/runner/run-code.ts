@@ -52,7 +52,11 @@ export function runJavaScript(code: string, stdin: string, timeoutMs = 5000): Pr
       resolve({ ...r, ms: Math.round(performance.now() - started) });
     };
     const timer = window.setTimeout(
-      () => done({ output: "", error: `Timed out after ${timeoutMs / 1000}s (possible infinite loop).` }),
+      () =>
+        done({
+          output: "",
+          error: `Timed out after ${timeoutMs / 1000}s (possible infinite loop).`,
+        }),
       timeoutMs,
     );
     worker.onmessage = (e) => done(e.data as Omit<RunResult, "ms">);

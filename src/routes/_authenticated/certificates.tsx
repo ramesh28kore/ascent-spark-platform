@@ -92,7 +92,9 @@ function CertificatesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Issue a certificate</CardTitle>
-            <CardDescription>Awarded certificates appear instantly for the student.</CardDescription>
+            <CardDescription>
+              Awarded certificates appear instantly for the student.
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">

@@ -32,7 +32,6 @@ export const generateTestSchema = z.object({
     .default(["mcq"]),
 });
 
-
 export const submitSchema = z.object({
   test_id: z.string().uuid(),
   responses: z.record(z.string().uuid(), z.string().max(20000)),
@@ -76,9 +75,18 @@ export function pickByDistribution(
   pcts: { easy: number; medium: number; hard: number },
 ): PickableQuestion[] {
   const buckets: Record<string, PickableQuestion[]> = {
-    easy: seededShuffle(pool.filter((q) => q.level === "easy"), "easy"),
-    medium: seededShuffle(pool.filter((q) => q.level === "medium"), "medium"),
-    hard: seededShuffle(pool.filter((q) => q.level === "hard"), "hard"),
+    easy: seededShuffle(
+      pool.filter((q) => q.level === "easy"),
+      "easy",
+    ),
+    medium: seededShuffle(
+      pool.filter((q) => q.level === "medium"),
+      "medium",
+    ),
+    hard: seededShuffle(
+      pool.filter((q) => q.level === "hard"),
+      "hard",
+    ),
   };
   const total = Math.max(1, pcts.easy + pcts.medium + pcts.hard);
   const want = {
@@ -92,7 +100,10 @@ export function pickByDistribution(
   });
   if (chosen.length < count) {
     const used = new Set(chosen.map((q) => q.id));
-    const rest = seededShuffle(pool.filter((q) => !used.has(q.id)), "topup");
+    const rest = seededShuffle(
+      pool.filter((q) => !used.has(q.id)),
+      "topup",
+    );
     chosen.push(...rest.slice(0, count - chosen.length));
   }
   return chosen.slice(0, count);

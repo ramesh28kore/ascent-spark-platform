@@ -55,8 +55,7 @@ export function useCodeSnapshots({
   );
 
   const ready =
-    enabled &&
-    (key.scope_kind === "playground" || !!key.problem_id || !!key.question_id);
+    enabled && (key.scope_kind === "playground" || !!key.problem_id || !!key.question_id);
 
   const history = useQuery({
     queryKey: ["code-snapshots", scopeKey],

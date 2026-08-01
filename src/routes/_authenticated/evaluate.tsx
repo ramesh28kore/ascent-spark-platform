@@ -98,8 +98,7 @@ function EvaluatePage() {
   ]);
 
   const createRubric = useMutation({
-    mutationFn: () =>
-      saveRubricFn({ data: { name: rubricName, kind: rubricKind, criteria } }),
+    mutationFn: () => saveRubricFn({ data: { name: rubricName, kind: rubricKind, criteria } }),
     onSuccess: () => {
       toast.success("Rubric saved");
       setRubricName("");
@@ -291,7 +290,6 @@ function EvaluatePage() {
           </Card>
         </TabsContent>
 
-
         <TabsContent value="theory" className="space-y-4 pt-4">
           {awaiting.length === 0 ? (
             <Card>
@@ -429,7 +427,10 @@ function EvaluatePage() {
               </div>
 
               {activeCriteria.map((criterion) => (
-                <div key={criterion.label} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_140px]">
+                <div
+                  key={criterion.label}
+                  className="grid gap-2 md:grid-cols-[minmax(0,1fr)_140px]"
+                >
                   <Label className="self-center">
                     {criterion.label}{" "}
                     <span className="text-muted-foreground">/ {criterion.max}</span>

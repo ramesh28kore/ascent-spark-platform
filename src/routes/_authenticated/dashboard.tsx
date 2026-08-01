@@ -78,9 +78,7 @@ function TrainerDashboard() {
 
   const byAssessment = list.map((a) => {
     const rows = relevant.filter((s) => s.assessment_id === a.id);
-    const avg = rows.length
-      ? rows.reduce((sum, r) => sum + Number(r.marks), 0) / rows.length
-      : 0;
+    const avg = rows.length ? rows.reduce((sum, r) => sum + Number(r.marks), 0) / rows.length : 0;
     return {
       name: a.title.length > 22 ? `${a.title.slice(0, 22)}…` : a.title,
       percent: pct(avg, a.max_marks),
@@ -117,7 +115,10 @@ function TrainerDashboard() {
     })
     .sort((a, b) => a.avg - b.avg);
 
-  const bottomQuartile = studentAverages.slice(0, Math.max(1, Math.ceil(studentAverages.length / 4)));
+  const bottomQuartile = studentAverages.slice(
+    0,
+    Math.max(1, Math.ceil(studentAverages.length / 4)),
+  );
 
   const upcoming = list
     .filter((a) => new Date(a.scheduled_on) >= new Date(Date.now() - 86400000))

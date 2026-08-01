@@ -172,16 +172,13 @@ function RolesPage() {
                               ? "You cannot remove your own account"
                               : "Delete account"
                         }
-                        onClick={() =>
-                          setPendingDelete({ userId: p.user_id!, name: p.full_name })
-                        }
+                        onClick={() => setPendingDelete({ userId: p.user_id!, name: p.full_name })}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Delete {p.full_name}</span>
                       </Button>
                     </TableCell>
                   )}
-
                 </TableRow>
               ))}
             </TableBody>
@@ -189,10 +186,7 @@ function RolesPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={!!pendingDelete}
-        onOpenChange={(open) => !open && setPendingDelete(null)}
-      >
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {pendingDelete?.name}?</AlertDialogTitle>

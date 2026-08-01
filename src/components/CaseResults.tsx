@@ -40,7 +40,11 @@ export function parseCaseResults(raw: unknown): CaseResult[] {
     }));
 }
 
-const lines = (value: string) => value.replace(/\r\n/g, "\n").split("\n").map((l) => l.trimEnd());
+const lines = (value: string) =>
+  value
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((l) => l.trimEnd());
 
 function LineDiff({ expected, actual }: { expected: string; actual: string }) {
   const left = lines(expected);

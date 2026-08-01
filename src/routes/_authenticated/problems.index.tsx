@@ -38,7 +38,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
 export const Route = createFileRoute("/_authenticated/problems/")({
   validateSearch: (search: Record<string, unknown>) => serialiseFilters(parseFilters(search)),
   head: () => ({
@@ -162,10 +161,7 @@ function ProblemsPage() {
       if (filters.status !== "all" && p.status !== filters.status) return false;
       if (filters.company !== "all" && p.company !== filters.company) return false;
       if (filters.fav && !favourites.has(p.id)) return false;
-      if (
-        filters.tags.length &&
-        !filters.tags.some((t) => p.category === t || p.tags.includes(t))
-      )
+      if (filters.tags.length && !filters.tags.some((t) => p.category === t || p.tags.includes(t)))
         return false;
       if (
         query &&
@@ -201,7 +197,6 @@ function ProblemsPage() {
     });
   }, [rows, filters, favourites]);
 
-
   const stats = useMemo(() => {
     const by = (l: string) => rows.filter((p) => p.level === l);
     return LEVELS.map((l) => {
@@ -216,7 +211,9 @@ function ProblemsPage() {
 
   const pickRandom = () => {
     const pool = list.filter((p) => p.status !== "solved");
-    const pick = (pool.length ? pool : list)[Math.floor(Math.random() * (pool.length || list.length))];
+    const pick = (pool.length ? pool : list)[
+      Math.floor(Math.random() * (pool.length || list.length))
+    ];
     if (pick?.slug) navigate({ to: "/problems/$slug", params: { slug: pick.slug } });
   };
 
@@ -277,7 +274,6 @@ function ProblemsPage() {
           </CardContent>
         </Card>
       ) : null}
-
 
       <Card>
         <CardContent className="grid gap-4 p-4 sm:grid-cols-4">
@@ -387,9 +383,7 @@ function ProblemsPage() {
           </Table>
           {list.length === 0 && (
             <div className="flex flex-col items-start gap-2 p-6">
-              <p className="text-sm text-muted-foreground">
-                No problems match these filters yet.
-              </p>
+              <p className="text-sm text-muted-foreground">No problems match these filters yet.</p>
               <Button size="sm" variant="outline" onClick={() => setFilters({ ...EMPTY_FILTERS })}>
                 Clear filters
               </Button>

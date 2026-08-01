@@ -64,7 +64,8 @@ const num = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
 const str = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 const pct = (earned: number, possible: number) =>
   possible > 0 ? Math.round((earned / possible) * 100) : 0;
-const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0);
+const avg = (xs: number[]) =>
+  xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0;
 
 function dayOf(value: unknown): string {
   const raw = str(value);
@@ -87,11 +88,16 @@ export function describeFilters(data: ReportData, filters: ReportFilters): strin
   const module = data.modules.find((m) => m.id === filters.moduleId);
   out.push(
     `Module: ${
-      filters.moduleId === "all" || !module ? "All modules" : `${str(module.code)} · ${str(module.title)}`
+      filters.moduleId === "all" || !module
+        ? "All modules"
+        : `${str(module.code)} · ${str(module.title)}`
     }`,
   );
   out.push(
-    `Period: ${filters.from || "start"} → ${filters.to || "today"}`.replace("start → today", "All time"),
+    `Period: ${filters.from || "start"} → ${filters.to || "today"}`.replace(
+      "start → today",
+      "All time",
+    ),
   );
   return out;
 }
@@ -105,9 +111,7 @@ function scope(data: ReportData, filters: ReportFilters) {
 
   const batchNameById = new Map(data.batches.map((b) => [str(b.id), str(b.name)]));
 
-  const students = data.students.filter(
-    (s) => batchId === "all" || str(s.batch_id) === batchId,
-  );
+  const students = data.students.filter((s) => batchId === "all" || str(s.batch_id) === batchId);
   const studentIds = new Set(students.map((s) => str(s.id)));
 
   const assessments = data.assessments.filter(
@@ -338,8 +342,7 @@ function buildBatchWise(data: ReportData, filters: ReportFilters): ReportDoc {
   const groups = new Map<string, { name: string; rows: typeof readiness }>();
   for (const student of s.students) {
     const key = str(student.batch_id) || "unassigned";
-    const name =
-      s.batchNameById.get(str(student.batch_id)) ?? str(student.batch) ?? "Unassigned";
+    const name = s.batchNameById.get(str(student.batch_id)) ?? str(student.batch) ?? "Unassigned";
     const bucket = groups.get(key) ?? { name, rows: [] };
     const r = byId.get(str(student.id));
     if (r) bucket.rows.push(r);
@@ -386,7 +389,16 @@ function buildBatchWise(data: ReportData, filters: ReportFilters): ReportDoc {
     .filter((g) => g.rows.length > 0)
     .map((g) => ({
       name: g.name.slice(0, 28) || "Batch",
-      columns: ["Name", "Attendance %", "Tests %", "Coding %", "Mock", "Core %", "Readiness", "Band"],
+      columns: [
+        "Name",
+        "Attendance %",
+        "Tests %",
+        "Coding %",
+        "Mock",
+        "Core %",
+        "Readiness",
+        "Band",
+      ],
       rows: [...g.rows]
         .sort((a, b) => b.score - a.score)
         .map((r) => [
@@ -536,11 +548,7 @@ function buildModuleWise(data: ReportData, filters: ReportFilters): ReportDoc {
 
 /* ------------------------------------------------------------------ entry */
 
-export function buildReport(
-  kind: ReportKind,
-  data: ReportData,
-  filters: ReportFilters,
-): ReportDoc {
+export function buildReport(kind: ReportKind, data: ReportData, filters: ReportFilters): ReportDoc {
   if (kind === "batch") return buildBatchWise(data, filters);
   if (kind === "module") return buildModuleWise(data, filters);
   return buildStudentWise(data, filters);

@@ -49,11 +49,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -224,9 +220,7 @@ function NavGroupSection({
                 <span>{item.title}</span>
               </Link>
             </SidebarMenuButton>
-            {item.url === "/alerts" && unread > 0 && (
-              <SidebarMenuBadge>{unread}</SidebarMenuBadge>
-            )}
+            {item.url === "/alerts" && unread > 0 && <SidebarMenuBadge>{unread}</SidebarMenuBadge>}
           </SidebarMenuItem>
         );
       })}

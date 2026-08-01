@@ -134,7 +134,11 @@ function ResourcesPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>URL</Label>
-                  <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" />
+                  <Input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Module</Label>
@@ -186,7 +190,12 @@ function ResourcesPage() {
                 Open <ExternalLink className="h-3 w-3" />
               </a>
               {isStaff && (
-                <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del.mutate(r.id)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Delete"
+                  onClick={() => del.mutate(r.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}

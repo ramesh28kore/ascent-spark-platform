@@ -15,13 +15,7 @@ import { exportReport, type ExportFormat } from "@/lib/export-formats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -67,7 +61,7 @@ export function ExportCentre() {
   const scopeLabel =
     batchId === "all"
       ? "all"
-      : (data?.batches.find((b) => b.id === batchId)?.name as string | undefined) ?? "batch";
+      : ((data?.batches.find((b) => b.id === batchId)?.name as string | undefined) ?? "batch");
 
   const run = async (format: ExportFormat) => {
     if (!doc) return;
@@ -164,9 +158,7 @@ export function ExportCentre() {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {KINDS.find((k) => k.value === kind)?.hint}
-        </p>
+        <p className="text-xs text-muted-foreground">{KINDS.find((k) => k.value === kind)?.hint}</p>
 
         {doc ? (
           <div className="flex flex-wrap gap-3 text-sm">
@@ -181,11 +173,7 @@ export function ExportCentre() {
 
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => run("pdf")} disabled={!doc || busy !== null}>
-            {busy === "pdf" ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <FileText />
-            )}
+            {busy === "pdf" ? <Loader2 className="animate-spin" /> : <FileText />}
             PDF
           </Button>
           <Button variant="secondary" onClick={() => run("xlsx")} disabled={!doc || busy !== null}>

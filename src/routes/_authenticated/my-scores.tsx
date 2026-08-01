@@ -85,9 +85,7 @@ function MyScores() {
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const avg = rows.length
-    ? Math.round(rows.reduce((s, r) => s + r.percent, 0) / rows.length)
-    : 0;
+  const avg = rows.length ? Math.round(rows.reduce((s, r) => s + r.percent, 0) / rows.length) : 0;
 
   const report = profile
     ? buildStudentReport(profile, modules.data?.modules ?? [], list, scores.data ?? [])
@@ -123,7 +121,6 @@ function MyScores() {
           </Button>
         </div>
       </div>
-
 
       <Card>
         <CardHeader>

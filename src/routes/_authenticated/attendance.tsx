@@ -33,7 +33,8 @@ export const Route = createFileRoute("/_authenticated/attendance")({
       { title: "Attendance — CRT Training Console" },
       {
         name: "description",
-        content: "Mark session-wise CRT attendance and monitor the 75% minimum threshold per student.",
+        content:
+          "Mark session-wise CRT attendance and monitor the 75% minimum threshold per student.",
       },
       { property: "og:title", content: "Attendance — CRT Training Console" },
       { property: "og:description", content: "Session attendance capture and shortfall tracking." },
@@ -135,9 +136,7 @@ function AttendancePage() {
                     >
                       <Checkbox
                         checked={isPresent(s.id)}
-                        onCheckedChange={(v) =>
-                          setDraft((d) => ({ ...d, [s.id]: v === true }))
-                        }
+                        onCheckedChange={(v) => setDraft((d) => ({ ...d, [s.id]: v === true }))}
                       />
                       <span className="truncate">
                         {s.full_name}

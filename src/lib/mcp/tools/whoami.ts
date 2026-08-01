@@ -4,7 +4,8 @@ import { errorResult, requireAuth, supabaseForUser, textResult } from "../supaba
 export default defineTool({
   name: "whoami",
   title: "Who am I",
-  description: "Return the signed-in user's CRT profile and roles (admin, trainer, placement, student).",
+  description:
+    "Return the signed-in user's CRT profile and roles (admin, trainer, placement, student).",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (_input, ctx) => {

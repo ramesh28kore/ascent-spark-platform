@@ -121,7 +121,11 @@ function BatchesPage() {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label>Name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="CRT-2026-A" />
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="CRT-2026-A"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Academic year</Label>
@@ -129,11 +133,18 @@ function BatchesPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Branch (optional)</Label>
-                  <Input value={branch} onChange={(e) => setBranch(e.target.value)} placeholder="CSE" />
+                  <Input
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                    placeholder="CSE"
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={create.isPending || name.trim().length < 2}>
+                <Button
+                  onClick={() => create.mutate()}
+                  disabled={create.isPending || name.trim().length < 2}
+                >
                   Save batch
                 </Button>
               </DialogFooter>

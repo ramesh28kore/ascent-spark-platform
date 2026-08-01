@@ -76,7 +76,9 @@ function AlertsPage() {
                   <BellRing className="h-4 w-4 text-muted-foreground" />
                   {n.title}
                 </span>
-                <Badge variant={n.kind === "attendance" ? "destructive" : "secondary"}>{n.kind}</Badge>
+                <Badge variant={n.kind === "attendance" ? "destructive" : "secondary"}>
+                  {n.kind}
+                </Badge>
               </CardTitle>
               <CardDescription>{new Date(n.created_at).toLocaleString()}</CardDescription>
             </CardHeader>

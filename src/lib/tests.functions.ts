@@ -8,7 +8,6 @@ import {
   seededShuffle,
 } from "@/lib/tests.server";
 
-
 export const getTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -121,10 +120,7 @@ export const getTestPaper = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
 
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const isStaff = (roles ?? []).some((r) =>
       ["trainer", "admin", "placement"].includes(r.role as string),
     );
@@ -132,10 +128,12 @@ export const getTestPaper = createServerFn({ method: "POST" })
     // Students can only see the question list while an attempt is live, so
     // open the attempt before loading the paper.
     if (!isStaff && profile && test.published) {
-      await supabase.from("test_attempts").upsert(
-        { test_id: data.test_id, student_id: profile.id, started_at: new Date().toISOString() },
-        { onConflict: "test_id,student_id", ignoreDuplicates: true },
-      );
+      await supabase
+        .from("test_attempts")
+        .upsert(
+          { test_id: data.test_id, student_id: profile.id, started_at: new Date().toISOString() },
+          { onConflict: "test_id,student_id", ignoreDuplicates: true },
+        );
     }
 
     const { data: items } = await supabase
@@ -143,7 +141,6 @@ export const getTestPaper = createServerFn({ method: "POST" })
       .select("id, question_id, marks, sort_order")
       .eq("test_id", data.test_id)
       .order("sort_order");
-
 
     const ids = (items ?? []).map((i) => i.question_id);
     const { data: questions } = ids.length
@@ -199,7 +196,6 @@ export const getTestPaper = createServerFn({ method: "POST" })
     };
   });
 
-
 export const startAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ test_id: z.string().uuid() }).parse(input))
@@ -240,4 +236,3 @@ export const submitAttempt = createServerFn({ method: "POST" })
       maxScore: Number(row?.max_score ?? 0),
     };
   });
-

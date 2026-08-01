@@ -17,7 +17,10 @@ export type ExportFormat = "pdf" | "xlsx" | "csv";
 export function reportFilename(doc: ReportDoc, format: ExportFormat, scope: string) {
   const day = new Date().toISOString().slice(0, 10);
   const tail = scope
-    ? `-${scope.toLowerCase().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}`
+    ? `-${scope
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-|-$/g, "")}`
     : "";
   return `crt-${doc.slug}${tail}-${day}.${format}`;
 }
@@ -149,7 +152,8 @@ export function reportToPdfDoc(doc: ReportDoc) {
         const text = String(hook.cell.raw ?? "");
         if (text === "Ready" || text === "On track") hook.cell.styles.textColor = [21, 110, 62];
         if (text === "Near-Ready" || text === "Watch") hook.cell.styles.textColor = [161, 98, 7];
-        if (text === "Needs Work" || text === "Critical") hook.cell.styles.textColor = [176, 32, 32];
+        if (text === "Needs Work" || text === "Critical")
+          hook.cell.styles.textColor = [176, 32, 32];
       },
     });
 

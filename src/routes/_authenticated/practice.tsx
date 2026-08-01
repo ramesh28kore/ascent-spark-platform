@@ -74,7 +74,8 @@ function PracticePage() {
   const [title, setTitle] = useState("");
   const [platform, setPlatform] = useState("internal");
   const [url, setUrl] = useState("");
-  const [level, setLevel] = useState<(typeof STATUSES)[number] extends never ? never : "easy" | "medium" | "hard">("easy");
+  const [level, setLevel] =
+    useState<(typeof STATUSES)[number] extends never ? never : "easy" | "medium" | "hard">("easy");
   const [moduleId, setModuleId] = useState("none");
 
   const problems = practice.data?.problems ?? [];
@@ -207,7 +208,10 @@ function PracticePage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => create.mutate()} disabled={create.isPending || title.trim().length < 3}>
+                  <Button
+                    onClick={() => create.mutate()}
+                    disabled={create.isPending || title.trim().length < 3}
+                  >
                     Add
                   </Button>
                 </DialogFooter>

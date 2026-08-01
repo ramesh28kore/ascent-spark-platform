@@ -67,8 +67,7 @@ for (const file of files) {
   }
 
   // Tables created in this file
-  const createRe =
-    /\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?public\.("?)([a-zA-Z_][\w]*)\1/gi;
+  const createRe = /\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?public\.("?)([a-zA-Z_][\w]*)\1/gi;
   const created = new Set();
   let m;
   while ((m = createRe.exec(sql)) !== null) created.add(m[2].toLowerCase());

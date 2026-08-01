@@ -38,9 +38,8 @@ function diffLines(current: string, snapshot: string) {
     snapshotLines: snapshot
       .split("\n")
       .map((line) => ({ line, added: line.trim() !== "" && !currentSet.has(line) })),
-    removedCount: current
-      .split("\n")
-      .filter((line) => line.trim() !== "" && !snapshotSet.has(line)).length,
+    removedCount: current.split("\n").filter((line) => line.trim() !== "" && !snapshotSet.has(line))
+      .length,
   };
 }
 

@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/modules")({
       { title: "Module planner — CRT Training Console" },
       {
         name: "description",
-        content: "M1–M7 CRT syllabus planner with hours, topics, deliverables and completion state.",
+        content:
+          "M1–M7 CRT syllabus planner with hours, topics, deliverables and completion state.",
       },
       { property: "og:title", content: "Module planner — CRT Training Console" },
       { property: "og:description", content: "Plan and track the 60–75 hour CRT syllabus." },

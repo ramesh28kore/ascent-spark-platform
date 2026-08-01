@@ -165,7 +165,10 @@ export function StudentHome() {
                       {row.solved}/{row.total}
                     </span>
                   </div>
-                  <Progress value={row.total ? (row.solved / row.total) * 100 : 0} className="h-1.5" />
+                  <Progress
+                    value={row.total ? (row.solved / row.total) * 100 : 0}
+                    className="h-1.5"
+                  />
                 </div>
               ))}
             </div>
@@ -198,7 +201,6 @@ export function StudentHome() {
                       </Badge>
                     ))}
                   </div>
-
                 </div>
                 <Button asChild size="sm" variant="secondary">
                   <Link to="/problems/$slug" params={{ slug: daily.slug ?? "" }}>
@@ -240,11 +242,9 @@ export function StudentHome() {
           </Button>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[...unlocked.slice(-3).reverse(), ...nextUp(badges, 3)]
-            .slice(0, 3)
-            .map((badge) => (
-              <BadgeCard key={badge.id} badge={badge} compact />
-            ))}
+          {[...unlocked.slice(-3).reverse(), ...nextUp(badges, 3)].slice(0, 3).map((badge) => (
+            <BadgeCard key={badge.id} badge={badge} compact />
+          ))}
         </CardContent>
       </Card>
 
@@ -312,10 +312,15 @@ export function StudentHome() {
                     {row.solved}/{row.total}
                   </span>
                 </div>
-                <Progress value={row.total ? (row.solved / row.total) * 100 : 0} className="h-1.5" />
+                <Progress
+                  value={row.total ? (row.solved / row.total) * 100 : 0}
+                  className="h-1.5"
+                />
               </div>
             ))}
-            {byTopic.length === 0 && <p className="text-sm text-muted-foreground">No topics yet.</p>}
+            {byTopic.length === 0 && (
+              <p className="text-sm text-muted-foreground">No topics yet.</p>
+            )}
           </CardContent>
         </Card>
       </div>

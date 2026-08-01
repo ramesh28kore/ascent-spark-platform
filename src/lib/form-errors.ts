@@ -45,7 +45,11 @@ function parseIssues(input: unknown): ZodIssueLike[] | null {
 /** Formats an unknown error (Error, Zod issue JSON, string) into a short sentence. */
 export function formatFormError(error: unknown, fallback = "Something went wrong."): string {
   const raw =
-    error instanceof Error ? error.message : typeof error === "string" ? error : String(error ?? "");
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : String(error ?? "");
   const issues = parseIssues(raw);
   if (issues?.length) {
     const parts = issues.slice(0, 3).map((issue) => {

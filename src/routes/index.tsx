@@ -33,10 +33,26 @@ const pillars = [
 ];
 
 const features = [
-  { icon: ClipboardList, title: "Module planner", body: "M1–M7 with hours, topics and deliverables tracked to completion." },
-  { icon: BarChart3, title: "Performance tracking", body: "Student × module × score × attempts, with bottom-quartile flags." },
-  { icon: Users, title: "Batch view", body: "Filter by batch, branch and year; drill into any student." },
-  { icon: Code2, title: "Coding library", body: "Problem → Approach → Python → Output → Complexity → Follow-ups." },
+  {
+    icon: ClipboardList,
+    title: "Module planner",
+    body: "M1–M7 with hours, topics and deliverables tracked to completion.",
+  },
+  {
+    icon: BarChart3,
+    title: "Performance tracking",
+    body: "Student × module × score × attempts, with bottom-quartile flags.",
+  },
+  {
+    icon: Users,
+    title: "Batch view",
+    body: "Filter by batch, branch and year; drill into any student.",
+  },
+  {
+    icon: Code2,
+    title: "Coding library",
+    body: "Problem → Approach → Python → Output → Complexity → Follow-ups.",
+  },
 ];
 
 function Landing() {
@@ -64,8 +80,8 @@ function Landing() {
           Run the entire campus recruitment training programme from one console
         </h1>
         <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-          A 60–75 hour module plan, a graded problem ladder, a Bloom-tagged question bank and
-          weekly score tracking — for trainers and students, in one place.
+          A 60–75 hour module plan, a graded problem ladder, a Bloom-tagged question bank and weekly
+          score tracking — for trainers and students, in one place.
         </p>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">

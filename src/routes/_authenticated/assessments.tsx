@@ -53,7 +53,8 @@ export const Route = createFileRoute("/_authenticated/assessments")({
       { title: "Assessments — CRT Training Console" },
       {
         name: "description",
-        content: "Schedule weekly tests, mock NQT papers and coding tests, then record student marks.",
+        content:
+          "Schedule weekly tests, mock NQT papers and coding tests, then record student marks.",
       },
       { property: "og:title", content: "Assessments — CRT Training Console" },
       { property: "og:description", content: "Schedule CRT tests and capture scores." },
@@ -127,8 +128,6 @@ function AssessmentsPage() {
     );
   }
 
-
-
   const list = assessments.data ?? [];
   const active = list.find((a) => a.id === selected) ?? list[0];
 
@@ -155,7 +154,12 @@ function AssessmentsPage() {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="t">Title</Label>
-                <Input id="t" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} />
+                <Input
+                  id="t"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={160}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -259,7 +263,9 @@ function AssessmentsPage() {
               {active ? `Marks — ${active.title}` : "Marks"}
             </CardTitle>
             <CardDescription>
-              {active ? `Out of ${active.max_marks}. Entries save on blur.` : "Select an assessment"}
+              {active
+                ? `Out of ${active.max_marks}. Entries save on blur.`
+                : "Select an assessment"}
             </CardDescription>
             {active && (
               <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -296,7 +302,6 @@ function AssessmentsPage() {
                 </Button>
               </div>
             )}
-
           </CardHeader>
           <CardContent>
             {active && (
@@ -402,9 +407,7 @@ function StudentAssessments({
     tests.find((t) => t.assessment_id === a.id) ??
     tests.find(
       (t) =>
-        !!a.module_id &&
-        t.module_id === a.module_id &&
-        t.starts_at.slice(0, 10) === a.scheduled_on,
+        !!a.module_id && t.module_id === a.module_id && t.starts_at.slice(0, 10) === a.scheduled_on,
     ) ??
     null;
   const myAttempt = (testId: string) =>
@@ -451,11 +454,7 @@ function StudentAssessments({
       );
     }
     if (!t.published) {
-      return (
-        <Badge variant="secondary">
-          Opens on {t.starts_at.slice(0, 10)}
-        </Badge>
-      );
+      return <Badge variant="secondary">Opens on {t.starts_at.slice(0, 10)}</Badge>;
     }
     return (
       <Button asChild size="sm">
@@ -528,7 +527,6 @@ function StudentAssessments({
             ))}
         </CardContent>
       </Card>
-
 
       <Card>
         <CardHeader>

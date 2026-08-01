@@ -72,7 +72,6 @@ export const rolesQuery = queryOptions({
 });
 export const testsQuery = queryOptions({ queryKey: ["tests"], queryFn: () => getTests() });
 
-
 export const KIND_LABEL: Record<string, string> = {
   weekly_test: "Weekly test",
   mock_nqt: "Mock NQT",

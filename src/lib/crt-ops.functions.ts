@@ -167,7 +167,6 @@ export const setUserRole = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 /* -------------------------------------------------------- mock interviews */
 
 export const getMockInterviews = createServerFn({ method: "GET" })

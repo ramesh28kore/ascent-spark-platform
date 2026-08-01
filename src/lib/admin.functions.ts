@@ -4,9 +4,7 @@ import { z } from "zod";
 
 import { DEFAULT_DOMAIN, normaliseRoll, rollToEmail } from "./admin-shared";
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 async function admin(): Promise<AdminClient> {
   const mod = await import("@/integrations/supabase/client.server");
@@ -62,13 +60,8 @@ async function setRole(
   await db.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
 }
 
-
 async function findUserIdByEmail(db: AdminClient, email: string): Promise<string | null> {
-  const { data } = await db
-    .from("profiles")
-    .select("user_id")
-    .ilike("email", email)
-    .maybeSingle();
+  const { data } = await db.from("profiles").select("user_id").ilike("email", email).maybeSingle();
   return data?.user_id ?? null;
 }
 
@@ -96,7 +89,6 @@ export const getCredentialSettings = createServerFn({ method: "GET" })
       defaultDomain: data?.default_domain ?? DEFAULT_DOMAIN,
     };
   });
-
 
 export const saveCredentialSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -286,7 +278,6 @@ export const deleteAccounts = createServerFn({ method: "POST" })
     return { deleted, failed };
   });
 
-
 /* ------------------------------------------------------------------ */
 /* Student credential generation                                       */
 /* ------------------------------------------------------------------ */
@@ -444,7 +435,8 @@ export const previewCredential = createServerFn({ method: "POST" })
       if (password && password.length < 6) {
         warnings.push("The roll number is shorter than 6 characters — a weak password.");
       }
-      if (!data.fullName) warnings.push("No full name given — the roll number will be used instead.");
+      if (!data.fullName)
+        warnings.push("No full name given — the roll number will be used instead.");
     } else {
       const email = data.email.toLowerCase().trim();
       username = email;
@@ -599,7 +591,8 @@ export const listStudentCredentials = createServerFn({ method: "POST" })
     if (data.batchId) query = query.eq("batch_id", data.batchId);
     if (data.section) query = query.eq("section", data.section);
     if (data.year) query = query.eq("year", data.year);
-    if (data.search) query = query.or(`roll_number.ilike.%${data.search}%,email.ilike.%${data.search}%`);
+    if (data.search)
+      query = query.or(`roll_number.ilike.%${data.search}%,email.ilike.%${data.search}%`);
 
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);

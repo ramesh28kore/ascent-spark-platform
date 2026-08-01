@@ -37,7 +37,8 @@ export const Route = createFileRoute("/_authenticated/questions")({
       { title: "Question bank — CRT Training Console" },
       {
         name: "description",
-        content: "Bloom-tagged CRT question bank with difficulty filters and a mock test generator.",
+        content:
+          "Bloom-tagged CRT question bank with difficulty filters and a mock test generator.",
       },
       { property: "og:title", content: "Question bank — CRT Training Console" },
       { property: "og:description", content: "Build mock NQT papers from a tagged question bank." },
@@ -132,7 +133,6 @@ function QuestionsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
 
   function generate() {
     const n = Math.max(1, Math.min(50, Number(count) || 10));
@@ -270,11 +270,13 @@ function QuestionsPage() {
                       rows={4}
                       spellCheck={false}
                       className="font-mono text-xs"
-                      placeholder={"5 3 => 8\n#10 -2 => 8   (prefix # to hide a case from students)"}
+                      placeholder={
+                        "5 3 => 8\n#10 -2 => 8   (prefix # to hide a case from students)"
+                      }
                     />
                     <p className="text-xs text-muted-foreground">
-                      One case per line as <code>input =&gt; expected output</code>. Use <code>\n</code>{" "}
-                      for multi-line input. Hidden cases are graded but never shown.
+                      One case per line as <code>input =&gt; expected output</code>. Use{" "}
+                      <code>\n</code> for multi-line input. Hidden cases are graded but never shown.
                     </p>
                   </div>
                 )}

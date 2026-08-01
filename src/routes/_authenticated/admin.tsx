@@ -24,13 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -39,7 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -74,7 +75,6 @@ import {
   saveCredentialSettings,
   authoriseCredentialExport,
 } from "@/lib/admin.functions";
-
 
 import {
   csvEscape,
@@ -144,9 +144,18 @@ async function exportCredentials(rows: CredentialRow[], label: string) {
   }
 
   const header = ["Roll number", "Username", "Password", "Batch", "Section", "Year"];
-  const body = rows.map((r) => [r.roll, r.email, r.password, r.batch ?? "", r.section ?? "", r.year ?? ""]);
+  const body = rows.map((r) => [
+    r.roll,
+    r.email,
+    r.password,
+    r.batch ?? "",
+    r.section ?? "",
+    r.year ?? "",
+  ]);
 
-  const csv = [header, ...body].map((line) => line.map((c) => csvEscape(String(c))).join(",")).join("\n");
+  const csv = [header, ...body]
+    .map((line) => line.map((c) => csvEscape(String(c))).join(","))
+    .join("\n");
   downloadBlob(`${label}.csv`, csv, "text/csv;charset=utf-8");
 
   const wb = XLSX.utils.book_new();
@@ -249,7 +258,9 @@ function GenerateStudents() {
 
   const activeDomain = domain || settings?.defaultDomain || "gmail.com";
   const batchName =
-    batchId === NONE ? "" : (batches ?? []).find((b: { id: string }) => b.id === batchId)?.name ?? "";
+    batchId === NONE
+      ? ""
+      : ((batches ?? []).find((b: { id: string }) => b.id === batchId)?.name ?? "");
 
   const rolls = useMemo(() => {
     if (mode === "list") return parseRollList(pasted);
@@ -297,8 +308,9 @@ function GenerateStudents() {
           <CardTitle className="font-display text-lg">Roll numbers</CardTitle>
           <CardDescription>
             Username is the roll number plus the chosen domain; the password is the roll number
-            itself — e.g. {rolls[0] ? rollToEmail(rolls[0], activeDomain) : `23Q61A0501@${activeDomain}`}{" "}
-            / {rolls[0] ?? "23Q61A0501"}.
+            itself — e.g.{" "}
+            {rolls[0] ? rollToEmail(rolls[0], activeDomain) : `23Q61A0501@${activeDomain}`} /{" "}
+            {rolls[0] ?? "23Q61A0501"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -311,19 +323,39 @@ function GenerateStudents() {
             <TabsContent value="range" className="mt-3 grid gap-3 sm:grid-cols-4">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="prefix">Roll prefix</Label>
-                <Input id="prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} maxLength={30} />
+                <Input
+                  id="prefix"
+                  value={prefix}
+                  onChange={(e) => setPrefix(e.target.value)}
+                  maxLength={30}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="start">From</Label>
-                <Input id="start" value={start} onChange={(e) => setStart(e.target.value)} inputMode="numeric" />
+                <Input
+                  id="start"
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                  inputMode="numeric"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="end">To</Label>
-                <Input id="end" value={end} onChange={(e) => setEnd(e.target.value)} inputMode="numeric" />
+                <Input
+                  id="end"
+                  value={end}
+                  onChange={(e) => setEnd(e.target.value)}
+                  inputMode="numeric"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="pad">Digits</Label>
-                <Input id="pad" value={pad} onChange={(e) => setPad(e.target.value)} inputMode="numeric" />
+                <Input
+                  id="pad"
+                  value={pad}
+                  onChange={(e) => setPad(e.target.value)}
+                  inputMode="numeric"
+                />
               </div>
             </TabsContent>
 
@@ -373,15 +405,30 @@ function GenerateStudents() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="section">Section</Label>
-              <Input id="section" value={section} onChange={(e) => setSection(e.target.value)} maxLength={20} />
+              <Input
+                id="section"
+                value={section}
+                onChange={(e) => setSection(e.target.value)}
+                maxLength={20}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="year">Year</Label>
-              <Input id="year" value={year} onChange={(e) => setYear(e.target.value)} maxLength={20} />
+              <Input
+                id="year"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                maxLength={20}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="branch">Branch</Label>
-              <Input id="branch" value={branch} onChange={(e) => setBranch(e.target.value)} maxLength={60} />
+              <Input
+                id="branch"
+                value={branch}
+                onChange={(e) => setBranch(e.target.value)}
+                maxLength={60}
+              />
             </div>
           </div>
 
@@ -441,11 +488,7 @@ function GenerateStudents() {
                     <TableCell className="font-mono text-xs">{r.email}</TableCell>
                     <TableCell className="font-mono text-xs">{r.password}</TableCell>
                     <TableCell>
-                      {r.exists ? (
-                        <Badge variant="secondary">Exists</Badge>
-                      ) : (
-                        <Badge>New</Badge>
-                      )}
+                      {r.exists ? <Badge variant="secondary">Exists</Badge> : <Badge>New</Badge>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -579,30 +622,56 @@ function StaffAccounts() {
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">Create a staff login</CardTitle>
-          <CardDescription>The account is active immediately — no email confirmation.</CardDescription>
+          <CardDescription>
+            The account is active immediately — no email confirmation.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="tname">Full name</Label>
-              <Input id="tname" value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={120} />
+              <Input
+                id="tname"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                maxLength={120}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="temail">Username (email)</Label>
-              <Input id="temail" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={160} />
+              <Input
+                id="temail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={160}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tpass">Password</Label>
               <div className="flex gap-2">
-                <Input id="tpass" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={72} />
-                <Button type="button" variant="outline" onClick={() => setPassword(randomPassword())}>
+                <Input
+                  id="tpass"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  maxLength={72}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPassword(randomPassword())}
+                >
                   <KeyRound className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tbranch">Branch</Label>
-              <Input id="tbranch" value={branch} onChange={(e) => setBranch(e.target.value)} maxLength={60} />
+              <Input
+                id="tbranch"
+                value={branch}
+                onChange={(e) => setBranch(e.target.value)}
+                maxLength={60}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>
@@ -709,7 +778,10 @@ function StaffAccounts() {
                       disabled={!s.user_id}
                       onClick={() =>
                         s.user_id &&
-                        setPendingStaff({ userId: s.user_id, label: s.full_name ?? s.email ?? "this account" })
+                        setPendingStaff({
+                          userId: s.user_id,
+                          label: s.full_name ?? s.email ?? "this account",
+                        })
                       }
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -732,7 +804,6 @@ function StaffAccounts() {
         }}
       />
     </div>
-
   );
 }
 
@@ -769,7 +840,14 @@ type CredentialPreview = {
   exists: boolean;
   problems: string[];
   warnings: string[];
-  details: { name: string; role: string; branch: string; year: string; section: string; batch: string };
+  details: {
+    name: string;
+    role: string;
+    branch: string;
+    year: string;
+    section: string;
+    batch: string;
+  };
   requirements: { label: string; ok: boolean }[];
 };
 
@@ -934,7 +1012,8 @@ function CreateCredentialDialog({
 
   const activeDomain = domain || settings?.defaultDomain || domains[0] || "";
   const normalisedRoll = roll.trim() ? normaliseRoll(roll) : "";
-  const previewEmail = normalisedRoll && activeDomain ? rollToEmail(normalisedRoll, activeDomain) : "";
+  const previewEmail =
+    normalisedRoll && activeDomain ? rollToEmail(normalisedRoll, activeDomain) : "";
   const batchName =
     batchId === NONE
       ? ""
@@ -1048,174 +1127,210 @@ function CreateCredentialDialog({
             preview={review}
             busy={busy}
             onBack={() => setReview(null)}
-            onConfirm={() => (kind === "student" ? studentMutation.mutate() : staffMutation.mutate())}
+            onConfirm={() =>
+              kind === "student" ? studentMutation.mutate() : staffMutation.mutate()
+            }
           />
         ) : (
-        <Tabs value={kind} onValueChange={(v) => { setKind(v as "student" | "trainer"); setIssued(null); setReview(null); }}>
-          <TabsList className="w-full">
-            <TabsTrigger value="student" className="flex-1">
-              Student
-            </TabsTrigger>
-            <TabsTrigger value="trainer" className="flex-1">
-              Trainer
-            </TabsTrigger>
-          </TabsList>
+          <Tabs
+            value={kind}
+            onValueChange={(v) => {
+              setKind(v as "student" | "trainer");
+              setIssued(null);
+              setReview(null);
+            }}
+          >
+            <TabsList className="w-full">
+              <TabsTrigger value="student" className="flex-1">
+                Student
+              </TabsTrigger>
+              <TabsTrigger value="trainer" className="flex-1">
+                Trainer
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="student" className="mt-4 space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="c-roll">Roll number</Label>
-                <Input
-                  id="c-roll"
-                  value={roll}
-                  maxLength={30}
-                  placeholder="23Q61A0501"
-                  onChange={(e) => setRoll(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-name">Full name (optional)</Label>
-                <Input
-                  id="c-name"
-                  value={studentName}
-                  maxLength={120}
-                  onChange={(e) => setStudentName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email domain</Label>
-                <Select value={activeDomain} onValueChange={setDomain}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a domain" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {domains.map((d: string) => (
-                      <SelectItem key={d} value={d}>
-                        @{d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Batch</Label>
-                <Select value={batchId} onValueChange={setBatchId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="No batch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>No batch</SelectItem>
-                    {(batches ?? []).map((b: { id: string; name: string }) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-branch">Branch</Label>
-                <Input id="c-branch" value={branch} maxLength={60} onChange={(e) => setBranch(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-year">Year</Label>
-                <Input id="c-year" value={year} maxLength={20} onChange={(e) => setYear(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-section">Section</Label>
-                <Input
-                  id="c-section"
-                  value={section}
-                  maxLength={20}
-                  onChange={(e) => setSection(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {previewEmail && (
-              <p className="rounded-md bg-muted p-2 font-mono text-xs">
-                {previewEmail} / {normalisedRoll}
-              </p>
-            )}
-
-            <Button
-              className="w-full"
-              disabled={previewMutation.isPending || normalisedRoll.length < 3 || !activeDomain}
-              onClick={() => previewMutation.mutate()}
-            >
-              {previewMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="mr-2 h-4 w-4" />
-              )}
-              Review credential
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="trainer" className="mt-4 space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="c-sname">Full name</Label>
-                <Input id="c-sname" value={fullName} maxLength={120} onChange={(e) => setFullName(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-semail">Username (email)</Label>
-                <Input id="c-semail" value={email} maxLength={160} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="c-sbranch">Branch</Label>
-                <Input
-                  id="c-sbranch"
-                  value={staffBranch}
-                  maxLength={60}
-                  onChange={(e) => setStaffBranch(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Role</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="trainer">Trainer</SelectItem>
-                    <SelectItem value="placement">Placement cell</SelectItem>
-                    <SelectItem value="admin">Super admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="c-spass">Password</Label>
-                <div className="flex gap-2">
+            <TabsContent value="student" className="mt-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-roll">Roll number</Label>
                   <Input
-                    id="c-spass"
-                    value={password}
-                    maxLength={72}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="c-roll"
+                    value={roll}
+                    maxLength={30}
+                    placeholder="23Q61A0501"
+                    onChange={(e) => setRoll(e.target.value)}
                   />
-                  <Button variant="outline" size="icon" onClick={() => setPassword(randomPassword())}>
-                    <Wand2 className="h-4 w-4" />
-                  </Button>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-name">Full name (optional)</Label>
+                  <Input
+                    id="c-name"
+                    value={studentName}
+                    maxLength={120}
+                    onChange={(e) => setStudentName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Email domain</Label>
+                  <Select value={activeDomain} onValueChange={setDomain}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a domain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {domains.map((d: string) => (
+                        <SelectItem key={d} value={d}>
+                          @{d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Batch</Label>
+                  <Select value={batchId} onValueChange={setBatchId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="No batch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>No batch</SelectItem>
+                      {(batches ?? []).map((b: { id: string; name: string }) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-branch">Branch</Label>
+                  <Input
+                    id="c-branch"
+                    value={branch}
+                    maxLength={60}
+                    onChange={(e) => setBranch(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-year">Year</Label>
+                  <Input
+                    id="c-year"
+                    value={year}
+                    maxLength={20}
+                    onChange={(e) => setYear(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-section">Section</Label>
+                  <Input
+                    id="c-section"
+                    value={section}
+                    maxLength={20}
+                    onChange={(e) => setSection(e.target.value)}
+                  />
                 </div>
               </div>
-            </div>
 
-            <Button
-              className="w-full"
-              disabled={
-                previewMutation.isPending || fullName.trim().length < 2 || !email.trim() || !password
-              }
-              onClick={() => previewMutation.mutate()}
-            >
-              {previewMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="mr-2 h-4 w-4" />
+              {previewEmail && (
+                <p className="rounded-md bg-muted p-2 font-mono text-xs">
+                  {previewEmail} / {normalisedRoll}
+                </p>
               )}
-              Review credential
-            </Button>
-          </TabsContent>
-        </Tabs>
+
+              <Button
+                className="w-full"
+                disabled={previewMutation.isPending || normalisedRoll.length < 3 || !activeDomain}
+                onClick={() => previewMutation.mutate()}
+              >
+                {previewMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="mr-2 h-4 w-4" />
+                )}
+                Review credential
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="trainer" className="mt-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-sname">Full name</Label>
+                  <Input
+                    id="c-sname"
+                    value={fullName}
+                    maxLength={120}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-semail">Username (email)</Label>
+                  <Input
+                    id="c-semail"
+                    value={email}
+                    maxLength={160}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="c-sbranch">Branch</Label>
+                  <Input
+                    id="c-sbranch"
+                    value={staffBranch}
+                    maxLength={60}
+                    onChange={(e) => setStaffBranch(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Role</Label>
+                  <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="trainer">Trainer</SelectItem>
+                      <SelectItem value="placement">Placement cell</SelectItem>
+                      <SelectItem value="admin">Super admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="c-spass">Password</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="c-spass"
+                      value={password}
+                      maxLength={72}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setPassword(randomPassword())}
+                    >
+                      <Wand2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                disabled={
+                  previewMutation.isPending ||
+                  fullName.trim().length < 2 ||
+                  !email.trim() ||
+                  !password
+                }
+                onClick={() => previewMutation.mutate()}
+              >
+                {previewMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="mr-2 h-4 w-4" />
+                )}
+                Review credential
+              </Button>
+            </TabsContent>
+          </Tabs>
         )}
 
         {issued && <IssuedCredentials email={issued.email} password={issued.password} />}
@@ -1372,11 +1487,14 @@ function Directory() {
             Create new credential
           </Button>
         </div>
-
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-4">
-          <Input placeholder="Search roll or email" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input
+            placeholder="Search roll or email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <Select value={batchId} onValueChange={setBatchId}>
             <SelectTrigger>
               <SelectValue placeholder="All batches" />
@@ -1390,7 +1508,11 @@ function Directory() {
               ))}
             </SelectContent>
           </Select>
-          <Input placeholder="Section" value={section} onChange={(e) => setSection(e.target.value)} />
+          <Input
+            placeholder="Section"
+            value={section}
+            onChange={(e) => setSection(e.target.value)}
+          />
           <Input placeholder="Year" value={year} onChange={(e) => setYear(e.target.value)} />
         </div>
 
@@ -1415,7 +1537,10 @@ function Directory() {
           </TableHeader>
           <TableBody>
             {students.map((s) => (
-              <TableRow key={s.id} data-state={s.user_id && selected.includes(s.user_id) ? "selected" : undefined}>
+              <TableRow
+                key={s.id}
+                data-state={s.user_id && selected.includes(s.user_id) ? "selected" : undefined}
+              >
                 <TableCell>
                   <Checkbox
                     aria-label={`Select ${s.roll_number ?? s.email ?? "student"}`}
@@ -1473,7 +1598,9 @@ function Directory() {
             {!students.length && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                  {studentsQuery.isLoading ? "Loading…" : "No student accounts match these filters."}
+                  {studentsQuery.isLoading
+                    ? "Loading…"
+                    : "No student accounts match these filters."}
                 </TableCell>
               </TableRow>
             )}
@@ -1510,10 +1637,8 @@ function Directory() {
         }}
       />
     </Card>
-
   );
 }
-
 
 /* ------------------------------------------------------------------ */
 
@@ -1568,7 +1693,10 @@ function DomainSettings() {
 
         <div className="space-y-2">
           {domains.map((d: string) => (
-            <div key={d} className="flex items-center justify-between rounded-md border p-2 text-sm">
+            <div
+              key={d}
+              className="flex items-center justify-between rounded-md border p-2 text-sm"
+            >
               <span className="font-mono">{d}</span>
               <div className="flex items-center gap-2">
                 {data?.defaultDomain === d ? (

@@ -15,9 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { next?: string } =>
-    typeof search.next === "string" &&
-    search.next.startsWith("/") &&
-    !search.next.startsWith("//")
+    typeof search.next === "string" && search.next.startsWith("/") && !search.next.startsWith("//")
       ? { next: search.next }
       : {},
 

@@ -13,7 +13,9 @@ import {
 } from "recharts";
 import { AlertTriangle, CalendarClock, Percent, Users } from "lucide-react";
 
+import { StudentHome } from "@/components/StudentHome";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -148,7 +148,7 @@ function SchedulePage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Session schedule</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Session schedule</h1>
           <p className="text-sm text-muted-foreground">
             Plan the weekly CRT calendar; attendance is captured against conducted sessions.
           </p>

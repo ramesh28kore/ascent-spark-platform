@@ -64,7 +64,7 @@ function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Analytics</h1>
         <p className="text-sm text-muted-foreground">
           Where the batch is losing marks, and how much judging activity is happening.
         </p>

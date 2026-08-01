@@ -184,7 +184,7 @@ function TestRunner() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
             {paper.data?.test.title}
           </h1>
           <p className="text-sm text-muted-foreground">

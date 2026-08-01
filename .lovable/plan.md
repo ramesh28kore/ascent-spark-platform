@@ -1,36 +1,47 @@
 ## Goal
 
-Give students badges for solving problems, keeping streaks, and competing in contests — shown as a strip on the dashboard and in full on a new **Achievements** page.
+Every badge currently shows only "unlocked / locked". Add a timeline that says **when** each badge was earned and links to the exact submission (or contest) that unlocked it.
 
 ## Approach
 
-Badges are **derived** from data already in the app (submissions, solved problems, contest registrations/results) rather than stored in a new table. That means no migration, no risk of stale rows, and badges unlock instantly when a student solves something. Earned dates come from the submission that triggered the unlock.
+No new tables. The full submission history is already loaded (`problem_submissions` with `verdict`, `problem_id`, `created_at`, plus each problem's `level`/`slug`/`title`), so earn dates can be replayed chronologically and are always consistent — even for badges earned before this feature exists.
 
-## Badge catalogue
+### 1. Replay engine (`src/lib/achievements.ts`)
 
-Four tracks, each with tiers (locked badges are shown greyed with progress toward the next tier):
+Add `computeAchievementTimeline(input)`:
+- Sort submissions oldest → newest.
+- Walk them, maintaining running counters: total solved, solved per difficulty, submission count, acceptance rate, streak length, and early-bird / night-owl tallies.
+- The first submission that pushes a counter to a badge's target becomes that badge's **unlock event**: `{ badgeId, earnedAt, submissionId, problemSlug, problemTitle, verdict }`.
+- Contest badges (Contender, In the arena, Top 10, Champion) are stamped with the contest's end date and link to the contest page instead of a submission.
+- Existing `computeAchievements` stays the source of truth for progress; the timeline attaches `earnedAt` + `source` to each unlocked badge.
 
-- **Solved** — 1, 10, 25, 50, 100 problems solved
-- **Difficulty** — first Medium solved, first Hard solved, 10 Hards
-- **Streak** — 3, 7, 30, 100 consecutive days with a submission (uses the existing streak helper)
-- **Contest** — registered for a contest, completed a contest, finished top 10, finished top 3
-- Plus a couple of flavour badges: "Night Owl" (submission after 11pm), "Perfectionist" (accepted on first attempt for a problem)
+Note: "first solve of a problem" is what counts, so re-submissions on an already-solved problem don't move the counters.
 
-## What gets built
+### 2. Contest timestamps
 
-1. **`src/lib/achievements.ts`** — badge definitions (id, title, description, icon, tier, threshold) and a pure `computeAchievements(...)` function taking solved problems, submissions, streak, and contest results; returns each badge with `earned`, `progress`, `earnedAt`.
-2. **`src/components/leetcode/BadgeCard.tsx`** — single badge tile: icon medal, title, description, tier colour, progress bar when locked.
-3. **Achievements page** at `/achievements` (`src/routes/_authenticated/achievements.tsx`) — summary header (X of Y unlocked, tier breakdown), grouped grid by track, own head() metadata.
-4. **Dashboard strip** in `src/components/StudentHome.tsx` — the most recent 4–5 earned badges plus the closest badge to unlocking, linking to the full page.
-5. **Sidebar entry** — "Achievements" under the **You** group in `src/components/AppShell.tsx`, next to Progress.
-6. **Progress page cross-link** — small earned-badge row on `/problems/profile`.
+`getMyContestStats` (in `src/lib/leetcode.functions.ts`) currently returns slug, title, rank, solved, score. Add `ends_at` so contest badges can be placed on the timeline in the right order.
+
+### 3. Timeline UI (`src/components/leetcode/AchievementTimeline.tsx`)
+
+A vertical timeline, newest first:
+- Tier-coloured medal icon on a connector rail.
+- Badge name + description, relative date ("3 days ago") with the exact date on hover.
+- "Unlocked by" row linking to the problem workspace (`/problems/$slug`) or contest (`/problems/contests/$slug`).
+- Grouped by month heading when the history spans multiple months.
+- Empty state when nothing is earned yet, pointing to the problem set.
+
+### 4. Placement
+
+- `/achievements`: timeline shown above the category grids, with a Grid / Timeline toggle so the full collection stays browsable.
+- Dashboard (`StudentHome.tsx`): the achievements strip gains a "Recently earned" line showing the newest unlock and its date.
+- My progress (`problems.profile.tsx`): last 3 timeline entries under the badge showcase.
+
+### 5. Verification
+
+Sign in as the QA student, confirm the timeline order matches the submission history, that dates are correct, and that each "unlocked by" link opens the right problem.
 
 ## Technical notes
 
-- Contest performance needs a per-student result read; the existing contest queries return contest and leaderboard data, so I'll add a small server function that returns the signed-in student's contest participations and ranks (read-only, RLS-scoped to the caller) if the current queries don't already expose it.
-- No schema changes and no new tables.
-- All colours use existing semantic tokens; medal tiers map to existing chart/accent tokens so dark mode keeps working.
-
-## Verification
-
-Sign in as the QA student with Playwright, check the dashboard strip renders, open `/achievements`, and confirm earned vs locked states and progress bars match the student's real solved/streak numbers with no console errors.
+- Pure client-side derivation from cached TanStack Query data — no migration, no writes, no extra round trips beyond the one added `ends_at` field.
+- Replay is O(submissions) and memoised, so it stays cheap at the 1000-submission fetch cap.
+- Streak-badge earn dates are reconstructed from day-bucketed activity, matching the existing `streakFromCounts` logic.

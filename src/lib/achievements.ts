@@ -122,3 +122,199 @@ export function nextUp(list: Achievement[], count = 3) {
     .sort((a, b) => b.value / b.target - a.value / a.target)
     .slice(0, count);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Timeline: replay history to work out WHEN each badge was earned    */
+/* ------------------------------------------------------------------ */
+
+export type TimelineSource =
+  | { kind: "submission"; submissionId: string; slug: string; title: string }
+  | { kind: "contest"; slug: string; title: string; rank: number };
+
+export type AchievementEvent = {
+  badge: Achievement;
+  earnedAt: string;
+  source: TimelineSource | null;
+};
+
+export type TimelineSubmission = {
+  id: string;
+  problem_id: string;
+  verdict: string;
+  created_at: string;
+};
+
+export type TimelineProblem = { id: string; slug: string | null; title: string; level: string };
+
+export type TimelineContest = {
+  slug: string;
+  title: string;
+  rank: number;
+  ends_at?: string | null;
+};
+
+type Counters = {
+  solvedTotal: number;
+  easy: number;
+  medium: number;
+  hard: number;
+  submissions: number;
+  accepted: number;
+  acceptance: number;
+  streak: number;
+  earlyBird: number;
+  nightOwl: number;
+};
+
+/** Metric each non-contest badge tracks, so the replay knows what to watch. */
+const METRIC: Record<string, (c: Counters) => number> = {
+  "first-blood": (c) => c.solvedTotal,
+  "solver-10": (c) => c.solvedTotal,
+  "solver-25": (c) => c.solvedTotal,
+  "solver-50": (c) => c.solvedTotal,
+  "solver-100": (c) => c.solvedTotal,
+  "easy-10": (c) => c.easy,
+  "medium-10": (c) => c.medium,
+  "medium-25": (c) => c.medium,
+  "hard-1": (c) => c.hard,
+  "hard-10": (c) => c.hard,
+  "streak-3": (c) => c.streak,
+  "streak-7": (c) => c.streak,
+  "streak-30": (c) => c.streak,
+  "submissions-50": (c) => c.submissions,
+  "accuracy-70": (c) => c.acceptance,
+  "early-bird": (c) => c.earlyBird,
+  "night-owl": (c) => c.nightOwl,
+};
+
+const CONTEST_BADGES = new Set([
+  "contest-join",
+  "contest-solve",
+  "contest-3",
+  "contest-top10",
+  "contest-win",
+]);
+
+const dayOf = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+const DAY = 86_400_000;
+
+/**
+ * Replays the student's submission history oldest-first and stamps the moment
+ * each badge crossed its target, together with the submission that did it.
+ */
+export function computeAchievementTimeline(
+  badges: Achievement[],
+  submissions: TimelineSubmission[],
+  problems: TimelineProblem[],
+  contests: TimelineContest[] = [],
+): AchievementEvent[] {
+  const byId = new Map(problems.map((p) => [p.id, p]));
+  const ordered = [...submissions].sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+  const counters: Counters = {
+    solvedTotal: 0,
+    easy: 0,
+    medium: 0,
+    hard: 0,
+    submissions: 0,
+    accepted: 0,
+    acceptance: 0,
+    streak: 0,
+    earlyBird: 0,
+    nightOwl: 0,
+  };
+
+  const solvedIds = new Set<string>();
+  const activeDays = new Set<string>();
+  const pending = new Map(
+    badges.filter((b) => b.unlocked && METRIC[b.id]).map((b) => [b.id, b] as const),
+  );
+  const events: AchievementEvent[] = [];
+
+  for (const sub of ordered) {
+    const problem = byId.get(sub.problem_id);
+    const when = new Date(sub.created_at);
+
+    counters.submissions += 1;
+    if (sub.verdict === "accepted") counters.accepted += 1;
+    counters.acceptance = Math.round((counters.accepted / counters.submissions) * 100);
+    if (when.getHours() < 8) counters.earlyBird += 1;
+    if (when.getHours() >= 22) counters.nightOwl += 1;
+
+    if (sub.verdict === "accepted" && !solvedIds.has(sub.problem_id)) {
+      solvedIds.add(sub.problem_id);
+      counters.solvedTotal += 1;
+      const level = problem?.level;
+      if (level === "easy") counters.easy += 1;
+      else if (level === "medium") counters.medium += 1;
+      else if (level === "hard") counters.hard += 1;
+    }
+
+    // Streak as of this submission: consecutive active days ending today.
+    const key = dayOf(sub.created_at);
+    activeDays.add(key);
+    let run = 0;
+    let cursor = new Date(`${key}T00:00:00.000Z`).getTime();
+    while (activeDays.has(new Date(cursor).toISOString().slice(0, 10))) {
+      run += 1;
+      cursor -= DAY;
+    }
+    counters.streak = Math.max(counters.streak, run);
+
+    for (const [id, badge] of [...pending]) {
+      if (METRIC[id]!(counters) >= badge.target) {
+        pending.delete(id);
+        events.push({
+          badge,
+          earnedAt: sub.created_at,
+          source: problem
+            ? {
+                kind: "submission",
+                submissionId: sub.id,
+                slug: problem.slug ?? "",
+                title: problem.title,
+              }
+            : null,
+        });
+      }
+    }
+  }
+
+  /* Contest badges are stamped with the contest that unlocked them. */
+  const played = [...contests]
+    .filter((c) => !!c.ends_at)
+    .sort((a, b) => (a.ends_at ?? "").localeCompare(b.ends_at ?? ""));
+  const contestEvent = (id: string, contest: TimelineContest | undefined) => {
+    const badge = badges.find((b) => b.id === id);
+    if (!badge?.unlocked || !contest?.ends_at) return;
+    events.push({
+      badge,
+      earnedAt: contest.ends_at,
+      source: { kind: "contest", slug: contest.slug, title: contest.title, rank: contest.rank },
+    });
+  };
+
+  contestEvent("contest-join", played[0]);
+  contestEvent("contest-solve", played[0]);
+  contestEvent("contest-3", played[2]);
+  contestEvent(
+    "contest-top10",
+    played.find((c) => c.rank <= 10),
+  );
+  contestEvent(
+    "contest-win",
+    played.find((c) => c.rank === 1),
+  );
+
+  return events.sort((a, b) => b.earnedAt.localeCompare(a.earnedAt));
+}
+
+/** "3 days ago" style label for timeline entries. */
+export function relativeDay(iso: string) {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / DAY);
+  if (diff <= 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff < 30) return `${diff} days ago`;
+  if (diff < 365) return `${Math.round(diff / 30)} months ago`;
+  return `${Math.round(diff / 365)} years ago`;
+}

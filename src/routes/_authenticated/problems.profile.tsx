@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BadgeCard } from "@/components/leetcode/BadgeCard";
 import { useAchievements } from "@/lib/use-achievements";
+import { AchievementTimeline } from "@/components/leetcode/AchievementTimeline";
 
 export const Route = createFileRoute("/_authenticated/problems/profile")({
   head: () => ({
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/_authenticated/problems/profile")({
 
 function ProblemProfilePage() {
   const profile = useQuery(problemProfileQuery);
-  const { badges, unlocked } = useAchievements();
+  const { badges, unlocked, timeline } = useAchievements();
   const submissions = profile.data?.submissions ?? [];
   const problems = profile.data?.problems ?? [];
 
@@ -200,6 +201,14 @@ function ProblemProfilePage() {
             </p>
           )}
         </CardContent>
+        {timeline.length > 0 && (
+          <CardContent className="border-t pt-4">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Recently earned
+            </p>
+            <AchievementTimeline events={timeline} limit={3} showMonths={false} />
+          </CardContent>
+        )}
       </Card>
 
       <Card>

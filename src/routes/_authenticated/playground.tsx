@@ -44,10 +44,7 @@ export const Route = createFileRoute("/_authenticated/playground")({
   component: PlaygroundPage,
 });
 
-const STARTER = `# Read input with input(), print your answer.
-name = input().strip() or "world"
-print(f"Hello, {name}!")
-`;
+const STARTER = templateFor("python");
 
 function PlaygroundPage() {
   const queryClient = useQueryClient();

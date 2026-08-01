@@ -11,10 +11,12 @@ import {
   MessageSquare,
   Play,
   Send,
+  Star,
   XCircle,
 } from "lucide-react";
 
-import { problemQuery } from "@/lib/crt-queries";
+import { bookmarksQuery, problemQuery } from "@/lib/crt-queries";
+import { toggleBookmark } from "@/lib/leetcode.functions";
 import { postProblemComment, runProblem, submitProblem } from "@/lib/problems.functions";
 import {
   LANGUAGES,
@@ -81,6 +83,8 @@ function ProblemWorkspace() {
   const run = useServerFn(runProblem);
   const submit = useServerFn(submitProblem);
   const comment = useServerFn(postProblemComment);
+  const bookmarks = useQuery(bookmarksQuery);
+  const bookmark = useServerFn(toggleBookmark);
 
   const [language, setLanguage] = useState<ProblemLanguage>("python");
   const [code, setCode] = useState("");
@@ -165,6 +169,15 @@ function ProblemWorkspace() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const bookmarkMutation = useMutation({
+    mutationFn: (on: boolean) => bookmark({ data: { problem_id: problem!.id, on } }),
+    onSuccess: (res) => {
+      toast.success(res.bookmarked ? "Added to favourites" : "Removed from favourites");
+      queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const commentMutation = useMutation({
     mutationFn: () => comment({ data: { problem_id: problem!.id, body: body.trim() } }),
     onSuccess: () => {
@@ -198,6 +211,7 @@ function ProblemWorkspace() {
 
 
 
+  const isFavourite = (bookmarks.data?.problemIds ?? []).includes(problem.id);
   const submissions = detail.data?.submissions ?? [];
   const posts = detail.data?.posts ?? [];
 
@@ -218,6 +232,16 @@ function ProblemWorkspace() {
             <CheckCircle2 className="size-3.5 text-emerald-500" /> Solved
           </Badge>
         ) : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          disabled={bookmarkMutation.isPending}
+          onClick={() => bookmarkMutation.mutate(!isFavourite)}
+        >
+          <Star className={`size-4 ${isFavourite ? "fill-amber-400 text-amber-400" : ""}`} />
+          {isFavourite ? "Favourited" : "Favourite"}
+        </Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

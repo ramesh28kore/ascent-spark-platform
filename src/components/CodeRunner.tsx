@@ -38,8 +38,8 @@ export type CodingSubmissionView = {
 
 
 const STARTER: Record<Lang, string> = {
-  javascript: "// Read input with readline(), print with console.log()\n",
-  python: "# Read input with input(), print with print()\n",
+  javascript: templateFor("javascript"),
+  python: templateFor("python"),
 };
 
 const runIn = (lang: Lang, code: string, stdin: string) =>

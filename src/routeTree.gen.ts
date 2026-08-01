@@ -45,6 +45,7 @@ import { Route as AuthenticatedProblemsSlugRouteImport } from './routes/_authent
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedProblemsPlansIndexRouteImport } from './routes/_authenticated/problems.plans.index'
+import { Route as AuthenticatedProblemsContestsIndexRouteImport } from './routes/_authenticated/problems.contests.index'
 import { Route as AuthenticatedProblemsPlansSlugRouteImport } from './routes/_authenticated/problems.plans.$slug'
 
 const VerifyRoute = VerifyRouteImport.update({
@@ -236,6 +237,12 @@ const AuthenticatedProblemsPlansIndexRoute =
     path: '/problems/plans/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProblemsContestsIndexRoute =
+  AuthenticatedProblemsContestsIndexRouteImport.update({
+    id: '/problems/contests/',
+    path: '/problems/contests/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProblemsPlansSlugRoute =
   AuthenticatedProblemsPlansSlugRouteImport.update({
     id: '/problems/plans/$slug',
@@ -279,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/problems/': typeof AuthenticatedProblemsIndexRoute
   '/tests/': typeof AuthenticatedTestsIndexRoute
   '/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
+  '/problems/contests/': typeof AuthenticatedProblemsContestsIndexRoute
   '/problems/plans/': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRoutesByTo {
@@ -317,6 +325,7 @@ export interface FileRoutesByTo {
   '/problems': typeof AuthenticatedProblemsIndexRoute
   '/tests': typeof AuthenticatedTestsIndexRoute
   '/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
+  '/problems/contests': typeof AuthenticatedProblemsContestsIndexRoute
   '/problems/plans': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRoutesById {
@@ -357,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/problems/': typeof AuthenticatedProblemsIndexRoute
   '/_authenticated/tests/': typeof AuthenticatedTestsIndexRoute
   '/_authenticated/problems/plans/$slug': typeof AuthenticatedProblemsPlansSlugRoute
+  '/_authenticated/problems/contests/': typeof AuthenticatedProblemsContestsIndexRoute
   '/_authenticated/problems/plans/': typeof AuthenticatedProblemsPlansIndexRoute
 }
 export interface FileRouteTypes {
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
     | '/problems/'
     | '/tests/'
     | '/problems/plans/$slug'
+    | '/problems/contests/'
     | '/problems/plans/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -435,6 +446,7 @@ export interface FileRouteTypes {
     | '/problems'
     | '/tests'
     | '/problems/plans/$slug'
+    | '/problems/contests'
     | '/problems/plans'
   id:
     | '__root__'
@@ -474,6 +486,7 @@ export interface FileRouteTypes {
     | '/_authenticated/problems/'
     | '/_authenticated/tests/'
     | '/_authenticated/problems/plans/$slug'
+    | '/_authenticated/problems/contests/'
     | '/_authenticated/problems/plans/'
   fileRoutesById: FileRoutesById
 }
@@ -743,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProblemsPlansIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/problems/contests/': {
+      id: '/_authenticated/problems/contests/'
+      path: '/problems/contests'
+      fullPath: '/problems/contests/'
+      preLoaderRoute: typeof AuthenticatedProblemsContestsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/problems/plans/$slug': {
       id: '/_authenticated/problems/plans/$slug'
       path: '/problems/plans/$slug'
@@ -781,6 +801,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProblemsIndexRoute: typeof AuthenticatedProblemsIndexRoute
   AuthenticatedTestsIndexRoute: typeof AuthenticatedTestsIndexRoute
   AuthenticatedProblemsPlansSlugRoute: typeof AuthenticatedProblemsPlansSlugRoute
+  AuthenticatedProblemsContestsIndexRoute: typeof AuthenticatedProblemsContestsIndexRoute
   AuthenticatedProblemsPlansIndexRoute: typeof AuthenticatedProblemsPlansIndexRoute
 }
 
@@ -812,6 +833,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProblemsIndexRoute: AuthenticatedProblemsIndexRoute,
   AuthenticatedTestsIndexRoute: AuthenticatedTestsIndexRoute,
   AuthenticatedProblemsPlansSlugRoute: AuthenticatedProblemsPlansSlugRoute,
+  AuthenticatedProblemsContestsIndexRoute:
+    AuthenticatedProblemsContestsIndexRoute,
   AuthenticatedProblemsPlansIndexRoute: AuthenticatedProblemsPlansIndexRoute,
 }
 

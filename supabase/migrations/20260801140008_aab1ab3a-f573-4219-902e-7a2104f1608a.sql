@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.verify_certificate(text);

@@ -1610,18 +1610,6 @@ export type Database = {
           submitted_at: string
         }[]
       }
-      verify_certificate: {
-        Args: { _code: string }
-        Returns: {
-          code: string
-          holder_name: string
-          issued_on: string
-          kind: string
-          max_score: number
-          score: number
-          title: string
-        }[]
-      }
     }
     Enums: {
       app_role: "trainer" | "student" | "admin" | "placement"

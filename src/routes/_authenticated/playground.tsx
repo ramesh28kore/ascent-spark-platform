@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, Play, Save, Trash2 } from "lucide-react";
 
 import { CodeEditor } from "@/components/CodeEditor";
+import { templateFor } from "@/lib/code-templates";
 import { runCodeRemote } from "@/lib/judge.functions";
 import { deleteSnippet, listSnippets, saveSnippet } from "@/lib/snippets.functions";
 import { PageHeader } from "@/components/PageHeader";

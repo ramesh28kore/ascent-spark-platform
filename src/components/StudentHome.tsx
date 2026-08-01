@@ -184,7 +184,7 @@ export function StudentHome() {
                   >
                     {daily.title}
                   </Link>
-                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                     <span className={`font-medium capitalize ${LEVEL_TONE[daily.level]}`}>
                       {daily.level}
                     </span>
@@ -193,7 +193,8 @@ export function StudentHome() {
                         {t}
                       </Badge>
                     ))}
-                  </p>
+                  </div>
+
                 </div>
                 <Button asChild size="sm" variant="secondary">
                   <Link to="/problems/$slug" params={{ slug: daily.slug ?? "" }}>

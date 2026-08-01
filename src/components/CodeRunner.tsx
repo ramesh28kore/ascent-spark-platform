@@ -58,6 +58,7 @@ export function CodeRunner({
   marks,
   submission,
   onSubmit,
+  snapshotScope,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -72,6 +73,7 @@ export function CodeRunner({
     cases_passed: number;
     cases_total: number;
   }) => Promise<unknown>;
+  snapshotScope?: SnapshotScope;
 }) {
   const [lang, setLang] = useState<Lang>("javascript");
   const [stdin, setStdin] = useState(sampleCases[0]?.input ?? "");
@@ -82,6 +84,21 @@ export function CodeRunner({
   const [caseReport, setCaseReport] = useState<string | null>(null);
 
   const locked = !!submission || !!disabled;
+
+  const snapshots = useCodeSnapshots({
+    scope: snapshotScope ?? { scope_kind: "exam" },
+    language: lang,
+    code: value,
+    enabled: !!snapshotScope && !locked,
+  });
+
+  // Resume the newest saved version for this attempt when the buffer is empty.
+  useEffect(() => {
+    if (locked || !snapshots.resumeReady || value.trim()) return;
+    if (snapshots.resumed?.code) onChange(snapshots.resumed.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshots.resumeReady, snapshots.resumed?.id, locked]);
+
 
   const run = async () => {
     if (!value.trim()) {

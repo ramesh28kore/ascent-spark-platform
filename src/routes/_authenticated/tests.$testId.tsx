@@ -375,10 +375,11 @@ function TestRunner() {
               )}
             </CardContent>
           </Card>
-        ))}
+          ))}
       </div>
 
-      {!submitted && !isStaff && (
+      {canWrite && (
+
         <Button onClick={() => send.mutate()} disabled={send.isPending}>
           Submit test
         </Button>

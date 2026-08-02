@@ -141,6 +141,8 @@ const staffNav: NavGroup[] = [
   {
     label: "Practice",
     items: [
+      { title: "Authoring studio", url: "/authoring", icon: FileQuestion },
+      { title: "Gradebook", url: "/gradebook", icon: ListChecks },
       { title: "Problem set", url: "/problems", icon: Braces },
       { title: "Study plans", url: "/problems/plans", icon: Target },
       { title: "Contests", url: "/problems/contests", icon: Trophy },

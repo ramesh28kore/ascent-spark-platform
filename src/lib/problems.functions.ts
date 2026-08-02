@@ -5,9 +5,9 @@ import { z } from "zod";
 import { parseCases } from "@/lib/problems-shared";
 
 const LIST_COLUMNS =
-  "id, slug, title, level, points, category, company, tags, module_id, sort_order, platform, url";
+  "id, slug, title, level, points, category, company, company_frequency, tags, module_id, sort_order, platform, url";
 
-const DETAIL_COLUMNS = `${LIST_COLUMNS}, statement, constraints, examples, hints, starter_code, test_cases, solution, time_limit_ms, memory_limit_kb`;
+const DETAIL_COLUMNS = `${LIST_COLUMNS}, statement, constraints, examples, hints, starter_code, test_cases, solution, editorial, time_limit_ms, memory_limit_kb`;
 
 async function myProfileId(supabase: { from: (t: string) => never } | never, userId: string) {
   const client = supabase as unknown as {
@@ -37,6 +37,7 @@ export const listProblems = createServerFn({ method: "GET" })
       supabase
         .from("practice_problems")
         .select(LIST_COLUMNS)
+        .eq("status", "published")
         .not("statement", "is", null)
         .order("sort_order"),
       supabase
@@ -132,11 +133,47 @@ export const getProblem = createServerFn({ method: "GET" })
 
     const cases = parseCases(problem.test_cases);
 
+    // "What should I solve next?" — the next published problem in the set that
+    // this student has not solved yet.
+    const anon = "00000000-0000-0000-0000-000000000000";
+    const [{ data: queue }, { data: mySolved }] = await Promise.all([
+      supabase
+        .from("practice_problems")
+        .select("id, slug, title, level, sort_order")
+        .eq("status", "published")
+        .not("statement", "is", null)
+        .not("slug", "is", null)
+        .order("sort_order"),
+      supabase
+        .from("problem_submissions")
+        .select("problem_id, verdict")
+        .eq("student_id", profileId ?? anon)
+        .eq("verdict", "accepted")
+        .limit(2000),
+    ]);
+
+    const solvedIds = new Set((mySolved ?? []).map((s) => s.problem_id));
+    const list = (queue ?? []).map((p) => ({
+      id: p.id,
+      slug: p.slug ?? "",
+      title: p.title,
+      level: p.level,
+    }));
+
+    const currentIndex = list.findIndex((p) => p.id === problem.id);
+    const after = currentIndex >= 0 ? list.slice(currentIndex + 1) : list;
+    const nextProblem =
+      after.find((p) => !solvedIds.has(p.id)) ??
+      list.find((p) => p.id !== problem.id && !solvedIds.has(p.id)) ??
+      null;
+
     return {
       profileId,
       isStaff,
       solved,
       attempts,
+      position: currentIndex >= 0 ? { index: currentIndex + 1, total: list.length } : null,
+      nextProblem,
       problem: {
         ...problem,
         tags: (problem.tags ?? []) as string[],
@@ -144,6 +181,7 @@ export const getProblem = createServerFn({ method: "GET" })
         test_cases: cases.filter((c) => !c.hidden),
         hidden_count: cases.filter((c) => c.hidden).length,
         solution: unlocked ? problem.solution : null,
+        editorial: unlocked ? problem.editorial : null,
         solution_locked: !unlocked,
       },
       submissions: submissions ?? [],

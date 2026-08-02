@@ -256,6 +256,18 @@ function ProblemWorkspace() {
           <Star className={`size-4 ${isFavourite ? "fill-amber-400 text-amber-400" : ""}`} />
           {isFavourite ? "Favourited" : "Favourite"}
         </Button>
+        {detail.data?.position ? (
+          <span className="text-xs text-muted-foreground">
+            Problem {detail.data.position.index} of {detail.data.position.total}
+          </span>
+        ) : null}
+        {detail.data?.nextProblem ? (
+          <Button asChild size="sm" variant={detail.data.solved ? "default" : "outline"} className="ml-auto gap-2">
+            <Link to="/problems/$slug" params={{ slug: detail.data.nextProblem.slug }}>
+              Next problem: {detail.data.nextProblem.title}
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -267,6 +279,7 @@ function ProblemWorkspace() {
                 <TabsTrigger value="description">Description</TabsTrigger>
                 <TabsTrigger value="hints">Hints</TabsTrigger>
                 <TabsTrigger value="solution">Solution</TabsTrigger>
+                <TabsTrigger value="editorial">Editorial</TabsTrigger>
                 <TabsTrigger value="submissions">Submissions</TabsTrigger>
                 <TabsTrigger value="discuss">Discuss</TabsTrigger>
               </TabsList>
@@ -342,11 +355,25 @@ function ProblemWorkspace() {
                   {problem.solution_locked ? (
                     <div className="flex items-start gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                       <Lock className="mt-0.5 size-4 shrink-0" />
+                      The solution unlocks after you solve this problem or make three submissions.
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {problem.solution || "No reference solution has been written yet."}
+                    </p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="editorial" className="px-4 pb-6">
+                  {problem.solution_locked ? (
+                    <div className="flex items-start gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                      <Lock className="mt-0.5 size-4 shrink-0" />
                       The editorial unlocks after you solve this problem or make three submissions.
                     </div>
                   ) : (
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {problem.solution || "No editorial has been written yet."}
+                      {problem.editorial ||
+                        "Your trainer has not published an editorial for this problem yet."}
                     </p>
                   )}
                 </TabsContent>

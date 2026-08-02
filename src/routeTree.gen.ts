@@ -25,11 +25,13 @@ import { Route as AuthenticatedPlaygroundRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMyScoresRouteImport } from './routes/_authenticated/my-scores'
 import { Route as AuthenticatedModulesRouteImport } from './routes/_authenticated/modules'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
+import { Route as AuthenticatedGradebookRouteImport } from './routes/_authenticated/gradebook'
 import { Route as AuthenticatedEvaluateRouteImport } from './routes/_authenticated/evaluate'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCodingRouteImport } from './routes/_authenticated/coding'
 import { Route as AuthenticatedCertificatesRouteImport } from './routes/_authenticated/certificates'
 import { Route as AuthenticatedBatchesRouteImport } from './routes/_authenticated/batches'
+import { Route as AuthenticatedAuthoringRouteImport } from './routes/_authenticated/authoring'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedAssessmentsRouteImport } from './routes/_authenticated/assessments'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -129,6 +131,11 @@ const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGradebookRoute = AuthenticatedGradebookRouteImport.update({
+  id: '/gradebook',
+  path: '/gradebook',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEvaluateRoute = AuthenticatedEvaluateRouteImport.update({
   id: '/evaluate',
   path: '/evaluate',
@@ -153,6 +160,11 @@ const AuthenticatedCertificatesRoute =
 const AuthenticatedBatchesRoute = AuthenticatedBatchesRouteImport.update({
   id: '/batches',
   path: '/batches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAuthoringRoute = AuthenticatedAuthoringRouteImport.update({
+  id: '/authoring',
+  path: '/authoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAttendanceRoute = AuthenticatedAttendanceRouteImport.update({
@@ -277,11 +289,13 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
+  '/authoring': typeof AuthenticatedAuthoringRoute
   '/batches': typeof AuthenticatedBatchesRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/evaluate': typeof AuthenticatedEvaluateRoute
+  '/gradebook': typeof AuthenticatedGradebookRoute
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
@@ -318,11 +332,13 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/assessments': typeof AuthenticatedAssessmentsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
+  '/authoring': typeof AuthenticatedAuthoringRoute
   '/batches': typeof AuthenticatedBatchesRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/coding': typeof AuthenticatedCodingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/evaluate': typeof AuthenticatedEvaluateRoute
+  '/gradebook': typeof AuthenticatedGradebookRoute
   '/import': typeof AuthenticatedImportRoute
   '/modules': typeof AuthenticatedModulesRoute
   '/my-scores': typeof AuthenticatedMyScoresRoute
@@ -361,11 +377,13 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/assessments': typeof AuthenticatedAssessmentsRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
+  '/_authenticated/authoring': typeof AuthenticatedAuthoringRoute
   '/_authenticated/batches': typeof AuthenticatedBatchesRoute
   '/_authenticated/certificates': typeof AuthenticatedCertificatesRoute
   '/_authenticated/coding': typeof AuthenticatedCodingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/evaluate': typeof AuthenticatedEvaluateRoute
+  '/_authenticated/gradebook': typeof AuthenticatedGradebookRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/modules': typeof AuthenticatedModulesRoute
   '/_authenticated/my-scores': typeof AuthenticatedMyScoresRoute
@@ -404,11 +422,13 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/assessments'
     | '/attendance'
+    | '/authoring'
     | '/batches'
     | '/certificates'
     | '/coding'
     | '/dashboard'
     | '/evaluate'
+    | '/gradebook'
     | '/import'
     | '/modules'
     | '/my-scores'
@@ -445,11 +465,13 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/assessments'
     | '/attendance'
+    | '/authoring'
     | '/batches'
     | '/certificates'
     | '/coding'
     | '/dashboard'
     | '/evaluate'
+    | '/gradebook'
     | '/import'
     | '/modules'
     | '/my-scores'
@@ -487,11 +509,13 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/assessments'
     | '/_authenticated/attendance'
+    | '/_authenticated/authoring'
     | '/_authenticated/batches'
     | '/_authenticated/certificates'
     | '/_authenticated/coding'
     | '/_authenticated/dashboard'
     | '/_authenticated/evaluate'
+    | '/_authenticated/gradebook'
     | '/_authenticated/import'
     | '/_authenticated/modules'
     | '/_authenticated/my-scores'
@@ -642,6 +666,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/gradebook': {
+      id: '/_authenticated/gradebook'
+      path: '/gradebook'
+      fullPath: '/gradebook'
+      preLoaderRoute: typeof AuthenticatedGradebookRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/evaluate': {
       id: '/_authenticated/evaluate'
       path: '/evaluate'
@@ -675,6 +706,13 @@ declare module '@tanstack/react-router' {
       path: '/batches'
       fullPath: '/batches'
       preLoaderRoute: typeof AuthenticatedBatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/authoring': {
+      id: '/_authenticated/authoring'
+      path: '/authoring'
+      fullPath: '/authoring'
+      preLoaderRoute: typeof AuthenticatedAuthoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/attendance': {
@@ -820,11 +858,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAssessmentsRoute: typeof AuthenticatedAssessmentsRoute
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
+  AuthenticatedAuthoringRoute: typeof AuthenticatedAuthoringRoute
   AuthenticatedBatchesRoute: typeof AuthenticatedBatchesRoute
   AuthenticatedCertificatesRoute: typeof AuthenticatedCertificatesRoute
   AuthenticatedCodingRoute: typeof AuthenticatedCodingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEvaluateRoute: typeof AuthenticatedEvaluateRoute
+  AuthenticatedGradebookRoute: typeof AuthenticatedGradebookRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedModulesRoute: typeof AuthenticatedModulesRoute
   AuthenticatedMyScoresRoute: typeof AuthenticatedMyScoresRoute
@@ -854,11 +894,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAssessmentsRoute: AuthenticatedAssessmentsRoute,
   AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
+  AuthenticatedAuthoringRoute: AuthenticatedAuthoringRoute,
   AuthenticatedBatchesRoute: AuthenticatedBatchesRoute,
   AuthenticatedCertificatesRoute: AuthenticatedCertificatesRoute,
   AuthenticatedCodingRoute: AuthenticatedCodingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEvaluateRoute: AuthenticatedEvaluateRoute,
+  AuthenticatedGradebookRoute: AuthenticatedGradebookRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedModulesRoute: AuthenticatedModulesRoute,
   AuthenticatedMyScoresRoute: AuthenticatedMyScoresRoute,

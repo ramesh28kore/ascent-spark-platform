@@ -100,8 +100,8 @@ export function matchPreset(filters: ProblemFilters): string | null {
       target.fav === filters.fav &&
       target.sort === filters.sort &&
       target.dir === filters.dir &&
-      target.levels.join() === [...filters.levels].sort().join() &&
-      target.tags.join() === [...filters.tags].sort().join();
+      [...target.levels].sort().join() === [...filters.levels].sort().join() &&
+      [...target.tags].sort().join() === [...filters.tags].sort().join();
     if (same) return preset.id;
   }
   return null;

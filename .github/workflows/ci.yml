@@ -25,7 +25,27 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node20-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Restore typecheck/lint cache
+        id: tool-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules/.cache/tsc
+            node_modules/.cache/eslint
+          key: ${{ runner.os }}-node20-toolcache-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-node20-toolcache-${{ hashFiles('package-lock.json') }}-
+            ${{ runner.os }}-node20-toolcache-
+
       - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: TypeScript typecheck
@@ -36,3 +56,12 @@ jobs:
 
       - name: Migration sanity checks
         run: npm run check:migrations
+
+      - name: Save typecheck/lint cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules/.cache/tsc
+            node_modules/.cache/eslint
+          key: ${{ runner.os }}-node20-toolcache-${{ hashFiles('package-lock.json') }}-${{ github.sha }}

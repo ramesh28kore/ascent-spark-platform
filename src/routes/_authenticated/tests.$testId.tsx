@@ -272,9 +272,10 @@ function TestRunner() {
       )}
 
       <div className="space-y-4">
-
-        {questions.map((q, idx) => (
+        {(isStaff || submitted || canWrite) &&
+          questions.map((q, idx) => (
           <Card key={q.question_id}>
+
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium leading-relaxed">
                 {idx + 1}. {q.prompt}

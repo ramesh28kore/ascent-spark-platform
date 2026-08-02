@@ -32,11 +32,51 @@ export const generateTestSchema = z.object({
     .default(["mcq"]),
 });
 
+export const manualTestSchema = z.object({
+  title: z.string().trim().min(3).max(160),
+  batch_id: z.string().uuid().nullable(),
+  module_id: z.string().uuid().nullable(),
+  assessment_id: z.string().uuid().nullable().default(null),
+  starts_at: z.string().min(10).max(40),
+  ends_at: z.string().min(10).max(40).nullable().default(null),
+  duration_min: z.number().int().min(1).max(300),
+  shuffle: z.boolean(),
+  publish: z.boolean(),
+  items: z
+    .array(
+      z.object({
+        question_id: z.string().uuid(),
+        marks: z.number().int().min(1).max(20),
+      }),
+    )
+    .min(1, { message: "pick at least one question" })
+    .max(200),
+});
+
+export const mcqImportSchema = z.object({
+  module_id: z.string().uuid().nullable(),
+  bloom: z.enum(["L1", "L2", "L3", "L4", "L5", "L6"]).default("L2"),
+  questions: z
+    .array(
+      z.object({
+        prompt: z.string().trim().min(5).max(2000),
+        options: z.array(z.string().trim().min(1).max(300)).min(2).max(6),
+        answer: z.string().trim().min(1).max(300),
+        explanation: z.string().trim().max(1000).default(""),
+        level: z.enum(["easy", "medium", "hard"]),
+        marks: z.number().int().min(1).max(20),
+      }),
+    )
+    .min(1, { message: "nothing to import" })
+    .max(300),
+});
+
 export const submitSchema = z.object({
   test_id: z.string().uuid(),
   responses: z.record(z.string().uuid(), z.string().max(20000)),
   blur_count: z.number().int().min(0).max(9999),
 });
+
 
 export type PickableQuestion = {
   id: string;

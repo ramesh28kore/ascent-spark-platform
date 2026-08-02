@@ -7,6 +7,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { generateTest, setTestPublished, deleteTest } from "@/lib/tests.functions";
 import { formatFormError } from "@/lib/form-errors";
+import { ManualTestBuilder } from "@/components/ManualTestBuilder";
+
 
 import {
   assessmentsQuery,
@@ -155,7 +157,9 @@ function TestsPage() {
   });
 
   const togglePublish = useMutation({
-    mutationFn: (vars: { id: string; published: boolean }) => publish({ data: vars }),
+    mutationFn: (vars: { id: string; published?: boolean; results_released?: boolean }) =>
+      publish({ data: vars }),
+
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tests"] }),
     onError: (e: Error) => toast.error(e.message),
   });
@@ -196,12 +200,15 @@ function TestsPage() {
           </p>
         </div>
         {isStaff && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="h-4 w-4" /> Generate test
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            <ManualTestBuilder />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" /> Generate test
+                </Button>
+              </DialogTrigger>
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Auto-generate a test</DialogTitle>
@@ -360,8 +367,10 @@ function TestsPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         )}
+
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -384,6 +393,7 @@ function TestsPage() {
                 <CardDescription>
                   {new Date(t.starts_at).toLocaleString()} · {t.duration_min} min · {qCount}{" "}
                   questions
+                  {t.ends_at ? ` · closes ${new Date(t.ends_at).toLocaleString()}` : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap items-center gap-2">
@@ -401,7 +411,17 @@ function TestsPage() {
                       />
                       Publish
                     </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Switch
+                        checked={!!t.results_released}
+                        onCheckedChange={(v) =>
+                          togglePublish.mutate({ id: t.id, results_released: v })
+                        }
+                      />
+                      Release marks
+                    </div>
                     <span className="text-xs text-muted-foreground">{done.length} submitted</span>
+
                     <Button
                       size="icon"
                       variant="ghost"

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Plus, Shuffle } from "lucide-react";
 
 import { createQuestion } from "@/lib/crt.functions";
+import { McqImportDialog } from "@/components/McqImportDialog";
+
 import { meQuery, modulesQuery, questionsQuery } from "@/lib/crt-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,12 +159,15 @@ function QuestionsPage() {
           </p>
         </div>
         {isTrainer && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Add question
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            <McqImportDialog modules={modules.data?.modules ?? []} />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" /> Add question
+                </Button>
+              </DialogTrigger>
+
             <DialogContent className="max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display">New question</DialogTitle>
@@ -323,8 +328,10 @@ function QuestionsPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         )}
+
       </div>
 
       <Card>

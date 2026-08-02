@@ -3,10 +3,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import {
   generateTestSchema,
+  manualTestSchema,
+  mcqImportSchema,
   submitSchema,
   pickByDistribution,
   seededShuffle,
 } from "@/lib/tests.server";
+
 
 export const getTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -77,19 +80,196 @@ export const generateTest = createServerFn({ method: "POST" })
     return { ok: true, test_id: test.id, items: rows.length };
   });
 
+/** Trainer-built paper: the exact questions the trainer picked, in their order. */
+export const createManualTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => manualTestSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const ids = data.items.map((i) => i.question_id);
+    const { data: pool, error: poolErr } = await supabase
+      .from("questions")
+      .select("id, marks")
+      .in("id", ids);
+    if (poolErr) throw new Error(poolErr.message);
+    const known = new Set((pool ?? []).map((q) => q.id));
+    if (known.size !== ids.length) throw new Error("Some selected questions no longer exist.");
+
+    const { data: test, error } = await supabase
+      .from("tests")
+      .insert({
+        title: data.title,
+        batch_id: data.batch_id,
+        module_id: data.module_id,
+        assessment_id: data.assessment_id,
+        starts_at: data.starts_at,
+        ends_at: data.ends_at,
+        duration_min: data.duration_min,
+        shuffle: data.shuffle,
+        published: data.publish,
+        exam_kind: "mcq_quiz",
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const rows = data.items.map((item, i) => ({
+      test_id: test.id,
+      question_id: item.question_id,
+      marks: item.marks,
+      sort_order: i,
+    }));
+    const { error: itemErr } = await supabase.from("test_items").insert(rows);
+    if (itemErr) throw new Error(itemErr.message);
+    return { ok: true, test_id: test.id, items: rows.length };
+  });
+
+/** Bulk import of MCQs pasted from Notepad. */
+export const importMcqQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => mcqImportSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const rows = data.questions.map((q) => ({
+      module_id: data.module_id,
+      prompt: q.prompt,
+      qtype: "mcq" as const,
+      options: q.options,
+      answer: q.answer,
+      explanation: q.explanation,
+      level: q.level,
+      bloom: data.bloom,
+      marks: q.marks,
+      test_cases: [],
+    }));
+    const { data: inserted, error } = await context.supabase
+      .from("questions")
+      .insert(rows)
+      .select("id");
+    if (error) throw new Error(error.message);
+    return { ok: true, imported: inserted?.length ?? 0, ids: (inserted ?? []).map((r) => r.id) };
+  });
+
 export const setTestPublished = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid(), published: z.boolean() }).parse(input),
+    z
+      .object({
+        id: z.string().uuid(),
+        published: z.boolean().optional(),
+        results_released: z.boolean().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("tests")
-      .update({ published: data.published })
-      .eq("id", data.id);
+    const patch: { published?: boolean; results_released?: boolean } = {};
+    if (typeof data.published === "boolean") patch.published = data.published;
+    if (typeof data.results_released === "boolean")
+      patch.results_released = data.results_released;
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const { error } = await context.supabase.from("tests").update(patch).eq("id", data.id);
+
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Marks sheet for a single test — trainers, placement staff and admin only. */
+export const getTestResults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ test_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isStaff = (roles ?? []).some((r) =>
+      ["trainer", "placement", "admin"].includes(r.role as string),
+    );
+    if (!isStaff) throw new Error("Only trainers can download the marks sheet.");
+
+    const { data: test, error } = await supabase
+      .from("tests")
+      .select("*")
+      .eq("id", data.test_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!test) throw new Error("Test not found.");
+
+    const [{ data: items }, { data: attempts }] = await Promise.all([
+      supabase.from("test_items").select("question_id, marks").eq("test_id", data.test_id),
+      supabase.from("test_attempts").select("*").eq("test_id", data.test_id),
+    ]);
+
+    const questionIds = (items ?? []).map((i) => i.question_id);
+    const { data: keys } = questionIds.length
+      ? await supabase.rpc("staff_questions")
+      : { data: [] };
+    const keyById = new Map(
+      ((keys ?? []) as { id: string; answer: string | null }[]).map((q) => [q.id, q.answer]),
+    );
+
+    const studentIds = (attempts ?? []).map((a) => a.student_id);
+    const { data: students } = studentIds.length
+      ? await supabase
+          .from("profiles")
+          .select("id, full_name, roll_number, email, branch, batch")
+          .in("id", studentIds)
+      : { data: [] };
+    const byStudent = new Map((students ?? []).map((s) => [s.id, s]));
+
+    const normalise = (v: string) => v.trim().toLowerCase().replace(/\s+/g, " ");
+    const rows = (attempts ?? []).map((a) => {
+      const responses = (a.responses ?? {}) as Record<string, string>;
+      let correct = 0;
+      let attemptedCount = 0;
+      for (const item of items ?? []) {
+        const given = responses[item.question_id];
+        if (given) attemptedCount += 1;
+        const key = keyById.get(item.question_id);
+        if (key && given && normalise(key) === normalise(given)) correct += 1;
+      }
+      const profile = byStudent.get(a.student_id);
+      const seconds =
+        a.submitted_at && a.started_at
+          ? Math.max(
+              0,
+              Math.round(
+                (new Date(a.submitted_at).getTime() - new Date(a.started_at).getTime()) / 1000,
+              ),
+            )
+          : null;
+      return {
+        student_id: a.student_id,
+        full_name: profile?.full_name ?? "Unknown",
+        roll_number: profile?.roll_number ?? "",
+        email: profile?.email ?? "",
+        branch: profile?.branch ?? "",
+        batch: profile?.batch ?? "",
+        score: Number(a.score ?? 0),
+        max_score: Number(a.max_score ?? 0),
+        correct,
+        attempted: attemptedCount,
+        total_questions: (items ?? []).length,
+        blur_count: Number(a.blur_count ?? 0),
+        seconds,
+        submitted_at: a.submitted_at,
+        started_at: a.started_at,
+      };
+    });
+
+    rows.sort((a, b) => b.score - a.score || a.full_name.localeCompare(b.full_name));
+    return { test, rows, totalMarks: (items ?? []).reduce((sum, i) => sum + (i.marks ?? 0), 0) };
+  });
+
+/** Per-question review for the signed-in student, once the trainer releases results. */
+export const getAttemptReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ test_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc("attempt_review", {
+      _test_id: data.test_id,
+    });
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
 
 export const deleteTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -126,8 +306,13 @@ export const getTestPaper = createServerFn({ method: "POST" })
     );
 
     // Students can only see the question list while an attempt is live, so
-    // open the attempt before loading the paper.
-    if (!isStaff && profile && test.published) {
+    // open the attempt before loading the paper — but only inside the window.
+    const nowMs = Date.now();
+    const windowOpen =
+      new Date(test.starts_at).getTime() <= nowMs &&
+      (!test.ends_at || new Date(test.ends_at).getTime() >= nowMs);
+    if (!isStaff && profile && test.published && windowOpen) {
+
       await supabase
         .from("test_attempts")
         .upsert(
@@ -207,6 +392,20 @@ export const startAttempt = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (!profile) throw new Error("No student profile linked to this account.");
+
+    // The exam window is authoritative: no early entry, no late entry.
+    const { data: test } = await supabase
+      .from("tests")
+      .select("starts_at, ends_at, published")
+      .eq("id", data.test_id)
+      .maybeSingle();
+    if (!test || !test.published) throw new Error("This test is not open yet.");
+    const now = Date.now();
+    if (new Date(test.starts_at).getTime() > now)
+      throw new Error(`This test opens at ${new Date(test.starts_at).toLocaleString()}.`);
+    if (test.ends_at && new Date(test.ends_at).getTime() < now)
+      throw new Error("The exam window for this test has closed.");
+
     const { error } = await supabase
       .from("test_attempts")
       .upsert(

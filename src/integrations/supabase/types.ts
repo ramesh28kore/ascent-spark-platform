@@ -1897,6 +1897,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attempt_review: {
+        Args: { _test_id: string }
+        Returns: {
+          answer: string
+          explanation: string
+          given: string
+          marks: number
+          options: Json
+          prompt: string
+          qtype: Database["public"]["Enums"]["question_type"]
+          question_id: string
+          sort_order: number
+        }[]
+      }
       grade_attempt: {
         Args: { _blur_count?: number; _responses: Json; _test_id: string }
         Returns: {

@@ -20,6 +20,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeRunner } from "@/components/CodeRunner";
 import { Leaderboard } from "@/components/Leaderboard";
+import { TestResults } from "@/components/TestResults";
+import { AttemptReview } from "@/components/AttemptReview";
+
 
 export const Route = createFileRoute("/_authenticated/tests/$testId")({
   head: () => ({
@@ -125,23 +128,35 @@ function TestRunner() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // Start the attempt once for students.
+  // Exam window state — students may only write between starts_at and ends_at.
+  const test = paper.data?.test ?? null;
+  const nowMs = Date.now();
+  const startMsWindow = test ? new Date(test.starts_at).getTime() : 0;
+  const endMsWindow = test?.ends_at ? new Date(test.ends_at).getTime() : null;
+  const notOpenYet = !!test && !isStaff && startMsWindow > nowMs;
+  const windowClosed = !!test && !isStaff && endMsWindow !== null && endMsWindow < nowMs;
+  const canWrite = !!test && !isStaff && !notOpenYet && !windowClosed && !submitted;
+
+  // Start the attempt once for students, inside the window only.
   useEffect(() => {
     if (isStaff || submitted || started.current || !paper.data) return;
+    if (notOpenYet || windowClosed) return;
     started.current = true;
     begin({ data: { test_id: testId } }).catch(() => undefined);
-  }, [isStaff, submitted, paper.data, begin, testId]);
+  }, [isStaff, submitted, paper.data, begin, testId, notOpenYet, windowClosed]);
 
-  // Countdown from the attempt start.
+  // Countdown from the attempt start, capped by the window close time.
   useEffect(() => {
-    if (!paper.data || submitted || isStaff) return;
+    if (!paper.data || submitted || isStaff || notOpenYet || windowClosed) return;
     const startMs = attempt?.started_at ? new Date(attempt.started_at).getTime() : Date.now();
-    const endMs = startMs + paper.data.test.duration_min * 60_000;
+    let endMs = startMs + paper.data.test.duration_min * 60_000;
+    if (endMsWindow !== null) endMs = Math.min(endMs, endMsWindow);
     const tick = () => setRemaining(Math.max(0, Math.round((endMs - Date.now()) / 1000)));
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [paper.data, attempt?.started_at, submitted, isStaff]);
+  }, [paper.data, attempt?.started_at, submitted, isStaff, notOpenYet, windowClosed, endMsWindow]);
+
 
   // Tab-switch proctoring signal.
   useEffect(() => {
@@ -205,6 +220,21 @@ function TestRunner() {
         </div>
       </div>
 
+      {(notOpenYet || windowClosed) && !submitted && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {notOpenYet ? "This exam has not opened yet" : "The exam window has closed"}
+            </CardTitle>
+            <CardDescription>
+              {notOpenYet
+                ? `You can start writing from ${new Date(startMsWindow).toLocaleString()}.`
+                : `Submissions closed on ${endMsWindow ? new Date(endMsWindow).toLocaleString() : ""}.`}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {submitted && (
         <Card>
           <CardHeader className="pb-2">
@@ -223,17 +253,29 @@ function TestRunner() {
               }
               className="h-2"
             />
+            {!test?.results_released && (
+              <p className="text-xs text-muted-foreground">
+                Your trainer has not released the answer key yet — question-wise review appears here
+                once they do.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {!submitted && !isStaff && (
+      {submitted && test?.results_released && <AttemptReview testId={testId} />}
+
+      {isStaff && <TestResults testId={testId} />}
+
+      {canWrite && (
         <Progress value={(answered / Math.max(1, questions.length)) * 100} className="h-2" />
       )}
 
       <div className="space-y-4">
-        {questions.map((q, idx) => (
+        {(isStaff || submitted || canWrite) &&
+          questions.map((q, idx) => (
           <Card key={q.question_id}>
+
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium leading-relaxed">
                 {idx + 1}. {q.prompt}
@@ -333,10 +375,11 @@ function TestRunner() {
               )}
             </CardContent>
           </Card>
-        ))}
+          ))}
       </div>
 
-      {!submitted && !isStaff && (
+      {canWrite && (
+
         <Button onClick={() => send.mutate()} disabled={send.isPending}>
           Submit test
         </Button>

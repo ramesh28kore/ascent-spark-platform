@@ -1,70 +1,57 @@
 ## Goal
 
-Close the loop: Super Admin issues credentials → Trainer authors problems with test cases and publishes them to chosen batches → Students solve them in a LeetCode-Premium-style workspace → Trainers download grading sheets.
+Close the gaps in the MCQ exam loop so it runs end to end:
+Super admin creates trainer + student credentials → trainer pastes MCQs from Notepad → trainer builds a timed test and publishes → students write it in the window → auto-marks on submit → trainer downloads the marks sheet. Student dashboard keeps its LeetCode-premium look.
 
 ## What already exists (verified)
 
-- Super Admin console creates trainer and student accounts with generated credentials, roles are locked, deletions audited.
-- Students already sign in with those credentials; role-aware sidebar, problem set, Monaco + Judge0 run/submit, submissions, contests, plans, badges.
-- Trainers already export assessment/test reports.
+- Super admin console creates trainer/student credentials with audit logging.
+- Question bank (`questions`, MCQ type), test generator (`generateTest`), publish toggle, student paper delivery with answers stripped, attempt start/submit and server-side grading (`grade_attempt`), attempt scores in `test_attempts`.
+- Student exam runner at `/tests/$testId` with proctoring blur count.
 
-## What is missing (verified)
+## What is missing (this plan)
 
-- `practice_problems` has **no publish/draft state and no batch targeting** — every problem is visible to every signed-in student the moment it is inserted.
-- There is **no trainer UI to author a problem with its test cases**; problems were seeded by migration.
-- Trainers cannot download practice-problem grading (only assessment/test exports exist).
-- No "next problem" guidance after all test cases pass.
+1. No way to paste MCQs from Notepad — questions are added one by one through a form.
+2. Test builder only picks questions randomly by difficulty; a trainer can't hand-pick the exact questions they just imported.
+3. No explicit exam window UX (start/end + duration shown to students, hard close after end).
+4. No trainer-facing marks sheet download for a single MCQ test.
 
----
+## Notepad import format
 
-## 1. Trainer problem authoring studio (new page `/authoring`)
+Plain text, one block per question, blocks separated by a blank line. Correct option marked with `*`.
 
-A staff-only workspace to create and manage coding problems:
+```text
+Q: What is the time complexity of binary search on a sorted array?
+A) O(n)
+*B) O(log n)
+C) O(n log n)
+D) O(1)
+MARKS: 1
+LEVEL: easy
+EXPLANATION: The search space halves each step.
 
-- **Details**: title, slug, difficulty, topic tags, company tags, points, module, time/memory limits.
-- **Statement**: markdown statement, constraints, worked examples.
-- **Test cases**: repeatable rows of input / expected output, each flagged sample (shown to students) or hidden. Add, reorder, delete.
-- **Starter code** per language, plus **editorial** (official approach + reference solution).
-- **Validate before publish**: trainer runs their reference solution against every test case through the existing Judge0 pipeline. A problem cannot be published until all cases pass — this is the "after all test cases done by trainer" gate.
-- Draft / Published state visible in a problem list with edit, duplicate, unpublish.
+Q: Which data structure uses FIFO ordering?
+A) Stack
+*B) Queue
+C) Tree
+D) Graph
+MARKS: 1
+LEVEL: easy
+```
 
-## 2. Publish + batch targeting
+Rules: `Q:` required, 2-6 options `A)`–`F)`, exactly one starred as the answer; `MARKS:`, `LEVEL:` (easy/medium/hard) and `EXPLANATION:` optional with defaults 1 / medium / empty. Also accepts `ANSWER: B` on its own line instead of a star.
 
-Schema additions to `practice_problems`: `status` (draft | published), `published_at`, `author_id`, `visible_to_all_batches`, plus a `problem_batches` join table.
+## Build steps
 
-Access rules rewritten so:
-- Students only ever read problems that are **published** AND targeted at their batch (or marked visible to all).
-- Trainers/admin see their drafts.
-- Every existing seeded problem is migrated to `published` + visible to all batches, so nothing disappears.
-
-All student-facing fetchers (problem set, plans, contests, daily challenge, dashboard) go through the same filter.
-
-## 3. Student flow — soft-guided ladder
-
-- Problem page shows a **test-case result panel** (already built) and, once the verdict is Accepted, an **"All tests passed — Next problem →"** card that advances to the next unsolved problem in the same list/plan ordering.
-- A persistent ladder strip shows position (e.g. "12 of 47 solved") and the next three targets.
-- All problems stay browsable; nothing is hard-locked.
-
-## 4. Premium-style student experience
-
-- **Editorial & official solution**: tabbed alongside Description/Submissions, unlocked after an accepted submission (or "reveal anyway" with a confirmation).
-- **Company tags & frequency**: company chips on each problem, a company-wise browse view, and sort-by-frequency.
-- **Debugger extras**: custom test-case input box for Run, plus runtime/memory percentile ("beats X% of submissions") computed from stored submissions.
-- **Timed interview drills**: pick topic + difficulty + duration, get a randomised set with a countdown and an end-of-drill performance report.
-
-## 5. Trainer gradebook & downloads
-
-New **Gradebook** tab in the export centre:
-- **Matrix export** (Excel/CSV): students as rows, published problems as columns, cells showing solved/attempted/not started with attempts, best verdict, runtime and last submission time.
-- **Marks sheet** (Excel + PDF): points auto-computed from solved problems, per-student totals, percentage and band, filterable by batch, module and date range.
-- Both restricted to trainer/admin server-side and written to the audit log.
-
----
+1. **Parser + tests** — `src/lib/mcq-import.ts`: parse text → questions, with per-block line-numbered errors (missing answer, duplicate star, too few options). Unit tests in Vitest.
+2. **Trainer import UI** — new "Import MCQs" tab on `/questions`: paste box (or `.txt` upload), format help with the example above, live preview table of parsed questions with error rows highlighted, module selector, then "Import N questions" writing to `questions` with `qtype = 'mcq'`.
+3. **Manual test builder** — extend `/tests` create dialog with a "Pick questions" mode: filter the MCQ bank by module/level, checkbox-select, reorder, per-question marks; plus title, batch, start time, end time, duration, shuffle, negative marking. A new `createManualTest` server function inserts `tests` + `test_items` in the chosen order.
+4. **Exam window enforcement** — students see "Opens in…", "Live — ends at…", "Closed"; `startAttempt` rejects before start / after end; the runner auto-submits when the earlier of `duration` and `ends_at` is reached.
+5. **Marks sheet** — "Results" view per test for trainers: student, roll number, score, %, correct/incorrect count, time taken, blur count, submitted-at — with CSV, Excel and PDF download reusing the existing export helpers. Only trainers/admin can open it.
+6. **Student results** — after submit, show score, per-question review (own answer, correct answer, explanation) once the trainer marks results as released.
 
 ## Technical notes
 
-- Schema: migration adding publish/targeting columns, `problem_batches`, an editorial column, company-frequency column, and grants + policies rewritten via the existing `private.is_content_reader` / `is_staff` helpers.
-- New server functions in `src/lib/problems.functions.ts` and a new `src/lib/authoring.functions.ts` (draft CRUD, validate-against-Judge0, publish/unpublish, batch targeting), all behind `requireSupabaseAuth` with a staff role check.
-- Gradebook builders extend `src/lib/report-builders.ts` and reuse `src/lib/export-formats.ts`.
-- Sidebar gains "Authoring" and "Gradebook" for staff; "Companies" and "Interview drills" for students.
-- Unit tests for the publish-visibility filter, the next-problem selector and the gradebook builders, keeping CI green.
+- New server functions live in `src/lib/tests.functions.ts`; parsing logic stays in a client-safe `mcq-import.ts` so it can be unit tested and previewed in the browser.
+- No schema change needed for MCQ import (`questions.options` is already jsonb, `answer` text). Results release uses the existing `tests.results_released` flag.
+- Grading continues to run server-side via the existing `grade_attempt` RPC — answers are never sent to the browser.

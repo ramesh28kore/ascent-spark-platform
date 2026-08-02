@@ -11,7 +11,10 @@
     "lint": "eslint . --cache --cache-location node_modules/.cache/eslint/",
     "typecheck": "tsc --noEmit",
     "check:migrations": "node scripts/check-migrations.mjs",
-    "ci": "npm run typecheck && npm run lint && npm run check:migrations",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "ci": "npm run typecheck && npm run lint && npm run check:migrations && npm run test && npm run build",
     "format": "prettier --write ."
   },
   "dependencies": {

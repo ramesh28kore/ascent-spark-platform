@@ -1,37 +1,35 @@
 ## Goal
 
-A minimal CI pipeline that blocks merges when TypeScript, lint, or migration hygiene checks fail.
+Cut PR CI time by caching dependency installs and reusing incremental TypeScript/ESLint state between runs.
 
-## What gets added
+## Changes
 
-**1. `typecheck` script in `package.json`**
-Currently only `dev`, `build`, `lint`, `format` exist. Add:
-- `"typecheck": "tsc --noEmit"`
-- `"check:migrations": "node scripts/check-migrations.mjs"`
-- `"ci": "npm run typecheck && npm run lint && npm run check:migrations"`
+**1. `tsconfig.json`** — enable incremental output so `tsc --noEmit` can skip unchanged files:
+- `"incremental": true`
+- `"tsBuildInfoFile": "node_modules/.cache/tsc/tsconfig.tsbuildinfo"`
 
-**2. `scripts/check-migrations.mjs`** — a dependency-free Node script that scans `supabase/migrations/*.sql` and fails with a clear message on:
-- A `CREATE TABLE public.<x>` with no `GRANT ... ON public.<x>` in the same file.
-- A `CREATE TABLE public.<x>` with no `ENABLE ROW LEVEL SECURITY` for that table.
-- A table with RLS enabled but zero `CREATE POLICY` on it in that file.
-- Filenames not matching the `YYYYMMDDHHMMSS_*.sql` timestamp pattern, or duplicate timestamps.
-- Forbidden edits to protected schemas (`auth`, `storage`, `realtime`, `vault`, `supabase_functions`).
+(TypeScript 5.8 supports `incremental` together with `noEmit`.)
 
-It only reads files — it never connects to the database, so CI needs no secrets.
+**2. `package.json`**
+- `typecheck`: keep `tsc --noEmit` (now incremental via tsconfig).
+- `lint`: `eslint . --cache --cache-location node_modules/.cache/eslint/`
 
-**3. `.github/workflows/ci.yml`** — runs on `pull_request` and pushes to the default branch:
-- checkout → setup-node 20 with npm cache → `npm ci`
-- three separate steps (typecheck, lint, migrations) so the failing one is obvious in the PR checks list
-- concurrency group that cancels superseded runs on the same branch
+**3. `.github/workflows/ci.yml`**
+- Keep `actions/setup-node@v4` with `cache: npm` (npm download cache), and swap `npm ci` to run only when the install cache misses:
+  - `actions/cache` on `node_modules` keyed by `${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}`
+  - `npm ci` runs with `if: steps.node-modules-cache.outputs.cache-hit != 'true'`
+- New `actions/cache` step for `node_modules/.cache/tsc` and `node_modules/.cache/eslint`, keyed by lockfile + `github.sha`, with restore-keys falling back to the newest prior cache on the branch, then `main`. This gives a warm-but-stale buildinfo that TS/ESLint validate and partially reuse.
+- Cache steps placed before the install step; the tsc/eslint cache step needs `save-always`-style behaviour, so it uses the split `actions/cache/restore` + `actions/cache/save` pair so state is saved even when typecheck fails.
 
 ## Technical notes
 
-- Lint is run as-is (`eslint .`). If the existing codebase has pre-existing lint errors, CI would go red on day one — I'll run lint and typecheck locally first and report the count. If there are pre-existing failures, the options are: fix them, or start lint as non-blocking (`continue-on-error`) and tighten later. I'll ask before choosing.
-- The migration checker is heuristic (regex over SQL text) and intentionally lenient: it only flags tables created in the file being scanned, so historical `ALTER`-only migrations pass.
-- No new dependencies are installed.
+- Caching `node_modules` directly is the big win here (skips the `npm ci` install entirely on lockfile-unchanged PRs); the `setup-node` npm cache still covers cache-miss installs.
+- The cache key must include the lockfile hash — a stale `node_modules` against a changed lockfile is the classic failure mode, and the key prevents it. No `restore-keys` fallback on the `node_modules` key for that reason.
+- `.eslintcache`/tsbuildinfo live under `node_modules/.cache/`, which is already gitignored, so nothing new needs ignoring.
+- Migration check stays uncached — it's a fast file scan.
 
 ## Files
 
-- `package.json` (scripts only)
-- `scripts/check-migrations.mjs` (new)
-- `.github/workflows/ci.yml` (new)
+- `.github/workflows/ci.yml`
+- `package.json` (lint script)
+- `tsconfig.json` (incremental flags)

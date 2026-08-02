@@ -14,7 +14,7 @@ import {
 } from "@/lib/authoring.functions";
 import { emptyDraft, publishBlockers, slugify, type AuthoringDraft } from "@/lib/authoring-shared";
 import { modulesQuery } from "@/lib/crt-queries";
-import { readableError } from "@/lib/form-errors";
+import { formatFormError } from "@/lib/form-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -114,7 +114,7 @@ function AuthoringPage() {
       toast.success("Draft saved");
       queryClient.invalidateQueries({ queryKey: ["authoring"] });
     },
-    onError: (e: Error) => toast.error(readableError(e)),
+    onError: (e: Error) => toast.error(formatFormError(e)),
   });
 
   const validateMutation = useMutation({
@@ -133,7 +133,7 @@ function AuthoringPage() {
       if (res.allPassed) toast.success(`All ${res.total} cases pass the reference solution`);
       else toast.error(`${res.total - res.passed} case(s) failed — fix them before publishing`);
     },
-    onError: (e: Error) => toast.error(readableError(e)),
+    onError: (e: Error) => toast.error(formatFormError(e)),
   });
 
   const publishMutation = useMutation({
@@ -144,7 +144,7 @@ function AuthoringPage() {
       queryClient.invalidateQueries({ queryKey: ["authoring"] });
       queryClient.invalidateQueries({ queryKey: ["problems"] });
     },
-    onError: (e: Error) => toast.error(readableError(e)),
+    onError: (e: Error) => toast.error(formatFormError(e)),
   });
 
   const deleteMutation = useMutation({
@@ -154,7 +154,7 @@ function AuthoringPage() {
       setDraft(emptyDraft());
       queryClient.invalidateQueries({ queryKey: ["authoring"] });
     },
-    onError: (e: Error) => toast.error(readableError(e)),
+    onError: (e: Error) => toast.error(formatFormError(e)),
   });
 
   const startEdit = (id: string) => {
@@ -201,7 +201,7 @@ function AuthoringPage() {
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
-          {readableError(bank.error as Error)}
+          {formatFormError(bank.error as Error)}
         </CardContent>
       </Card>
     );
@@ -355,7 +355,7 @@ function AuthoringPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No module</SelectItem>
-                        {(modules.data ?? []).map((m) => (
+                        {(modules.data?.modules ?? []).map((m) => (
                           <SelectItem key={m.id} value={m.id}>
                             {m.code} — {m.title}
                           </SelectItem>

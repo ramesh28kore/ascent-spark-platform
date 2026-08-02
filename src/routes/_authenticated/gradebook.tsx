@@ -171,7 +171,7 @@ function GradebookPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {(["pdf", "excel", "csv"] as ExportFormat[]).map((f) => (
+            {(["pdf", "xlsx", "csv"] as ExportFormat[]).map((f) => (
               <Button
                 key={`matrix-${f}`}
                 variant="outline"
@@ -182,7 +182,7 @@ function GradebookPage() {
                 <Download className="size-4" /> Matrix {f.toUpperCase()}
               </Button>
             ))}
-            {(["pdf", "excel", "csv"] as ExportFormat[]).map((f) => (
+            {(["pdf", "xlsx", "csv"] as ExportFormat[]).map((f) => (
               <Button
                 key={`marks-${f}`}
                 size="sm"

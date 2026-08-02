@@ -36,14 +36,18 @@ describe("computeAchievements", () => {
   });
 
   it("tracks difficulty badges from the per-level counts", () => {
-    const list = computeAchievements(input({ solved: { easy: 10, medium: 0, hard: 1, total: 11 } }));
+    const list = computeAchievements(
+      input({ solved: { easy: 10, medium: 0, hard: 1, total: 11 } }),
+    );
     expect(badge(list, "easy-10").unlocked).toBe(true);
     expect(badge(list, "hard-1").unlocked).toBe(true);
     expect(badge(list, "hard-10").unlocked).toBe(false);
   });
 
   it("caps displayed progress at the target", () => {
-    const list = computeAchievements(input({ solved: { easy: 0, medium: 0, hard: 0, total: 999 } }));
+    const list = computeAchievements(
+      input({ solved: { easy: 0, medium: 0, hard: 0, total: 999 } }),
+    );
     expect(badge(list, "solver-10").value).toBe(10);
   });
 

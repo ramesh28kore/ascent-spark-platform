@@ -878,10 +878,13 @@ export type Database = {
       }
       practice_problems: {
         Row: {
+          author_id: string | null
           category: string
           company: string | null
+          company_frequency: number
           constraints: string | null
           created_at: string
+          editorial: string | null
           examples: Json
           hints: Json
           id: string
@@ -890,22 +893,29 @@ export type Database = {
           module_id: string | null
           platform: string
           points: number
+          published_at: string | null
           slug: string | null
           solution: string | null
           sort_order: number
           starter_code: Json
           statement: string | null
+          status: string
           tags: string[]
           test_cases: Json
           time_limit_ms: number
           title: string
+          updated_at: string
           url: string | null
+          visible_to_all_batches: boolean
         }
         Insert: {
+          author_id?: string | null
           category?: string
           company?: string | null
+          company_frequency?: number
           constraints?: string | null
           created_at?: string
+          editorial?: string | null
           examples?: Json
           hints?: Json
           id?: string
@@ -914,22 +924,29 @@ export type Database = {
           module_id?: string | null
           platform?: string
           points?: number
+          published_at?: string | null
           slug?: string | null
           solution?: string | null
           sort_order?: number
           starter_code?: Json
           statement?: string | null
+          status?: string
           tags?: string[]
           test_cases?: Json
           time_limit_ms?: number
           title: string
+          updated_at?: string
           url?: string | null
+          visible_to_all_batches?: boolean
         }
         Update: {
+          author_id?: string | null
           category?: string
           company?: string | null
+          company_frequency?: number
           constraints?: string | null
           created_at?: string
+          editorial?: string | null
           examples?: Json
           hints?: Json
           id?: string
@@ -938,18 +955,29 @@ export type Database = {
           module_id?: string | null
           platform?: string
           points?: number
+          published_at?: string | null
           slug?: string | null
           solution?: string | null
           sort_order?: number
           starter_code?: Json
           statement?: string | null
+          status?: string
           tags?: string[]
           test_cases?: Json
           time_limit_ms?: number
           title?: string
+          updated_at?: string
           url?: string | null
+          visible_to_all_batches?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "practice_problems_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "practice_problems_module_id_fkey"
             columns: ["module_id"]
@@ -994,6 +1022,42 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      problem_batches: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          problem_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          problem_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          problem_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problem_batches_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "problem_batches_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "practice_problems"
             referencedColumns: ["id"]
           },
         ]
